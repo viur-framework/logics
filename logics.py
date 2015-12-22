@@ -154,6 +154,14 @@ class viurLogicsJS(viurLogicsParser):
 
 		s = str()
 
+		# GetField ------------------------------------------------------------
+		s += "function %sGetField(name)\n" % self.apiPrefix
+		s += """{
+	return document.getElementsByName(name)[0].value;
+}
+
+"""
+
 		# Add -----------------------------------------------------------------
 		s += "function %sAdd(a, b)\n" % self.apiPrefix
 		s += """{
@@ -234,11 +242,11 @@ class viurLogicsJS(viurLogicsParser):
 		s += """{
 	try
 	{
-		return b.indexOf(a) > -1 ? True : False;
+		return b.indexOf(a) > -1 ? true : false;
 	}
 	catch(e)
 	{
-		return False;
+		return false;
 	}
 }
 
