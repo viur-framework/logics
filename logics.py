@@ -48,7 +48,7 @@ class viurLogicsParser(Parser):
 			not_test	: 'not' not_test 										%emit
 						| comparison
 						;
-			comparison	: expr (("<" | ">" | "==" | ">=" | "<=" |
+			comparison	: expr (( "==" | ">=" | "<=" | "<" | ">" |
 									"<>" | "!=" | "in" | not_in) expr)+ 		%emit
 						| expr
 						;
@@ -96,6 +96,8 @@ class viurLogicsParser(Parser):
 		                                                "return parseInt(arguments[0]);")
 		self.functions["float"] = viurLogicsFunction(lambda x: float(x),
 		                                                "return parseFloat(arguments[0]);")
+		self.functions["len"] = viurLogicsFunction(lambda x: len(x), "return arguments[0].length;")
+
 
 	def compile(self, src):
 		return self.parse(src)
