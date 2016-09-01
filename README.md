@@ -62,7 +62,10 @@ viur/vi currently supports within the branch *viurDepends* a support of
 on input data.
 
 The logics expressions are executed event-based, when input field contents
-are changed. In a proof-of-concept draft, only the "visibleIf"-event supported.
+are changed. The following events are supported so far:
+
+- `logic.visibleIf` sets the field visible when the expression returns `True`
+- `logic.readonlyIf` sets the field read-only when the expression returns `True`
 
 The expressions are provided by extending skeleton bones to specific expressions
 on the particular event.
@@ -78,17 +81,19 @@ on the particular event.
 		                        "query": u"Output field"},
 	                        required=True, defaultValue="level")
 	value = stringBone(descr="Default value",
-						params={"visibleIf": 'type != "level"'})
+						params={"logic.visibleIf": 'type != "level"'})
 	entries = stringBone(descr="Possible values",
-							params={"visibleIf": 'type == "select"'},
+							params={"logic.visibleIf": 'type == "select"'},
 							multiple=True)
 	required = booleanBone(descr="Required",
-							params={"visibleIf": 'type in ["text", "memo"]'},
+							params={"logic.visibleIf":
+										'type in ["text", "memo"]'},
 							defaultValue=False)
-	multiple = booleanBone(descr=u"Multiple entries",
-							params={"visibleIf": 'type in ["text", "memo", "select"]'},
+	multiple = booleanBone(descr="Multiple entries",
+							params={"logic.visibleIf":
+										'type in ["text", "memo", "select"]'},
 							defaultValue=False)
-	columns = stringBone(descr=u"Columns",
+	columns = stringBone(descr="Columns",
 							multiple=True,
 							params={"visibleIf": 'type == "table"'})
 
