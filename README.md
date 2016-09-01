@@ -57,7 +57,7 @@ greater-equal 21 and lower-equal 42.
 
 ## LOGICS IN VIUR VI ##
 
-The Vi currently supports within the branch *viurDepends* a support of
+viur/vi currently supports within the branch *viurDepends* a support of
 *logics* expressions, to dynamically change input mask behavior depending
 on input data.
 
@@ -117,4 +117,3 @@ Getting an running a JavaScript compiler
 	print(viljs.compile('type in ["text", "memo"] and required == "1"'))
 
 More to come later on! :-)
-
