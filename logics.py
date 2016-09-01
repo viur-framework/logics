@@ -406,13 +406,13 @@ class viurLogicsExecutor(viurLogicsParser):
 		return self.stack.pop()
 
 	def post_or_test(self, node):
-		for i in range(1, len(node[1]), 2):
+		for i in range(1, len(node.children), 2):
 			r = self.stack.pop()
 			l = self.stack.pop()
 			self.stack.append(l or r)
 
 	def post_and_test(self, node):
-		for i in range(1, len(node[1]), 2):
+		for i in range(1, len(node.children), 2):
 			r = self.stack.pop()
 			l = self.stack.pop()
 			self.stack.append(l and r)
@@ -421,8 +421,8 @@ class viurLogicsExecutor(viurLogicsParser):
 		self.stack.append(not self.stack.pop())
 
 	def post_comparison(self, node):
-		for i in range(1, len(node[1]), 2):
-			op = node[1][i][0]
+		for i in range(1, len(node.children), 2):
+			op = node.children[i].symbol
 			r = self.stack.pop()
 			l = self.stack.pop()
 
@@ -479,7 +479,7 @@ class viurLogicsExecutor(viurLogicsParser):
 			self.stack.append(~op)
 
 	def post_field(self, node):
-		name = node[1][0][1]
+		name = node.children[0].match
 		if name in ["True", "False"]:
 			self.stack.append(True if name == "True" else False)
 		else:
