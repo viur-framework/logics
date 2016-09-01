@@ -70,32 +70,33 @@ are changed. The following events are supported so far:
 The expressions are provided by extending skeleton bones to specific expressions
 on the particular event.
 
-	type = selectOneBone(descr="Type",
-							values={
-								"level":u"Leveling",
-		                        "bool":u"Boolean",
-		                        "text":u"Text (single line)",
-		                        "memo":u"Text (multi-line)",
-		                        "select":u"Selection field",
-		                        "table":u"Table",
-		                        "query": u"Output field"},
-	                        required=True, defaultValue="level")
-	value = stringBone(descr="Default value",
-						params={"logic.visibleIf": 'type != "level"'})
-	entries = stringBone(descr="Possible values",
-							params={"logic.visibleIf": 'type == "select"'},
-							multiple=True)
-	required = booleanBone(descr="Required",
-							params={"logic.visibleIf":
-										'type in ["text", "memo"]'},
-							defaultValue=False)
-	multiple = booleanBone(descr="Multiple entries",
-							params={"logic.visibleIf":
-										'type in ["text", "memo", "select"]'},
-							defaultValue=False)
-	columns = stringBone(descr="Columns",
-							multiple=True,
-							params={"visibleIf": 'type == "table"'})
+	class fieldSkel(Skeleton):
+		type = selectOneBone(descr="Type",
+								values={
+									"level":u"Leveling",
+			                        "bool":u"Boolean",
+			                        "text":u"Text (single line)",
+			                        "memo":u"Text (multi-line)",
+			                        "select":u"Selection field",
+			                        "table":u"Table",
+			                        "query": u"Output field"},
+		                        required=True, defaultValue="level")
+		value = stringBone(descr="Default value",
+							params={"logic.visibleIf": 'type != "level"'})
+		entries = stringBone(descr="Possible values",
+								params={"logic.visibleIf": 'type == "select"'},
+								multiple=True)
+		required = booleanBone(descr="Required",
+								params={"logic.visibleIf":
+											'type in ["text", "memo"]'},
+								defaultValue=False)
+		multiple = booleanBone(descr="Multiple entries",
+								params={"logic.visibleIf":
+											'type in ["text", "memo", "select"]'},
+								defaultValue=False)
+		columns = stringBone(descr="Columns",
+								multiple=True,
+								params={"visibleIf": 'type == "table"'})
 
 # USAGE #
 
