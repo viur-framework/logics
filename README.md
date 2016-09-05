@@ -15,14 +15,13 @@ platforms.
 
 # FEATURES #
 
-- Provides the classes `logics.viurLogicsParser` as the parser,
-  `logics.viurLogicsExecutor` as the interpreter, and
-  `logics.viurLogicsJS` as the JavaScript compiler
+- Provides the classes `logics.Parser` as the parser, `logics.Interpreter` as
+  the interpreter, and `logics.JSCompiler` as the JavaScript compiler
 - Logical operators `=`, `!=`, `<=`, `>=`, `in`, `not`, `not in`
 - Inline `<expression> if <condition> else <expression>`
 - Basic arithmetics `+`, `-`, `*`, `/`
 - Data types `bool`, `int`, `float`, `str`, `[list]`
-- Some dynamically extendable build-in functions, like
+- Some dynamically extendible build-in functions, like
   `upper()`, `lower()`, `str()`, `int()`, `float()`, `len()`
 
 # EXAMPLES #
@@ -66,6 +65,7 @@ are changed. The following events are supported so far:
 
 - `logic.visibleIf` sets the field visible when the expression returns `True`
 - `logic.readonlyIf` sets the field read-only when the expression returns `True`
+- `logic.evaluate` sets the field's value according to the provided expression
 
 The expressions are provided by extending skeleton bones to specific expressions
 on the particular event.
@@ -102,24 +102,28 @@ on the particular event.
 
 Getting a raw parser
 
-	from logics import viurLogicsParser
+	import logics
 
-	vil = viurLogicsParser()
+	vil = logics.Parser()
 	vil.dump(vil.compile("a in b(13)"))
 
 Getting an executor and run an expression
 
-	from logics import viurLogicsExecutor
+	import logics
 
-	vile = viurLogicsExecutor()
-	print(vile.execute("float(upper('23.4')) + 1"))
+	vili = logics.Interpreter()
+	print(vili.execute("float(upper('23.4')) + 1"))
 
 Getting an running a JavaScript compiler
 
-	from logics import viurLogicsJS
+	import logics
 
-	viljs = viurLogicsJS()
+	viljs = logics.JSCompiler()
+
+	# Print the runtime API
 	print(viljs.api())
+
+	# Compile and print expression
 	print(viljs.compile('type in ["text", "memo"] and required == "1"'))
 
 More to come later on! :-)

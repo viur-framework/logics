@@ -1,2 +1,1 @@
-from logics import viurLogicsJS
-from logics import viurLogicsExecutor
+from logics import Parser, Interpreter, JSCompiler

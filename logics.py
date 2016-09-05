@@ -5,9 +5,9 @@ into JavaScript or directly executed within an interpreter. It is entirely
 written in pure Python.
 """
 
-from pynetree import Parser
+import pynetree
 
-class viurLogicsFunction(object):
+class Function(object):
 	def __init__(self, call, js):
 		if not callable(call):
 			raise TypeError("Parameter must be callable")
@@ -19,12 +19,12 @@ class viurLogicsFunction(object):
 
 		self.js = js
 
-class viurLogicsParser(Parser):
+class Parser(pynetree.Parser):
 
 	functions = None
 
 	def __init__(self):
-		super(viurLogicsParser, self).__init__(
+		super(Parser, self).__init__(
 			"""
 			$			/\\s+|#.*\n/											%skip;
 			$NAME		/[A-Za-z_][A-Za-z0-9_]*/ 								%emit;
@@ -86,31 +86,31 @@ class viurLogicsParser(Parser):
 			""")
 
 		self.functions = {}
-		self.functions["upper"] = viurLogicsFunction(lambda x: str.upper(x),
+		self.functions["upper"] = Function(lambda x: str.upper(x),
 		                                                "return String(arguments[0]).toUpperCase();")
-		self.functions["lower"] = viurLogicsFunction(lambda x: str.lower(x),
+		self.functions["lower"] = Function(lambda x: str.lower(x),
 		                                                "return String(arguments[0]).toLowerCase();")
-		self.functions["str"] = viurLogicsFunction(lambda x: str(x),
+		self.functions["str"] = Function(lambda x: str(x),
 		                                                "return String(arguments[0]);")
-		self.functions["int"] = viurLogicsFunction(lambda x: int(x),
+		self.functions["int"] = Function(lambda x: int(x),
 		                                                "return parseInt(arguments[0]);")
-		self.functions["float"] = viurLogicsFunction(lambda x: float(x),
+		self.functions["float"] = Function(lambda x: float(x),
 		                                                "return parseFloat(arguments[0]);")
-		self.functions["len"] = viurLogicsFunction(lambda x: len(x), "return arguments[0].length;")
+		self.functions["len"] = Function(lambda x: len(x), "return arguments[0].length;")
 
 
 	def compile(self, src):
 		return self.parse(src)
 
 
-class viurLogicsJS(viurLogicsParser):
+class JSCompiler(Parser):
 	"""
 	Compiler to emit viurLogics code as JavaScript code.
 	"""
 	stack = None
 
 	def __init__(self):
-		super(viurLogicsJS, self).__init__()
+		super(JSCompiler, self).__init__()
 		self.apiPrefix = "viurLogics"
 
 	def compile(self, src, fields = None):
@@ -357,13 +357,13 @@ class viurLogicsJS(viurLogicsParser):
 	def post_NUMBER(self, node):
 		self.stack.append(node[1])
 
-class viurLogicsExecutor(viurLogicsParser):
+class Interpreter(Parser):
 	"""
 	Interpreter class for the viurLogics.
 	"""
 
 	def __init__(self):
-		super(viurLogicsExecutor, self).__init__()
+		super(Interpreter, self).__init__()
 		self.stack = []
 		self.fields = {}
 
@@ -522,12 +522,12 @@ class viurLogicsExecutor(viurLogicsParser):
 
 
 if __name__ == "__main__":
-	vil = viurLogicsParser()
+	vil = Parser()
 	vil.dump(vil.compile("a in b(13)"))
 
-	vile = viurLogicsExecutor()
-	print(vile.execute("float(upper('23.4')) + 1"))
+	vili = Interpreter()
+	print(vili.execute("float(upper('23.4')) + 1"))
 
-	viljs = viurLogicsJS()
+	viljs = JSCompiler()
 	print(viljs.api())
 	print(viljs.compile('type in ["text", "memo"] and required == "1"'))
