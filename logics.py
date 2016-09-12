@@ -246,13 +246,13 @@ class JSCompiler(Parser):
 		self.stack.append("%s ? %s : %s" % (expr, res, alt))
 
 	def post_or_test(self, node):
-		for i in range(1, len(node.children), 2):
+		for i in range(1, len(node.children)):
 			r = self.stack.pop()
 			l = self.stack.pop()
 			self.stack.append("%s || %s" % (l, r))
 
 	def post_and_test(self, node):
-		for i in range(1, len(node.children), 2):
+		for i in range(1, len(node.children)):
 			r = self.stack.pop()
 			l = self.stack.pop()
 			self.stack.append("%s && %s" % (l, r))
@@ -317,10 +317,10 @@ class JSCompiler(Parser):
 		self.stack.append("(%s)" % self.stack.pop())
 
 	def post_call(self, node):
-		func = node[1][0][1]
+		func = node.children[0].match
 
 		l = []
-		for i in range(1, len(node[1])):
+		for i in range(1, len(node.children)):
 			l.append(self.stack.pop())
 
 		if not func in self.functions.keys():
@@ -355,7 +355,7 @@ class JSCompiler(Parser):
 		self.stack.append("Array(" + ", ".join(l) + ")")
 
 	def post_NUMBER(self, node):
-		self.stack.append(node[1])
+		self.stack.append(node.match)
 
 class Interpreter(Parser):
 	"""
@@ -402,17 +402,19 @@ class Interpreter(Parser):
 		else:
 			t = src
 
+		self.dump(t)
+
 		self.traverse(t)
 		return self.stack.pop()
 
 	def post_or_test(self, node):
-		for i in range(1, len(node.children), 2):
+		for i in range(1, len(node.children)):
 			r = self.stack.pop()
 			l = self.stack.pop()
 			self.stack.append(l or r)
 
 	def post_and_test(self, node):
-		for i in range(1, len(node.children), 2):
+		for i in range(1, len(node.children)):
 			r = self.stack.pop()
 			l = self.stack.pop()
 			self.stack.append(l and r)
