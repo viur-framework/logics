@@ -402,8 +402,6 @@ class Interpreter(Parser):
 		else:
 			t = src
 
-		self.dump(t)
-
 		self.traverse(t)
 		return self.stack.pop()
 
