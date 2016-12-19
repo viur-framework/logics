@@ -26,48 +26,52 @@ class Parser(pynetree.Parser):
 	def __init__(self):
 		super(Parser, self).__init__(
 			"""
-			$			/\\s+|#.*\n/											%skip;
-			$NAME		/[A-Za-z_][A-Za-z0-9_]*/ 								%emit;
-			$STRING 	/"[^"]*"|'[^']*'/ 										%emit;
-			$NUMBER 	/[0-9]+\.[0-9]*|[0-9]*\.[0-9]+|[0-9]+/ 					%emit;
+			%skip		/\\s+|#.*\n/;
 
-			test %goal	: if_else
-						| or_test                            					%emit
+			@NAME		/[A-Za-z_][A-Za-z0-9_]*/;
+			@STRING 	/"[^"]*"|'[^']*'/;
+			@NUMBER 	/[0-9]+\.[0-9]*|[0-9]*\.[0-9]+|[0-9]+/;
+
+			@test$   	: if_else
+						| or_test
 						;
 
-			if_else     : or_test 'if' or_test 'else' test   					%emit;
+			@if_else    : or_test 'if' or_test 'else' test;
 
-			or_test		: and_test ('or' and_test)+ 							%emit
+			or_test		: @(and_test ('or' and_test)+)
 						| and_test
 						;
 
-			and_test	: not_test ('and' not_test)+ 							%emit
+			and_test	: @(not_test ('and' not_test)+)
 						| not_test
 						;
 
-			not_test	: 'not' not_test 										%emit
+			not_test	: @('not' not_test)
 						| comparison
 						;
-			comparison	: expr (( "==" | ">=" | "<=" | "<" | ">" |
-									"<>" | "!=" | "in" | not_in) expr)+ 		%emit
+
+			comparison	: @(expr (( "==" | ">=" | "<=" | "<" | ">" |
+									"<>" | "!=" | "in" | not_in) expr)+)
 						| expr
 						;
 
-			not_in		: 'not' 'in' 											%emit;
+			not_in		: @('not' 'in');
 
-			expr		: add | sub | term;
-			add			: expr '+' term 										%emit;
-			sub			: expr '-' term 										%emit;
+			expr		: @add(expr '+' term)
+						| @sub(expr '-' term)
+						| term
+						;
 
-			term		: mul | div | mod | factor;
-			mul			: term '*' factor										%emit;
-			div			: term '/' factor										%emit;
-			mod			: term '%' factor										%emit;
+			term		: @mul(term '*' factor)
+						| @div(term '/' factor)
+						| @mod(term '%' factor)
+						| factor;
 
-			factor		: ("+"|"-"|"~") factor									%emit
+			factor		: @(("+"|"-"|"~") factor)
 						| power
 						;
-			power		: atom "**" factor 										%emit
+
+			power		: @(atom "**" factor)
 						| atom
 						;
 
@@ -76,13 +80,13 @@ class Parser(pynetree.Parser):
 						| field
 						| strings
 						| list
-						| '(' test ')'                                          %emit
+						| @('(' test ')')
 						;
 
-			call        : NAME '(' ( test (',' test )* )? ')'                   %emit;
-			field       : NAME                                                  %emit;
-			list        : '[' ( test (',' test )* )? ']'                        %emit;
-			strings		: STRING+												%emit;
+			@call       : NAME '(' ( test (',' test )* )? ')';
+			@field      : NAME ;
+			@list       : '[' ( test (',' test )* )? ']' ;
+			@strings    : STRING+ ;
 			""")
 
 		self.functions = {}
@@ -399,6 +403,8 @@ class Interpreter(Parser):
 			t = self.compile(src)
 			if t is None:
 				return None
+
+			#self.dump(t)
 		else:
 			t = src
 
@@ -523,11 +529,13 @@ class Interpreter(Parser):
 
 if __name__ == "__main__":
 	vil = Parser()
-	vil.dump(vil.compile("a in b(13)"))
+	e1 = vil.compile("1 + 2 == 3")
+	vil.dump(e1)
 
 	vili = Interpreter()
+	print(vili.execute(e1))
 	print(vili.execute("float(upper('23.4')) + 1"))
 
 	viljs = JSCompiler()
-	print(viljs.api())
+	#print(viljs.api())
 	print(viljs.compile('type in ["text", "memo"] and required == "1"'))

@@ -13,9 +13,9 @@ pynetree is a simple, light-weight parsing toolkit for and written in Python.
 
 __author__ = "Jan Max Meyer"
 __copyright__ = "Copyright 2015-2016, Phorward Software Technologies"
-__version__ = "0.3"
+__version__ = "0.4"
 __license__ = "MIT"
-__status__ = "Production"
+__status__ = "Beta"
 
 import re
 
@@ -39,24 +39,53 @@ class Node(object):
 	This is an AST node.
 	"""
 
-	def __init__(self, symbol, match = None, rule = None, children = None):
+	def __init__(self, symbol, emit = None, match = None, rule = None, children = None):
 		self.symbol = symbol
+		self.emit = emit
 		self.rule = rule
-		self.key = self.symbol if self.rule is None else (self.symbol, self.rule)
+		self.key = self.symbol if self.rule is None \
+					else (self.symbol, self.rule)
 
 		self.match = match
 		self.children = children or []
 
 	def __str__(self):
-		s = self.symbol
+		s = self.emit or self.symbol
 
-		if self.rule:
+		if self.rule is not None:
 			s += "[%d]" % self.rule
 
-		if self.match:
+		if self.match is not None:
 			s += " (%s)" % self.match
 
 		return s
+
+	def __eq__(self, symbol):
+		return self.symbol == symbol
+
+	def __contains__(self, symbol):
+		return bool(self.select(symbol, 0))
+
+	def select(self, symbol, idx = -1):
+		"""
+		Select children by symbol from the current node.
+
+		:param symbol: Symbol to be matched.
+		:param idx: The desired index of the symbol.
+		:return: If idx is < 0, the function returns a list of children matching symbol, else it returns the
+					child at position `idx` that matches `symbol`. It returns None if there is no child.
+		"""
+		if idx < 0:
+			return [child for child in self.children if child.symbol == symbol]
+
+		for child in self.children:
+			if child.symbol == symbol:
+				if idx == 0:
+					return child
+
+				idx -= 0
+
+		return None
 
 class Parser(object):
 	"""
@@ -68,7 +97,7 @@ class Parser(object):
 	"""
 	AUTOTOKNAME = "$%03d"
 
-	def __init__(self, grm):
+	def __init__(self, grm, dump = False):
 		"""
 		Constructs a new pynetree Parser object.
 
@@ -76,6 +105,8 @@ class Parser(object):
 					symbols and relating productions, or a string that is
 					expressed in the BNF-styled grammar definition parser.
 		:type grm: dict | str
+
+		:param dump: Dump parsed grammar (only when grm was a string)
 		"""
 		self.grammar = {}
 		self.goal = None
@@ -112,10 +143,17 @@ class Parser(object):
 
 
 		if isinstance(grm, dict):
-			# Rewrite grammar modifiers and goal according to the provided
-			# grammar
+			# Rewrite grammar modifiers and goal according provided grammar
 			for n, np in grm.items():
+				if n.startswith("@"):
+					n = n[1:]
+					self.emits[n] = None
+
 				if n.endswith("$"):
+					if n in self.emits.keys():
+						self.emits[n[:-1]] = self.emits[n]
+						del self.emits[n]
+
 					n = n[:-1]
 					self.goal = n
 
@@ -133,8 +171,12 @@ class Parser(object):
 
 					rp = []
 					for sym in p:
+						if len(sym) > 1 and sym.startswith("@"):
+							sym = sym[1:]
+							self.emits[sym] = None
+
 						if any([len(sym) > 1 and sym.endswith(x)
-									for x in "*+?"]):
+						                            for x in "*+?"]):
 							sym = generateModifier(n, sym[:-1], sym[-1:])
 
 						rp.append(sym)
@@ -145,38 +187,32 @@ class Parser(object):
 		else:
 			# Construct a parser for the BNF input language.
 			bnfparser = Parser({
-				"inline": "( alternation )",
-				"symbol": ["IDENT", "STRING", "TOKEN", "REGEX", "CCL",
-						   	"inline", ""],
+				"opt_ident": ["IDENT", ""],
+				"opt_emit": ["EMIT", ""],
+
+				"inline": ["EMIT opt_ident ( alternation )", "( alternation )"],
+
+				"symbol": ["IDENT", "STRING", "TOKEN", "REGEX", "CCL", "inline"],
+
 				"mod_kleene": "symbol *",
 				"mod_positive": "symbol +",
 				"mod_optional": "symbol ?",
-				"modifier": ["mod_kleene", "mod_positive",
-								"mod_optional", "symbol"],
+				"modifier": ["mod_kleene", "mod_positive", "mod_optional", "symbol"],
+
 				"sequence": ["sequence modifier", "modifier"],
 
-				"prodflag": ["EMIT", "NOEMIT"],
-				"prodflags": ["prodflags % prodflag+", "% prodflag+"],
-
-				"production": ["sequence? prodflags?"],
+				"production": ["sequence", ""],
 
 				"alternation": ["alternation | production", "production"],
 
-				"nontermflag": ["GOAL", "EMIT", "NOEMIT"],
-				"nontermflags": ["nontermflags % nontermflag", "% nontermflag"],
+				"nontermflag": ["GOAL"], #fixme sticky
+				"nontermflags": ["nontermflags nontermflag", "nontermflag", ""],
+				"nontermdef": ["opt_emit IDENT nontermflags : alternation ;" ],
 
-				"nontermdef": ["IDENT nontermflags? : alternation ;" ],
-
-				"termflag": ["EMIT", "IGNORE"],
-				"termflags": ["termflags % termflag", "% termflag"],
 				"termsym": ["STRING", "REGEX", "CCL", "IDENT"],
-				"opt_ident": ["IDENT", ""],
-				"termdef": ["$ opt_ident termsym termflags? ;"],
+				"termdef": ["opt_emit IDENT termsym ;", "IGNORE termsym ;"] ,
 
-				"gflag": ["EMITALL", "EMITNONE"],
-				"gflags": ["gflags % gflag", "% gflag"],
-
-				"definition": ["nontermdef", "termdef", "gflags"],
+				"definition": ["nontermdef", "termdef"],
 				"definitions": ["definitions definition", "definition"],
 				"grammar$": "definitions"})
 
@@ -187,19 +223,15 @@ class Parser(object):
 			bnfparser.token("TOKEN", r'"[^"]*"')
 			bnfparser.token("REGEX", r"/(\\.|[^\\/])*/")
 
-			bnfparser.token("GOAL", "goal", static=True)
-			bnfparser.token("EMIT", "emit", static=True)
-			bnfparser.token("NOEMIT", "noemit", static=True)
-			bnfparser.token("EMITALL", "emitall", static=True)
-			bnfparser.token("EMITNONE", "emitnone", static=True)
-			bnfparser.token("IGNORE", r"ignore|skip")
+			bnfparser.token("GOAL", "$", static=True)
+			bnfparser.token("EMIT", "@", static=True)
+			bnfparser.token("IGNORE", r"%(ignore|skip)")
 
 			bnfparser.emit(["IDENT", "STRING", "TOKEN", "REGEX", "CCL",
-							"GOAL", "EMIT", "NOEMIT", "EMITALL", "EMITNONE",
-							"IGNORE"])
+							"GOAL", "EMIT", "IGNORE"])
 			bnfparser.emit(["inline", "mod_kleene", "mod_positive",
-							"mod_optional", "production",  "nontermdef",
-							"termdef", "opt_ident"])
+			                    "mod_optional", "production", "nontermdef",
+									"termdef", "grammar"])
 
 			ast = bnfparser.parse(grm)
 			if not ast:
@@ -219,7 +251,15 @@ class Parser(object):
 				elif symdef.symbol == "inline":
 					sym = uniqueName(nonterm)
 					self.grammar[sym] = []
-					buildNonterminal(sym, symdef.children)
+					buildNonterminal(sym, symdef.select("production"))
+
+					if symdef.select("EMIT"):
+						ident = symdef.select("IDENT", 0)
+						if ident is not None:
+							self.emit(sym, ident.match)
+						else:
+							self.emit((nonterm, len(self.grammar[nonterm])))
+
 				elif symdef.symbol == "TOKEN":
 					sym = symdef.match[1:-1]
 					self.tokens[sym] = sym
@@ -238,119 +278,78 @@ class Parser(object):
 
 				return sym
 
-			def buildNonterminal(nonterm, prods, allEmit = False):
+			def buildNonterminal(nonterm, prods):
 				"""
 				AST traversal function for nonterminals in the BNF-grammar.
 				"""
-				if isinstance(prods, tuple):
-					prods = [prods]
-
-				emits = []
-
 				for p in prods:
-
-					if p.symbol == "GOAL":
-						self.goal = nonterm
-						continue
-
-					elif p.symbol == "EMIT":
-						allEmit = True
-						continue
-
-					elif p.symbol == "NOEMIT":
-						allEmit = False
-						continue
-
 					seq = []
-					emit = allEmit
 
 					for s in p.children:
-
-						if s.symbol == "EMIT":
-							emit = True
-							continue
-
-						elif s.symbol == "NOEMIT":
-							emit = False
-							continue
-
 						seq.append(buildSymbol(nonterm, s))
-
-					if emit:
-						emits.append((nonterm, len(self.grammar[nonterm])))
 
 					self.grammar[nonterm].append(seq)
 
-				if len(self.grammar[nonterm]) == len(emits):
-					self.emit(nonterm)
-				else:
-					for i in emits:
-						self.emit(i)
-
-			#bnfparser.dump(ast)
+			if dump:
+				bnfparser.dump(ast)
 
 			# Integrate all non-terminals into the grammar.
-			for d in ast:
-				if d.symbol == "nontermdef":
-					sym = d.children[0].match
-					self.grammar[sym] = []
+			for d in ast.select("nontermdef"):
+				sym = d.select("IDENT", 0).match
+				self.grammar[sym] = []
 
 			# Now build the grammar
-			emitall = False
-			for d in ast:
-				if d.symbol == "EMITALL":
-					emitall = True
-					continue
-				elif d.symbol == "EMITNONE":
-					emitall = False
-					continue
-				elif d.symbol == "termdef":
-					if d.children[0].children:
-						sym = d.children[0].children[0].match
+			nonterm = None
+
+			for d in ast.children:
+				if d == "termdef":
+					term = d.select("IDENT", 0)
+					if term:
+						term = term.match
 					else:
-						sym = self.AUTOTOKNAME % (len(self.tokens.keys()) + 1)
+						term = self.AUTOTOKNAME % (len(self.tokens.keys()) + 1)
 
-					kind = d.children[1].symbol
-
-					if kind == "STRING":
-						dfn = d.children[1].children[0].match[1:-1]
-					elif kind == "REGEX":
-						dfn = re.compile(d.children[1].match[1:-1])
-					elif kind == "CCL":
-						dfn = re.compile(d.children[1].match)
+					if "STRING" in d:
+						dfn = d.select("STRING", 0).match[1:-1]
+					elif "REGEX" in d:
+						dfn = re.compile(d.select("REGEX", 0).match[1:-1])
+					elif "CCL" in d:
+						dfn = re.compile(d.select("CCL", 0).match)
 					else:
-						dfn = d.children[1].match
+						dfn = d.select("IDENT", 1).match
 
-					if sym in self.tokens.keys():
-						raise MultipleDefinitionError(sym)
+					if term in self.tokens.keys():
+						raise MultipleDefinitionError(term)
 
-					self.tokens[sym] = dfn
+					self.tokens[term] = dfn
 
-					for flag in d.children[2:]:
-						if flag.symbol == "EMIT":
-							self.emit(sym)
-						elif flag.symbol == "IGNORE":
-							self.ignores.append(sym)
+					if d.select("EMIT"):
+						self.emit(term)
+					elif d.select("IGNORE"):
+						self.ignores.append(term)
 
-					if emitall:
-						self.emit(sym)
+				else: # d == "nontermdef"
+					nonterm = d.select("IDENT", 0).match
+					buildNonterminal(nonterm, d.select("production"))
 
-				else:
-					sym = d.children[0].match
-					buildNonterminal(sym, d.children[1:], emitall)
+					if d.select("EMIT"):
+						self.emit(nonterm)
+					if d.select("GOAL"):
+						self.goal = nonterm
 
-			# First nonterminal becomes goal, if not set by flags
-			if not self.goal:
-				for d in reversed(ast):
-					if d.symbol == "nontermdef":
-						self.goal = d.children[0].match
-						break
+			# Last nonterminal becomes goal, if not set by flags
+			if not self.goal and nonterm:
+				self.goal = nonterm
 
 		if not self.goal:
 			raise GoalSymbolNotDefined()
 
+		#print(self.grammar)
+		#print(self.tokens)
+		#print(self.emits)
 
-	def token(self, name, token = None, static = False):
+
+	def token(self, name, token = None, static = False, emit = None):
 		"""
 		Adds a new terminal token ``name`` to the parser.
 
@@ -365,6 +364,9 @@ class Parser(object):
 
 		:param static: If True, ``token`` is direcly taken as is, and not
 			interpreted as a regex str.
+
+		:param emit: If set, the token is configured to be emitted.
+		:type emit: bool | str | callable
 		"""
 
 		if isinstance(name, list):
@@ -384,6 +386,9 @@ class Parser(object):
 
 		self.tokens[name] = token
 
+		if emit:
+			self.emits[name] = emit if not isinstance(emit, bool) else None
+
 	def ignore(self, token, static = False):
 		"""
 		Adds a new ignore terminal (whitespace) to the parser.
@@ -401,7 +406,7 @@ class Parser(object):
 		self.token(name, token, static)
 		self.ignores.append(name)
 
-	def emit(self, name, action = None):
+	def emit(self, name, emit = None):
 		"""
 		Defines which symbols of the grammar shall be emitted in the
 		generated, abstract syntax tree (AST).
@@ -410,15 +415,15 @@ class Parser(object):
 			Alternatively, a list of symbol names is accepted.
 		:type name: str | list
 
-		:param action: An action that can be associated with the
-			emitter during AST traversal. This can be omitted, if
-			the traversal function is manually written.
-		:type action: callable
+		:param emit: An emit string that is used instead of the symbol
+						name. This can also be a callable, which is
+						called using AST traversal. If omitted, the
+						symbol's name is used as emit.
+		:type action: str | callable
 		"""
-
 		if isinstance(name, list):
 			for n in name:
-				self.emit(n, action)
+				self.emit(n, emit)
 
 			return
 
@@ -431,7 +436,7 @@ class Parser(object):
 			and not testname in self.tokens.keys()):
 			raise SymbolNotFoundError(testname)
 
-		self.emits[name] = action
+		self.emits[name] = emit
 
 	def error(self, s, pos):
 		"""
@@ -556,7 +561,7 @@ class Parser(object):
 								break
 
 							if sym in self.emits.keys():
-								seq.append(Node(sym, s[pos:pos + res]))
+								seq.append(Node(sym, self.emits[sym], s[pos:pos + res]))
 
 							pos += res
 
@@ -577,7 +582,7 @@ class Parser(object):
 							pos = res.pos
 
 							if sym in self.emits.keys():
-								seq.append(Node(sym, children = res.res))
+								seq.append(Node(sym, self.emits[sym], children = res.res))
 							elif isinstance(res.res, Node):
 								seq.append(res.res)
 							elif isinstance(res.res, list):
@@ -590,7 +595,7 @@ class Parser(object):
 
 						# Insert production-based node?
 						if (nterm, count) in self.emits.keys():
-							seq = [Node(nterm, rule = count, children = seq)]
+							seq = [Node(nterm, self.emits[(nterm, count)], rule = count, children = seq)]
 
 						return (seq, pos)
 
@@ -701,7 +706,7 @@ class Parser(object):
 			return None
 
 		if self.goal in self.emits.keys():
-			return Node(self.goal, children = ast.res)
+			return Node(self.goal, self.emits[self.goal], children = ast.res)
 
 		return ast.res
 
@@ -719,39 +724,52 @@ class Parser(object):
 		:param args: Arguments passed to these functions as *args.
 		:param kwargs: Keyword arguments passed to these functions as **kwargs.
 		"""
+		def perform(prefix, loop = None, *args, **kwargs):
+			if loop is not None:
+				kwargs["_loopIndex"] = loop
+
+			for x in range(0, 2):
+				if x == 0:
+					fname = "%s%s" % (prefix, node.emit or node.symbol)
+				else:
+					if node.rule is None:
+						break
+
+					fname = "%s%s_%d" % (prefix, node.emit or node.symbol, node.rule)
+
+				if fname and fname in dir(self) and callable(getattr(self, fname)):
+					getattr(self, fname)(node, *args, **kwargs)
+					return True
+
+				elif loop is not None:
+					fname += "_%d" % loop
+
+					if fname and fname in dir(self) and callable(getattr(self, fname)):
+						getattr(self, fname)(node, *args, **kwargs)
+						return True
+
+			return False
+
 		if node is None:
 			return
 
 		if isinstance(node, Node):
-
 			# Pre-processing function
-			fname = "%s%s" % (prePrefix, node.symbol)
-			if fname and fname in dir(self) and callable(getattr(self, fname)):
-				getattr(self, fname)(node, *args, **kwargs)
+			perform(prePrefix, *args, **kwargs)
 
 			for cnt, i in enumerate(node.children):
 				self.traverse(i, prePrefix, passPrefix, postPrefix, *args, **kwargs)
 
 				# Pass-processing function
-				fname = "%s%s" % (passPrefix, node.symbol)
-				if fname and fname in dir(self) and callable(getattr(self, fname)):
-					getattr(self, fname)(node, _loopIndex = cnt, *args, **kwargs)
-				else:
-					fname = "%s%s_%d" % (passPrefix, node.symbol, cnt)
-
-					if fname and fname in dir(self) and callable(getattr(self, fname)):
-						getattr(self, fname)(node, *args, **kwargs)
+				perform(passPrefix, loop=cnt, *args, **kwargs)
 
 			# Post-processing function
-			fname = "%s%s" % (postPrefix, node.symbol)
-			if fname and fname in dir(self) and callable(getattr(self, fname)):
-				getattr(self, fname)(node, *args, **kwargs)
-
-			# Allow for post-process function in the emit info.
-			elif callable(self.emits[node.key]):
-				self.emits[node.key](node, *args, **kwargs)
-			elif self.emits[node.key]:
-				print(self.emits[node.key])
+			if not perform(postPrefix, *args, **kwargs):
+				# Allow for post-process function in the emit info.
+				if callable(self.emits[node.key]):
+					self.emits[node.key](node, *args, **kwargs)
+				elif self.emits[node.key]:
+					print(self.emits[node.key])
 
 		elif isinstance(node, list):
 			for item in node:
@@ -824,26 +842,19 @@ if __name__ == "__main__":
 
 	# INDIRECT LEFT-RECURSIVE!!
 	g = {
-		"factor": ["INT", "( expr )"],
-		"mul": "term * factor",
-		"div": "term / factor",
+		"factor": ["@INT", "( expr )"],
+		"@mul": "term * factor",
+		"@div": "term / factor",
 		"term": ["mul", "div", "factor"],
-		"add": "expr + term",
-		"sub": "expr - term",
+		"@add": "expr + term",
+		"@sub": "expr - term",
 		"expr": ["add", "sub", "term"],
-		"calc$": "expr"
+		"@calc$": "expr"
 	}
 
 	calc = Calculator(g)
 	calc.token("INT", r"\d+")
 	calc.ignore(r"\s+")
-
-	calc.emit("INT")
-	calc.emit("mul")
-	calc.emit("div")
-	calc.emit("add")
-	calc.emit("sub")
-	calc.emit("calc")
 
 	# Parse into a parse tree
 	ast = calc.parse("1 + 2 * ( 3 + 4 ) * 5 - 6 / 7")
