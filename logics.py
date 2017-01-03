@@ -28,7 +28,7 @@ class Parser(pynetree.Parser):
 			"""
 			%skip		/\\s+|#.*\n/;
 
-			@NAME		/[A-Za-z_][A-Za-z0-9_]*/;
+			@IDENT		/[A-Za-z_][A-Za-z0-9_]*/;
 			@STRING 	/"[^"]*"|'[^']*'/;
 			@NUMBER 	/[0-9]+\.[0-9]*|[0-9]*\.[0-9]+|[0-9]+/;
 
@@ -75,16 +75,20 @@ class Parser(pynetree.Parser):
 						| atom
 						;
 
-			atom		: call
+			atom		: ( "True" | "False" )
+						| call
 						| NUMBER
-						| field
+						| @path(path_list)
 						| strings
 						| list
 						| @('(' test ')')
 						;
 
-			@call       : NAME '(' ( test (',' test )* )? ')';
-			@field      : NAME ;
+			path_list   : path_list '.' IDENT
+						| IDENT
+						;
+
+			@call       : IDENT '(' ( test (',' test )* )? ')';
 			@list       : '[' ( test (',' test )* )? ']' ;
 			@strings    : STRING+ ;
 			""")
@@ -333,7 +337,8 @@ class JSCompiler(Parser):
 		l.reverse()
 		self.stack.append("%s_%s(%s)" % (self.apiPrefix, func, ", ".join(l)))
 
-	def post_field(self, node):
+	def post_path(self, node):
+		#fixme
 		name = node.children[0].match
 		if name in ["True", "False"]:
 			self.stack.append(name.lower())
@@ -393,26 +398,32 @@ class Interpreter(Parser):
 		return l, r
 
 	def optValue(self, val):
-		v = self.parseInt(val, None)
-		if v is not None:
-			return v
+		if isinstance(val, str):
+			v = self.parseInt(val, None)
+			if v is not None:
+				return v
 
-		v = self.parseFloat(val, None)
-		if v is not None:
-			return v
+			v = self.parseFloat(val, None)
+			if v is not None:
+				return v
+		elif any([isinstance(val, t) for t in [int, bool, float]]):
+			return val
 
 		return str(val)
 
 	def parseInt(self, s, ret = 0):
 		if (not isinstance(s, str)
-		    or (all([x in "-0123456789" for x in s]) and s.count("-") <= 1)):
+		    or (s
+		        and all([_ in "-0123456789" for _ in s])
+				and s.count("-") <= 1)):
 			return int(s)
 
 		return ret
 
 	def parseFloat(self, s, ret = 0.0):
 		if (not isinstance(s, str)
-		    or (all([x in "-0123456789." for x in s])
+		    or (s
+		        and all([_ in "-0123456789." for _ in s])
 		        and s.count("-") <= 1
 		        and s.count(".") <= 1)):
 			return float(s)
@@ -490,6 +501,8 @@ class Interpreter(Parser):
 
 	def post_sub(self, node):
 		l, r = self.getOperands()
+
+		#print("sub", type(l), l, type(r), r)
 		self.stack.append(l - r)
 
 	def post_mul(self, node):
@@ -508,30 +521,48 @@ class Interpreter(Parser):
 
 	def post_div(self, node):
 		l, r = self.getOperands()
+
+		#print("div", type(l), l, type(r), r)
 		self.stack.append(l / r)
 
 	def post_mod(self, node):
 		l, r = self.getOperands()
+
+		#print("mod", type(l), l, type(r), r)
 		self.stack.append(l % r)
 
 	def post_factor(self, node):
 		op = self.stack.pop()
+		#print("factor", op)
 
-		if isinstance(op, (str, unicode)):
+		if isinstance(op, str) or isinstance(op, unicode):
 			self.stack.append(op)
-		elif node[1][0][0] == "+":
+		elif node.children[0].match == "+":
 			self.stack.append(+op)
-		elif node[1][0][0] == "-":
+		elif node.children[0].match == "-":
 			self.stack.append(-op)
 		else:
 			self.stack.append(~op)
 
-	def post_field(self, node):
-		name = node.children[0].match
-		if name in ["True", "False"]:
-			self.stack.append(True if name == "True" else False)
-		else:
-			self.stack.append(self.fields.get(name, ""))
+	def post_path(self, node):
+		field = self.fields
+
+		for part in node.children:
+			#print(part.match, field)
+
+			if not isinstance(field, dict):
+				field = "<invalid data path @ '%s'>" % ".".join([_.match for _ in node.children])
+				break
+
+			field = field.get(part.match, "")
+
+		self.stack.append(self.optValue(field))
+
+	def post_True(self, node):
+		self.stack.append(True)
+
+	def post_False(self, node):
+		self.stack.append(False)
 
 	def post_call(self, node):
 		func = node.children[0].match
@@ -570,11 +601,13 @@ class Interpreter(Parser):
 
 if __name__ == "__main__":
 	vil = Parser()
-	e1 = vil.compile("3 + 3.2 * 'a'")
+	e1 = vil.compile("(a.b.c + ' ') * b")
 	vil.dump(e1)
 
 	vili = Interpreter()
 	x = vili.execute(e1)
+	print(type(x), x)
+	x = vili.execute(e1, {"a": {"b": {"c": "Hello World"}}, "b": 5})
 	print(type(x), x)
 	print(vili.execute("float(upper('23.4')) + 1"))
 
