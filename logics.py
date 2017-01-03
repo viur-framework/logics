@@ -387,10 +387,37 @@ class Interpreter(Parser):
 				except:
 					r = 0
 			else:
-				l = str(l)
-				r = str(r)
+				l = self.optValue(l)
+				r = self.optValue(r)
 
 		return l, r
+
+	def optValue(self, val):
+		v = self.parseInt(val, None)
+		if v is not None:
+			return v
+
+		v = self.parseFloat(val, None)
+		if v is not None:
+			return v
+
+		return str(val)
+
+	def parseInt(self, s, ret = 0):
+		if (not isinstance(s, str)
+		    or (all([x in "-0123456789" for x in s]) and s.count("-") <= 1)):
+			return int(s)
+
+		return ret
+
+	def parseFloat(self, s, ret = 0.0):
+		if (not isinstance(s, str)
+		    or (all([x in "-0123456789." for x in s])
+		        and s.count("-") <= 1
+		        and s.count(".") <= 1)):
+			return float(s)
+
+		return ret
 
 	def execute(self, src, fields = None):
 		if self.stack:
@@ -451,6 +478,14 @@ class Interpreter(Parser):
 
 	def post_add(self, node):
 		l, r = self.getOperands(False)
+
+		if isinstance(l, str) or isinstance(r, str):
+			if not isinstance(l, str):
+				l = str(l)
+			else:
+				r = str(r)
+
+		#print("add", type(l), l, type(r), r)
 		self.stack.append(l + r)
 
 	def post_sub(self, node):
@@ -459,9 +494,16 @@ class Interpreter(Parser):
 
 	def post_mul(self, node):
 		l, r = self.getOperands(False)
-		if isinstance(l, str) and isinstance(r, str):
-			l = 0
 
+		if isinstance(l, str) and isinstance(r, str):
+			r = 0
+		elif isinstance(l, str) or isinstance(r, str):
+			if self.parseInt(l, None) is not None:
+				l = int(l)
+			elif self.parseInt(r, None) is not None:
+				r = int(r)
+
+		#print("mul", type(l), l, type(r), r)
 		self.stack.append(l * r)
 
 	def post_div(self, node):
@@ -522,18 +564,18 @@ class Interpreter(Parser):
 
 	def post_NUMBER(self, node):
 		if "." in node.match:
-			self.stack.append(float(node.match))
+			self.stack.append(self.parseFloat(node.match))
 		else:
-			self.stack.append(int(node.match))
-
+			self.stack.append(self.parseInt(node.match))
 
 if __name__ == "__main__":
 	vil = Parser()
-	e1 = vil.compile("1 + 2 == 3")
+	e1 = vil.compile("3 + 3.2 * 'a'")
 	vil.dump(e1)
 
 	vili = Interpreter()
-	print(vili.execute(e1))
+	x = vili.execute(e1)
+	print(type(x), x)
 	print(vili.execute("float(upper('23.4')) + 1"))
 
 	viljs = JSCompiler()
