@@ -398,6 +398,9 @@ class Interpreter(Parser):
 		return l, r
 
 	def optValue(self, val):
+		if isinstance(val, list) and len(val) == 1:
+			val = val[0]
+
 		if isinstance(val, str):
 			v = self.parseInt(val, None)
 			if v is not None:
