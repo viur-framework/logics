@@ -415,21 +415,30 @@ class Interpreter(Parser):
 		return str(val)
 
 	def parseInt(self, s, ret = 0):
-		if (not isinstance(s, str)
-		    or (s
-		        and all([_ in "-0123456789" for _ in s])
-				and s.count("-") <= 1)):
+		if not isinstance(s, str):
 			return int(s)
+		elif s:
+			if s[0] in "+-":
+				ts = s[1:]
+			else:
+				ts = s
+
+			if ts and all([_ in "0123456789" for _ in ts]):
+				return int(s)
 
 		return ret
 
 	def parseFloat(self, s, ret = 0.0):
-		if (not isinstance(s, str)
-		    or (s
-		        and all([_ in "-0123456789." for _ in s])
-		        and s.count("-") <= 1
-		        and s.count(".") <= 1)):
+		if not isinstance(s, str):
 			return float(s)
+		elif s:
+			if s[0] in "+-":
+				ts = s[1:]
+			else:
+				ts = s
+
+			if ts and ts.count(".") <= 1 and all([_ in ".0123456789" for _ in ts]):
+				return float(s)
 
 		return ret
 
