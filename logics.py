@@ -1,9 +1,15 @@
+#!/usr/bin/env python
 #-*- coding: utf-8 -*-
 """
-Implements the tiny dependency check language "viurLogic" that can be compiled
-into JavaScript or directly executed within an interpreter. It is entirely
-written in pure Python.
+logics is the attempt of implementing a domain-specific, Python-style expressional language that can be
+compiled and executed in any of ViURs runtime contexts.
 """
+
+__author__ = "Jan Max Meyer"
+__copyright__ = "Copyright 2015-2017, Mausbrand Informationssysteme GmbH"
+__version__ = "0.4"
+__license__ = "GPLv3"
+__status__ = "Beta"
 
 import pynetree
 
@@ -26,71 +32,81 @@ class Parser(pynetree.Parser):
 	def __init__(self):
 		super(Parser, self).__init__(
 			"""
-			%skip		/\\s+|#.*\n/;
+			%skip		    /\\s+|#.*\n/;
 
-			@IDENT		/[A-Za-z_][A-Za-z0-9_]*/;
-			@STRING 	/"[^"]*"|'[^']*'/;
-			@NUMBER 	/[0-9]+\.[0-9]*|[0-9]*\.[0-9]+|[0-9]+/;
+			@IDENT		    /[A-Za-z_][A-Za-z0-9_]*/;
+			@STRING 	    /"[^"]*"|'[^']*'/;
+			@NUMBER 	    /[0-9]+\.[0-9]*|[0-9]*\.[0-9]+|[0-9]+/;
 
-			@test$   	: if_else
-						| or_test
-						;
+			logic$          : evaluation
+							;
 
-			@if_else    : or_test 'if' or_test 'else' test;
+			@comprehension  : '[' expression 'for' IDENT 'in' expression ( 'if' expression )? ']'
+							;
 
-			or_test		: @(and_test ('or' and_test)+)
-						| and_test
-						;
+			@evaluation     : expression ;
 
-			and_test	: @(not_test ('and' not_test)+)
-						| not_test
-						;
+			expression      : test ;
 
-			not_test	: @('not' not_test)
-						| comparison
-						;
+			@test   	    : if_else
+							| or_test
+							;
 
-			comparison	: @(expr (( "==" | ">=" | "<=" | "<" | ">" |
-									"<>" | "!=" | "in" | not_in) expr)+)
-						| expr
-						;
+			@if_else        : or_test 'if' or_test 'else' test
+							;
 
-			not_in		: @('not' 'in');
+			or_test		    : @( and_test ( 'or' and_test )+ )
+							| and_test
+							;
 
-			expr		: @add(expr '+' term)
-						| @sub(expr '-' term)
-						| term
-						;
+			and_test	    : @( not_test ( 'and' not_test )+ )
+							| not_test
+							;
 
-			term		: @mul(term '*' factor)
-						| @div(term '/' factor)
-						| @mod(term '%' factor)
-						| factor;
+			not_test	    : @( 'not' not_test )
+							| comparison
+							;
 
-			factor		: @(("+"|"-"|"~") factor)
-						| power
-						;
+			comparison	    : @(expr ( ( "==" | ">=" | "<=" | "<" | ">" | "<>" | "!="
+											| @in( 'in' ) | @not_in( 'not' 'in' ) ) expr)+ )
+							| expr
+							;
 
-			power		: @(atom "**" factor)
-						| atom
-						;
+			expr		    : @add( expr '+' term )
+							| @sub( expr '-' term )
+							| term
+							;
 
-			atom		: ( "True" | "False" )
-						| call
-						| NUMBER
-						| @path(path_list)
-						| strings
-						| list
-						| @('(' test ')')
-						;
+			term		    : @mul( term '*' factor )
+							| @div( term '/' factor )
+							| @mod( term '%' factor )
+							| factor;
 
-			path_list   : path_list '.' IDENT
-						| IDENT
-						;
+			factor		    : @( ( "+" | "-" | "~" ) factor)
+							| power
+							;
 
-			@call       : IDENT '(' ( test (',' test )* )? ')';
-			@list       : '[' ( test (',' test )* )? ']' ;
-			@strings    : STRING+ ;
+			power		    : @(atom "**" factor)
+							| atom
+							;
+
+			atom		    : ( "True" | "False" )
+							| call
+							| NUMBER
+							| @path(path_list)
+							| strings
+							| comprehension
+							| list
+							| @( '(' expression ')' )
+							;
+
+			path_list       : path_list '.' IDENT
+							| IDENT
+							;
+
+			@call           : IDENT '(' ( test (',' test )* )? ')';
+			@list           : '[' ( test (',' test )* )? ']' ;
+			@strings        : STRING+ ;
 			""")
 
 		self.functions = {}
@@ -373,6 +389,7 @@ class Interpreter(Parser):
 
 	def __init__(self):
 		super(Interpreter, self).__init__()
+		self.evaluate = False
 		self.stack = []
 		self.fields = {}
 
@@ -430,7 +447,7 @@ class Interpreter(Parser):
 
 		return ret
 
-	def execute(self, src, fields = None):
+	def execute(self, src, fields = None, dump = False):
 		if self.stack:
 			self.stack = []
 
@@ -442,29 +459,77 @@ class Interpreter(Parser):
 			if t is None:
 				return None
 
-			#self.dump(t)
+			if dump:
+				self.dump(t)
 		else:
 			t = src
 
 		self.traverse(t)
-		return self.stack.pop()
+		return self.stack.pop() if self.stack else None
+
+
+	# Traversal functions
+
+	def pre_evaluation(self, node):
+		self.evaluate = True
+
+	def post_evaluation(self, node):
+		self.evaluate = False
+
+	def pre_comprehension(self, node):
+		self.evaluate = False
+
+	def post_comprehension(self, node):
+		#print("COMPREHENSION")
+		#print(self.stack)
+		#self.dump(node.children[2])
+
+		self.evaluate = True
+		iter = self.execute(node.children[2], self.fields)
+
+		ret = []
+		tfields = self.fields.copy()
+
+		for var in iter:
+			tfields[node.children[1].match] = var
+
+			if len(node.children) == 4 and not self.execute(node.children[3], tfields):
+				continue
+
+			ret.append(self.execute(node.children[0], tfields))
+
+		self.stack.append(ret)
+
+	# Evaluational-depending traversal functions
 
 	def post_or_test(self, node):
+		if not self.evaluate:
+			return
+
 		for i in range(1, len(node.children)):
 			r = self.stack.pop()
 			l = self.stack.pop()
 			self.stack.append(l or r)
 
 	def post_and_test(self, node):
+		if not self.evaluate:
+			return
+
 		for i in range(1, len(node.children)):
 			r = self.stack.pop()
 			l = self.stack.pop()
 			self.stack.append(l and r)
 
 	def post_not_test(self, node):
+		if not self.evaluate:
+			return
+
 		self.stack.append(not self.stack.pop())
 
 	def post_comparison(self, node):
+		if not self.evaluate:
+			return
+
 		for i in range(1, len(node.children), 2):
 			op = node.children[i].symbol
 			r = self.stack.pop()
@@ -488,6 +553,9 @@ class Interpreter(Parser):
 				self.stack.append(l not in r)
 
 	def post_add(self, node):
+		if not self.evaluate:
+			return
+
 		l, r = self.getOperands(False)
 
 		if isinstance(l, str) or isinstance(r, str):
@@ -500,12 +568,18 @@ class Interpreter(Parser):
 		self.stack.append(l + r)
 
 	def post_sub(self, node):
+		if not self.evaluate:
+			return
+
 		l, r = self.getOperands()
 
 		#print("sub", type(l), l, type(r), r)
 		self.stack.append(l - r)
 
 	def post_mul(self, node):
+		if not self.evaluate:
+			return
+
 		l, r = self.getOperands(False)
 
 		if isinstance(l, str) and isinstance(r, str):
@@ -520,18 +594,27 @@ class Interpreter(Parser):
 		self.stack.append(l * r)
 
 	def post_div(self, node):
+		if not self.evaluate:
+			return
+
 		l, r = self.getOperands()
 
 		#print("div", type(l), l, type(r), r)
 		self.stack.append(l / r)
 
 	def post_mod(self, node):
+		if not self.evaluate:
+			return
+
 		l, r = self.getOperands()
 
 		#print("mod", type(l), l, type(r), r)
 		self.stack.append(l % r)
 
 	def post_factor(self, node):
+		if not self.evaluate:
+			return
+
 		op = self.stack.pop()
 		#print("factor", op)
 
@@ -545,6 +628,9 @@ class Interpreter(Parser):
 			self.stack.append(~op)
 
 	def post_path(self, node):
+		if not self.evaluate:
+			return
+
 		field = self.fields
 
 		for part in node.children:
@@ -559,12 +645,21 @@ class Interpreter(Parser):
 		self.stack.append(self.optValue(field))
 
 	def post_True(self, node):
+		if not self.evaluate:
+			return
+
 		self.stack.append(True)
 
 	def post_False(self, node):
+		if not self.evaluate:
+			return
+
 		self.stack.append(False)
 
 	def post_call(self, node):
+		if not self.evaluate:
+			return
+
 		func = node.children[0].match
 
 		l = []
@@ -577,9 +672,15 @@ class Interpreter(Parser):
 		self.stack.append(self.functions[func].call(*reversed(l)))
 
 	def post_STRING(self, node):
+		if not self.evaluate:
+			return
+
 		self.stack.append(node.match[1:-1])
 
 	def post_strings(self, node):
+		if not self.evaluate:
+			return
+
 		s = ""
 		for i in range(len(node.children)):
 			s = str(self.stack.pop()) + s
@@ -587,6 +688,9 @@ class Interpreter(Parser):
 		self.stack.append(s)
 
 	def post_list(self, node):
+		if not self.evaluate:
+			return
+
 		l = []
 		for i in range(0, len(node.children)):
 			l.append(self.stack.pop())
@@ -594,23 +698,72 @@ class Interpreter(Parser):
 		self.stack.append(l)
 
 	def post_NUMBER(self, node):
+		if not self.evaluate:
+			return
+
 		if "." in node.match:
 			self.stack.append(self.parseFloat(node.match))
 		else:
 			self.stack.append(self.parseInt(node.match))
 
 if __name__ == "__main__":
-	vil = Parser()
-	e1 = vil.compile("(a.b.c + ' ') * b")
-	vil.dump(e1)
+	import argparse
 
-	vili = Interpreter()
-	x = vili.execute(e1)
-	print(type(x), x)
-	x = vili.execute(e1, {"a": {"b": {"c": "Hello World"}}, "b": 5})
-	print(type(x), x)
-	print(vili.execute("float(upper('23.4')) + 1"))
+	ap = argparse.ArgumentParser(description="ViUR Logics Expressional Language")
 
-	viljs = JSCompiler()
-	#print(viljs.api())
-	print(viljs.compile('type in ["text", "memo"] and required == "1"'))
+	ap.add_argument("expression", type=str, help="The expression to compile")
+
+	ap.add_argument("-D", "--debug", help="Print debug output", action="store_true")
+	ap.add_argument("-e", "--environment", help="Import environment as variables", action="store_true")
+	ap.add_argument("-v", "--var",  help="Assign variables",
+	                action="append", nargs=2, metavar=("var", "value"))
+	ap.add_argument("-r", "--run", help="Run expression using interpreter",
+	                action="store_true")
+
+	ap.add_argument("-j", "--javascript", help="Compile expression to JavaScript",
+	                action="store_true")
+	ap.add_argument("-J", "--javascript+api", help="Compile expression to JavaScript with API",
+	                action="store_true")
+	ap.add_argument("-V", "--version", action="version", version="ViUR logics %s" % __version__)
+
+	args = ap.parse_args()
+	expr = args.expression
+	done = False
+
+	vars = {}
+
+	if args.debug:
+		print("expr", expr)
+
+	if args.environment:
+		import os
+		vars.update(os.environ)
+
+	# Read variables
+	if args.var:
+		for var in args.var:
+			vars[var[0]] = var[1]
+
+	if args.debug:
+		print("vars", vars)
+
+	if args.run:
+		vili = Interpreter()
+		print(vili.execute(expr, vars, args.debug))
+
+		done = True
+
+	if args.javascript or getattr(args, "javascript+api"):
+		viljs = JSCompiler()
+
+		if getattr(args, "javascript+api"):
+			print(viljs.api())
+
+		print(viljs.compile(expr))
+
+		done = True
+
+	if not done:
+		vil = Parser()
+		ast = vil.parse(expr)
+		vil.dump(ast)
