@@ -708,6 +708,8 @@ class Interpreter(Parser):
 		for i in range(0, len(node.children)):
 			l.append(self.stack.pop())
 
+		l.reverse()
+
 		self.stack.append(l)
 
 	def post_NUMBER(self, node):

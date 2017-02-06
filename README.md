@@ -1,20 +1,29 @@
-# DESCRIPTION #
+This software is a part of the ViUR® Information System.
+ViUR® is a free software development framework for the Google App Engine™.
+More about ViUR can be found at http://www.viur.is/.
 
-*logics* is an attempt of providing a Python-style expressional language with
-an integrated interpreter and a compiler generating JavaScript code as its
-output.
+DESCRIPTION
+===========
+*logics* is the attempt of implementing a domain-specific, Python-style
+expressional language that can be compiled and executed in any of ViURs runtime
+contexts.
 
-The idea behind this project is to serve a well-known syntax to express validity
-checks across all ViUR-modules, from the administration tools to server-side
-input checking as well as client-side input forms. So *logics* code is only
-specified once at a particular place, and can be executed in pure Python (also
-compiles with pyJS) or compiled to native JavaScript.
+The idea behind this project is to serve a well-known syntax to express
+validity checks across all ViUR modules, from the administration tools to
+server-side input checking as well as client-side input forms.
+
+Therefore, *logics* code is only specified once at a particular place, and can
+be executed in pure Python (also compiled with PyJS) or compiled to native
+JavaScript.
 
 It provides equal semantics and behavior for the same expressions on different
 platforms.
 
-# FEATURES #
+**Warning:** *logics* is under heavy development and may change its API and/or
+semantics.
 
+FEATURES
+========
 - Provides the classes `logics.Parser` as the parser, `logics.Interpreter` as
   the interpreter, and `logics.JSCompiler` as the JavaScript compiler
 - Logical operators `=`, `!=`, `<=`, `>=`, `in`, `not`, `not in`
@@ -24,8 +33,37 @@ platforms.
 - Some dynamically extendible build-in functions, like
   `upper()`, `lower()`, `str()`, `int()`, `float()`, `len()`
 
-# EXAMPLES #
+USAGE
+=====
+*logics.py* can be used as a command-line tool for invocation and testing.
 
+	usage: logics.py [-h] [-D] [-e] [-v var value] [-r] [-j] [-J] [-V] expression
+	
+	ViUR Logics Expressional Language
+	
+	positional arguments:
+	  expression            The expression to compile
+	
+	optional arguments:
+	  -h, --help            show this help message and exit
+	  -D, --debug           Print debug output
+	  -e, --environment     Import environment as variables
+	  -v var value, --var var value
+	                        Assign variables
+	  -r, --run             Run expression using interpreter
+	  -j, --javascript      Compile expression to JavaScript
+	  -J, --javascript+api  Compile expression to JavaScript with API
+	  -V, --version         show program's version number and exit
+
+DEPENDENCIES
+============
+*logics* is implemented using the pynetree Parsing Library, http://pynetree.org.
+
+pynetree is free software under the MIT license, and is included in this
+repository.
+
+EXAMPLES
+========
 Literals
 
 	"Hello World"
@@ -54,14 +92,16 @@ greater-equal 21 and lower-equal 42.
 	(degree and degree in ["mother", "father"])
 		or (int(age) >= 21 and int(age) <= 42)
 
-## LOGICS IN VIUR VI ##
-
-viur/vi currently supports within the branch *viurDepends* a support of
-*logics* expressions, to dynamically change input mask behavior depending
+USING LOGICS IN VI
+------------------
+viur/vi currently supports within the branch *viurDepends* a support for
+*logics* expressions to dynamically change input mask behavior depending
 on input data.
 
-The logics expressions are executed event-based, when input field contents
-are changed. The following events are supported so far:
+The logics expressions are triggered on an event base, when input field contents
+are changed.
+
+The following events are supported so far:
 
 - `logic.visibleIf` sets the field visible when the expression returns `True`
 - `logic.readonlyIf` sets the field read-only when the expression returns `True`
@@ -98,32 +138,18 @@ on the particular event.
 								multiple=True,
 								params={"visibleIf": 'type == "table"'})
 
-# USAGE #
+LICENSING
+=========
+Copyright (C) 2016, 2017 by Mausbrand Informationssysteme GmbH.
 
-Getting a raw parser
+Mausbrand and ViUR are registered trademarks of
+Mausbrand Informationssysteme GmbH.
 
-	import logics
+You may use, modify and distribute this software under the terms and
+conditions of the GNU Lesser General Public License (LGPL).
 
-	vil = logics.Parser()
-	vil.dump(vil.compile("a in b(13)"))
+See the file LICENSE provided in this package for more information.
 
-Getting an executor and run an expression
-
-	import logics
-
-	vili = logics.Interpreter()
-	print(vili.execute("float(upper('23.4')) + 1"))
-
-Getting an running a JavaScript compiler
-
-	import logics
-
-	viljs = logics.JSCompiler()
-
-	# Print the runtime API
-	print(viljs.api())
-
-	# Compile and print expression
-	print(viljs.compile('type in ["text", "memo"] and required == "1"'))
-
-More to come later on! :-)
+WHO DO I TALK TO?
+=================
+For problems, questions and enhancement request, contact @codepilot.
