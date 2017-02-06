@@ -8,7 +8,7 @@ compiled and executed in any of ViURs runtime contexts.
 __author__ = "Jan Max Meyer"
 __copyright__ = "Copyright 2015-2017, Mausbrand Informationssysteme GmbH"
 __version__ = "0.4"
-__license__ = "GPLv3"
+__license__ = "LGPLv3"
 __status__ = "Beta"
 
 import pynetree
