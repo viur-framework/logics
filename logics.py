@@ -13,6 +13,65 @@ __status__ = "Beta"
 
 import pynetree
 
+def parseInt(s, ret = 0):
+	"""
+	Parses a value as int
+	"""
+	if not isinstance(s, str):
+		return int(s)
+	elif s:
+		if s[0] in "+-":
+			ts = s[1:]
+		else:
+			ts = s
+
+		if ts and all([_ in "0123456789" for _ in ts]):
+			return int(s)
+
+	return ret
+
+def parseFloat(s, ret = 0.0):
+	"""
+	Parses a value as float.
+	"""
+	if not isinstance(s, str):
+		return float(s)
+	elif s:
+		if s[0] in "+-":
+			ts = s[1:]
+		else:
+			ts = s
+
+		if ts and ts.count(".") <= 1 and all([_ in ".0123456789" for _ in ts]):
+			return float(s)
+
+	return ret
+
+def optimizeValue(val, allow = [int, bool, float], default = lambda s: str(s)):
+	"""
+	Evaluates the best matching value.
+	"""
+	if isinstance(val, list) and len(val) == 1: #fixme: Really required?
+		val = val[0]
+
+	# On string, check if parsing int or float is possible.
+	if isinstance(val, str):
+		v = parseInt(val, None)
+		if v is not None:
+			val = v
+		else:
+			v = parseFloat(val, None)
+			if v is not None:
+				val = v
+
+	if any([isinstance(val, t) for t in allow]):
+		return val
+
+	if callable(default):
+		return default(val)
+
+	return default
+
 class Function(object):
 	def __init__(self, call, js):
 		if not callable(call):
@@ -24,6 +83,7 @@ class Function(object):
 			raise TypeError("Parameter must be str")
 
 		self.js = js
+
 
 class Parser(pynetree.Parser):
 
@@ -110,17 +170,50 @@ class Parser(pynetree.Parser):
 			""")
 
 		self.functions = {}
-		self.functions["upper"] = Function(lambda x: str.upper(x),
-		                                                "return String(arguments[0]).toUpperCase();")
-		self.functions["lower"] = Function(lambda x: str.lower(x),
-		                                                "return String(arguments[0]).toLowerCase();")
-		self.functions["str"] = Function(lambda x: str(x),
-		                                                "return String(arguments[0]);")
-		self.functions["int"] = Function(lambda x: int(x),
-		                                                "return parseInt(arguments[0]);")
-		self.functions["float"] = Function(lambda x: float(x),
-		                                                "return parseFloat(arguments[0]);")
-		self.functions["len"] = Function(lambda x: len(x), "return arguments[0].length;")
+
+		self.functions["upper"] = Function(
+			lambda x: str.upper(x),
+			"return String(arguments[0]).toUpperCase();"
+		)
+
+		self.functions["lower"] = Function(
+			lambda x: str.lower(x),
+		    "return String(arguments[0]).toLowerCase();"
+		)
+
+		self.functions["str"] = Function(
+			lambda x: str(x),
+		    "return String(arguments[0]);"
+		)
+
+		self.functions["int"] = Function(
+			lambda x: int(x),
+		    "return parseInt(arguments[0]);"
+		)
+
+		self.functions["float"] = Function(
+			lambda x: float(x),
+		    "return parseFloat(arguments[0]);"
+		)
+
+		self.functions["len"] = Function(
+			lambda x: len(x),
+		    "return arguments[0].length;"
+		)
+
+		self.functions["sum"] = Function(
+			lambda v: sum([optimizeValue(_, default=0) for _ in v]),
+		    "return arguments[0].length;"   # fixme JavaScript
+		)
+		self.functions["max"] = Function(
+			lambda v: max(v),
+		    "return arguments[0].length;" # fixme JavaScript
+		)
+
+		self.functions["min"] = Function(
+			lambda v: min(v),
+		    "return arguments[0].length;" # fixme JavaScript
+		)
 
 
 	def compile(self, src):
@@ -409,55 +502,10 @@ class Interpreter(Parser):
 				except:
 					r = 0
 			else:
-				l = self.optValue(l)
-				r = self.optValue(r)
+				l = optimizeValue(l)
+				r = optimizeValue(r)
 
 		return l, r
-
-	def optValue(self, val):
-		if isinstance(val, list) and len(val) == 1:
-			val = val[0]
-
-		if isinstance(val, str):
-			v = self.parseInt(val, None)
-			if v is not None:
-				return v
-
-			v = self.parseFloat(val, None)
-			if v is not None:
-				return v
-		elif any([isinstance(val, t) for t in [int, bool, float]]):
-			return val
-
-		return str(val)
-
-	def parseInt(self, s, ret = 0):
-		if not isinstance(s, str):
-			return int(s)
-		elif s:
-			if s[0] in "+-":
-				ts = s[1:]
-			else:
-				ts = s
-
-			if ts and all([_ in "0123456789" for _ in ts]):
-				return int(s)
-
-		return ret
-
-	def parseFloat(self, s, ret = 0.0):
-		if not isinstance(s, str):
-			return float(s)
-		elif s:
-			if s[0] in "+-":
-				ts = s[1:]
-			else:
-				ts = s
-
-			if ts and ts.count(".") <= 1 and all([_ in ".0123456789" for _ in ts]):
-				return float(s)
-
-		return ret
 
 	def execute(self, src, fields = None, dump = False):
 		if self.stack:
@@ -598,9 +646,9 @@ class Interpreter(Parser):
 		if isinstance(l, str) and isinstance(r, str):
 			r = 0
 		elif isinstance(l, str) or isinstance(r, str):
-			if self.parseInt(l, None) is not None:
+			if parseInt(l, None) is not None:
 				l = int(l)
-			elif self.parseInt(r, None) is not None:
+			elif parseInt(r, None) is not None:
 				r = int(r)
 
 		#print("mul", type(l), l, type(r), r)
@@ -655,7 +703,7 @@ class Interpreter(Parser):
 
 			field = field.get(part.match, "")
 
-		self.stack.append(self.optValue(field))
+		self.stack.append(optimizeValue(field))
 
 	def post_True(self, node):
 		if not self.evaluate:
@@ -716,10 +764,7 @@ class Interpreter(Parser):
 		if not self.evaluate:
 			return
 
-		if "." in node.match:
-			self.stack.append(self.parseFloat(node.match))
-		else:
-			self.stack.append(self.parseInt(node.match))
+		self.stack.append(optimizeValue(node.match))
 
 if __name__ == "__main__":
 	import argparse
