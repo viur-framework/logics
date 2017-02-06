@@ -543,7 +543,8 @@ class Interpreter(Parser):
 			return
 
 		for i in range(1, len(node.children), 2):
-			op = node.children[i].symbol
+			op = node.children[i].emit or node.children[i].symbol
+
 			r = self.stack.pop()
 			l = self.stack.pop()
 
