@@ -108,7 +108,7 @@ class Parser(pynetree.Parser):
 
 			expression      : test ;
 
-			@test   	    : if_else
+			test   	        : if_else
 							| or_test
 							;
 
@@ -146,27 +146,28 @@ class Parser(pynetree.Parser):
 							| power
 							;
 
-			power		    : @(atom "**" factor)
+			power		    : @(entity "**" factor)
+							| entity
+							;
+
+			entity          : @( atom trailer+ )
 							| atom
 							;
 
+			trailer         : '(' list ')' | '[' expression ']' | '.' IDENT ;
+
 			atom		    : ( "True" | "False" )
-							| call
 							| NUMBER
-							| @path(path_list)
-							| strings
+							| IDENT
+							| @strings( STRING+ )
 							| comprehension
-							| list
+							| '[' list ']'
 							| @( '(' expression ')' )
 							;
 
-			path_list       : path_list '.' IDENT
-							| IDENT
-							;
-
-			@call           : IDENT '(' ( test (',' test )* )? ')';
-			@list           : '[' ( test (',' test )* )? ']' ;
-			@strings        : STRING+ ;
+			@list           : expression (',' expression )*
+			                |
+			                ;
 			""")
 
 		self.functions = {}
@@ -475,6 +476,8 @@ class JSCompiler(Parser):
 	def post_NUMBER(self, node):
 		self.stack.append(node.match)
 
+
+
 class Interpreter(Parser):
 	"""
 	Interpreter class for the viurLogics.
@@ -508,9 +511,6 @@ class Interpreter(Parser):
 		return l, r
 
 	def execute(self, src, fields = None, dump = False):
-		if self.stack:
-			self.stack = []
-
 		if isinstance(fields, dict):
 			self.fields = fields
 
@@ -526,7 +526,6 @@ class Interpreter(Parser):
 
 		self.traverse(t)
 		return self.stack.pop() if self.stack else None
-
 
 	# Traversal functions
 
@@ -559,6 +558,44 @@ class Interpreter(Parser):
 			ret.append(self.execute(node.children[0], tfields))
 
 		self.stack.append(ret)
+
+	def pre_entity(self, node):
+		self.evaluate = False
+
+	def post_entity(self, node):
+		self.evaluate = True
+
+		value = self.execute(node.children[0], self.fields)
+
+		for tail in node.children[1:]:
+			if value is None:
+				break
+
+			if tail.symbol == "IDENT":
+
+				# fixme: This is *not* the desired behavior!
+				# Later it must be checked which object-related functions
+				# are allowed to be called from logics.
+				if tail.match in dir(value):
+					value = getattr(value, tail.match)
+
+				continue
+			else:
+				tail = self.execute(tail, self.fields)
+
+			if callable(value):
+				#print(value, tail)
+				try:
+					value = value(*tail)
+				except:
+					value = None
+			else:
+				try:
+					value = value[tail]
+				except:
+					value = None
+
+		self.stack.append(value)
 
 	# Evaluational-depending traversal functions
 
@@ -616,6 +653,8 @@ class Interpreter(Parser):
 	def post_add(self, node):
 		if not self.evaluate:
 			return
+
+		print(self.stack)
 
 		l, r = self.getOperands(False)
 
@@ -688,23 +727,6 @@ class Interpreter(Parser):
 		else:
 			self.stack.append(~op)
 
-	def post_path(self, node):
-		if not self.evaluate:
-			return
-
-		field = self.fields
-
-		for part in node.children:
-			#print(part.match, field)
-
-			if not isinstance(field, dict):
-				field = "<invalid data path @ '%s'>" % ".".join([_.match for _ in node.children])
-				break
-
-			field = field.get(part.match, "")
-
-		self.stack.append(optimizeValue(field))
-
 	def post_True(self, node):
 		if not self.evaluate:
 			return
@@ -731,6 +753,23 @@ class Interpreter(Parser):
 			return
 
 		self.stack.append(self.functions[func].call(*reversed(l)))
+
+	def post_IDENT(self, node):
+		if not self.evaluate:
+			return
+
+		if node.match in self.fields:
+			self.stack.append(optimizeValue(self.fields[node.match]))
+		elif node.match in self.functions:
+			self.stack.append(self.functions[node.match].call)
+		else:
+			self.stack.append(None)
+
+	def post_NUMBER(self, node):
+		if not self.evaluate:
+			return
+
+		self.stack.append(optimizeValue(node.match))
 
 	def post_STRING(self, node):
 		if not self.evaluate:
@@ -760,11 +799,6 @@ class Interpreter(Parser):
 
 		self.stack.append(l)
 
-	def post_NUMBER(self, node):
-		if not self.evaluate:
-			return
-
-		self.stack.append(optimizeValue(node.match))
 
 if __name__ == "__main__":
 	import argparse
