@@ -485,6 +485,7 @@ class Interpreter(Parser):
 		self.evaluate = False
 		self.stack = []
 		self.fields = {}
+		self.prefix = ""
 
 	def getOperands(self, onlyNumeric = True):
 		r = self.stack.pop()
@@ -507,9 +508,12 @@ class Interpreter(Parser):
 
 		return l, r
 
-	def execute(self, src, fields = None, dump = False):
+	def execute(self, src, fields = None, dump = False, prefix = None):
 		if isinstance(fields, dict):
 			self.fields = fields
+
+		if isinstance(prefix, str):
+			self.prefix = prefix
 
 		if isinstance(src, str):
 			t = self.compile(src)
@@ -537,24 +541,30 @@ class Interpreter(Parser):
 
 	def post_comprehension(self, node):
 		#print("COMPREHENSION")
-		#print(self.stack)
-		#self.dump(node.children[2])
+		#print("COMPREHENSION", "begin", self.stack)
+		self.dump(node.children[2])
 
 		self.evaluate = True
-		iter = self.execute(node.children[2], self.fields)
+		iter = self.execute(node.children[2])
+
+		#print(iter)
 
 		ret = []
-		tfields = self.fields.copy()
+		ofields = self.fields
+		self.fields = tfields = self.fields.copy()
 
 		for var in iter:
-			tfields[node.children[1].match] = var
+			tfields[self.prefix + node.children[1].match] = var
 
-			if len(node.children) == 4 and not self.execute(node.children[3], tfields):
+			if len(node.children) == 4 and not self.execute(node.children[3]):
 				continue
 
-			ret.append(self.execute(node.children[0], tfields))
+			ret.append(self.execute(node.children[0]))
 
+		self.fields = ofields
 		self.stack.append(ret)
+
+		#print("COMPREHENSION", "end", self.stack)
 
 	def pre_entity(self, node):
 		self.evaluate = False
@@ -562,7 +572,7 @@ class Interpreter(Parser):
 	def post_entity(self, node):
 		self.evaluate = True
 
-		value = self.execute(node.children[0], self.fields)
+		value = self.execute(node.children[0])
 
 		for tail in node.children[1:]:
 			if value is None:
@@ -578,7 +588,7 @@ class Interpreter(Parser):
 
 				continue
 			else:
-				tail = self.execute(tail, self.fields)
+				tail = self.execute(tail)
 
 			if callable(value):
 				#print(value, tail)
@@ -755,8 +765,8 @@ class Interpreter(Parser):
 		if not self.evaluate:
 			return
 
-		if node.match in self.fields:
-			self.stack.append(optimizeValue(self.fields[node.match]))
+		if self.prefix + node.match in self.fields:
+			self.stack.append(optimizeValue(self.fields[self.prefix + node.match]))
 		elif node.match in self.functions:
 			self.stack.append(self.functions[node.match].call)
 		else:
