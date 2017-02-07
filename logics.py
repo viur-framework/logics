@@ -47,13 +47,10 @@ def parseFloat(s, ret = 0.0):
 
 	return ret
 
-def optimizeValue(val, allow = [int, bool, float], default = lambda s: str(s)):
+def optimizeValue(val, allow = [int, bool, float, list, dict], default = lambda s: str(s)):
 	"""
 	Evaluates the best matching value.
 	"""
-	if isinstance(val, list) and len(val) == 1: #fixme: Really required?
-		val = val[0]
-
 	# On string, check if parsing int or float is possible.
 	if isinstance(val, str):
 		v = parseInt(val, None)
