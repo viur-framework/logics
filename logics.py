@@ -47,7 +47,7 @@ def parseFloat(s, ret = 0.0):
 
 	return ret
 
-def optimizeValue(val, allow = [int, bool, float, list, dict], default = lambda s: str(s)):
+def optimizeValue(val, allow = [int, bool, float, list, dict, str], default = str):
 	"""
 	Evaluates the best matching value.
 	"""
@@ -199,7 +199,7 @@ class Parser(pynetree.Parser):
 		)
 
 		self.functions["sum"] = Function(
-			lambda v: sum([optimizeValue(_, default=0) for _ in v]),
+			lambda v: sum([optimizeValue(_, allow=[bool, int, float], default=0) for _ in v]),
 		    "return arguments[0].length;"   # fixme JavaScript
 		)
 		self.functions["max"] = Function(
@@ -209,11 +209,6 @@ class Parser(pynetree.Parser):
 
 		self.functions["min"] = Function(
 			lambda v: min(v),
-		    "return arguments[0].length;" # fixme JavaScript
-		)
-
-		self.functions["sorted"] = Function(
-			lambda v: sorted(v),
 		    "return arguments[0].length;" # fixme JavaScript
 		)
 
@@ -494,29 +489,18 @@ class Interpreter(Parser):
 		r = self.stack.pop()
 		l = self.stack.pop()
 
-		if isinstance(l, str) or isinstance(r, str):
-			if onlyNumeric:
-				try:
-					l = float(l)
-				except:
-					l = 0
-
-				try:
-					r = float(r)
-				except:
-					r = 0
-			else:
-				l = optimizeValue(l)
-				r = optimizeValue(r)
+		if onlyNumeric:
+			l = optimizeValue(l, allow = [bool, int, float], default=0)
+			r = optimizeValue(r, allow = [bool, int, float], default=0)
+		else:
+			l = optimizeValue(l, default=0)
+			r = optimizeValue(r, default=0)
 
 		return l, r
 
 	def execute(self, src, fields = None, dump = False, prefix = None):
-		if isinstance(fields, dict):
-			self.fields = fields
-
-		if isinstance(prefix, str):
-			self.prefix = prefix
+		self.fields = fields or {}
+		self.prefix = prefix or ""
 
 		if isinstance(src, str):
 			t = self.compile(src)
@@ -598,7 +582,8 @@ class Interpreter(Parser):
 		#print("COMPREHENSION", "begin", self.stack)
 		#self.dump(node.children[2])
 
-		iter = self.execute(node.children[2])
+		self.traverse(node.children[2])
+		iter = self.stack.pop()
 
 		#print(iter)
 
@@ -606,13 +591,17 @@ class Interpreter(Parser):
 		ofields = self.fields
 		self.fields = tfields = self.fields.copy()
 
-		for var in iter:
+		for var in iter or []:
 			tfields[self.prefix + node.children[1].match] = var
 
-			if len(node.children) == 4 and not self.execute(node.children[3]):
-				continue
+			if len(node.children) == 4:
+				self.traverse(node.children[3])
 
-			ret.append(self.execute(node.children[0]))
+				if not self.stack.pop():
+					continue
+
+			self.traverse(node.children[0])
+			ret.append(self.stack.pop())
 
 		self.fields = ofields
 		self.stack.append(ret)
@@ -623,7 +612,8 @@ class Interpreter(Parser):
 		#print("entity %d" % self.call_entity)
 		#self.dump(node)
 
-		value = self.execute(node.children[0])
+		self.traverse(node.children[0])
+		value = self.stack.pop()
 		#print("entity", value)
 
 		for tail in node.children[1:]:
@@ -640,7 +630,8 @@ class Interpreter(Parser):
 
 				continue
 			else:
-				tail = self.execute(tail)
+				self.traverse(tail)
+				tail = self.stack.pop()
 
 				#print("entity", value, tail)
 
@@ -762,16 +753,30 @@ class Interpreter(Parser):
 	def post_False(self, node):
 		self.stack.append(False)
 
+	def post_call(self, node):
+		func = node.children[0].match
+
+		l = []
+		for i in range(1, len(node.children)):
+			l.append(self.stack.pop())
+
+		if not func in self.functions.keys():
+			return
+
+		self.stack.append(self.functions[func].call(*reversed(l)))
+
 	def post_IDENT(self, node):
-		if self.prefix + node.match in self.fields:
-			self.stack.append(optimizeValue(self.fields[self.prefix + node.match]))
+		var = self.prefix + node.match
+
+		if var in self.fields:
+			self.stack.append(optimizeValue(self.fields[var]) if self.fields[var] is not None else None)
 		elif node.match in self.functions:
 			self.stack.append(self.functions[node.match].call)
 		else:
 			self.stack.append(None)
 
 	def post_NUMBER(self, node):
-		self.stack.append(optimizeValue(node.match))
+		self.stack.append(optimizeValue(node.match, allow=[int, float], default=0))
 
 	def post_STRING(self, node):
 		self.stack.append(node.match[1:-1])
