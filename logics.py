@@ -213,6 +213,11 @@ class Parser(pynetree.Parser):
 		    "return arguments[0].length;" # fixme JavaScript
 		)
 
+		self.functions["sorted"] = Function(
+			lambda v: sorted(v),
+		    "return arguments[0].length;" # fixme JavaScript
+		)
+
 
 	def compile(self, src):
 		return self.parse(src)
@@ -745,21 +750,6 @@ class Interpreter(Parser):
 			return
 
 		self.stack.append(False)
-
-	def post_call(self, node):
-		if not self.evaluate:
-			return
-
-		func = node.children[0].match
-
-		l = []
-		for i in range(1, len(node.children)):
-			l.append(self.stack.pop())
-
-		if not func in self.functions.keys():
-			return
-
-		self.stack.append(self.functions[func].call(*reversed(l)))
 
 	def post_IDENT(self, node):
 		if not self.evaluate:
