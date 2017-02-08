@@ -95,13 +95,8 @@ class Parser(pynetree.Parser):
 			@STRING 	    /"[^"]*"|'[^']*'/;
 			@NUMBER 	    /[0-9]+\.[0-9]*|[0-9]*\.[0-9]+|[0-9]+/;
 
-			logic$          : evaluation
+			logic$          : expression
 							;
-
-			@comprehension  : '[' expression 'for' IDENT 'in' expression ( 'if' expression )? ']'
-							;
-
-			@evaluation     : expression ;
 
 			expression      : test ;
 
@@ -161,6 +156,10 @@ class Parser(pynetree.Parser):
 							| '[' list ']'
 							| @( '(' expression ')' )
 							;
+
+			@comprehension  : '[' expression 'for' IDENT 'in' expression ( 'if' expression )? ']'
+							;
+
 
 			@list           : expression (',' expression )*
 			                |
@@ -487,7 +486,6 @@ class Interpreter(Parser):
 
 	def __init__(self):
 		super(Interpreter, self).__init__()
-		self.evaluate = False
 		self.stack = []
 		self.fields = {}
 		self.prefix = ""
@@ -533,23 +531,73 @@ class Interpreter(Parser):
 		self.traverse(t)
 		return self.stack.pop() if self.stack else None
 
+	def traverse(self, node, prePrefix = "pre_", passPrefix = "pass_", postPrefix = "post_", *args, **kwargs):
+		"""
+		Modified AST traversal function.
+		"""
+		def perform(prefix, loop = None, *args, **kwargs):
+			if loop is not None:
+				kwargs["_loopIndex"] = loop
+
+			for x in range(0, 2):
+				if x == 0:
+					fname = "%s%s" % (prefix, node.emit or node.symbol)
+				else:
+					if node.rule is None:
+						break
+
+					fname = "%s%s_%d" % (prefix, node.emit or node.symbol, node.rule)
+
+				if fname and fname in dir(self) and callable(getattr(self, fname)):
+					getattr(self, fname)(node, *args, **kwargs)
+					return True
+
+				elif loop is not None:
+					fname += "_%d" % loop
+
+					if fname and fname in dir(self) and callable(getattr(self, fname)):
+						getattr(self, fname)(node, *args, **kwargs)
+						return True
+
+			return False
+
+		if node is None:
+			return
+
+		if isinstance(node, pynetree.Node):
+			# Don't run through the AST in case of "comprehension" or "entity".
+			if (node.emit or node.symbol) not in ["comprehension", "entity"]:
+				# Pre-processing function
+				perform(prePrefix, *args, **kwargs)
+
+				for cnt, i in enumerate(node.children):
+					self.traverse(i, prePrefix, passPrefix, postPrefix, *args, **kwargs)
+
+					# Pass-processing function
+					perform(passPrefix, loop=cnt, *args, **kwargs)
+
+			# Post-processing function
+			if not perform(postPrefix, *args, **kwargs):
+				# Allow for post-process function in the emit info.
+				if callable(self.emits[node.key]):
+					self.emits[node.key](node, *args, **kwargs)
+				elif self.emits[node.key]:
+					print(self.emits[node.key])
+
+		elif isinstance(node, list):
+			for item in node:
+				self.traverse(item, prePrefix, passPrefix, postPrefix, *args, **kwargs)
+
+		else:
+			raise ValueError()
+
 	# Traversal functions
-
-	def pre_evaluation(self, node):
-		self.evaluate = True
-
-	def post_evaluation(self, node):
-		self.evaluate = False
-
-	def pre_comprehension(self, node):
-		self.evaluate = False
 
 	def post_comprehension(self, node):
 		#print("COMPREHENSION")
 		#print("COMPREHENSION", "begin", self.stack)
-		self.dump(node.children[2])
+		#self.dump(node.children[2])
 
-		self.evaluate = True
 		iter = self.execute(node.children[2])
 
 		#print(iter)
@@ -571,13 +619,12 @@ class Interpreter(Parser):
 
 		#print("COMPREHENSION", "end", self.stack)
 
-	def pre_entity(self, node):
-		self.evaluate = False
-
 	def post_entity(self, node):
-		self.evaluate = True
+		#print("entity %d" % self.call_entity)
+		#self.dump(node)
 
 		value = self.execute(node.children[0])
+		#print("entity", value)
 
 		for tail in node.children[1:]:
 			if value is None:
@@ -595,8 +642,10 @@ class Interpreter(Parser):
 			else:
 				tail = self.execute(tail)
 
+				#print("entity", value, tail)
+
 			if callable(value):
-				#print(value, tail)
+				#print("entity", value, tail)
 				try:
 					value = value(*tail)
 				except:
@@ -612,33 +661,21 @@ class Interpreter(Parser):
 	# Evaluational-depending traversal functions
 
 	def post_or_test(self, node):
-		if not self.evaluate:
-			return
-
 		for i in range(1, len(node.children)):
 			r = self.stack.pop()
 			l = self.stack.pop()
 			self.stack.append(l or r)
 
 	def post_and_test(self, node):
-		if not self.evaluate:
-			return
-
 		for i in range(1, len(node.children)):
 			r = self.stack.pop()
 			l = self.stack.pop()
 			self.stack.append(l and r)
 
 	def post_not_test(self, node):
-		if not self.evaluate:
-			return
-
 		self.stack.append(not self.stack.pop())
 
 	def post_comparison(self, node):
-		if not self.evaluate:
-			return
-
 		for i in range(1, len(node.children), 2):
 			op = node.children[i].emit or node.children[i].symbol
 
@@ -663,11 +700,6 @@ class Interpreter(Parser):
 				self.stack.append(l not in r)
 
 	def post_add(self, node):
-		if not self.evaluate:
-			return
-
-		print(self.stack)
-
 		l, r = self.getOperands(False)
 
 		if isinstance(l, str) or isinstance(r, str):
@@ -680,18 +712,12 @@ class Interpreter(Parser):
 		self.stack.append(l + r)
 
 	def post_sub(self, node):
-		if not self.evaluate:
-			return
-
 		l, r = self.getOperands()
 
 		#print("sub", type(l), l, type(r), r)
 		self.stack.append(l - r)
 
 	def post_mul(self, node):
-		if not self.evaluate:
-			return
-
 		l, r = self.getOperands(False)
 
 		if isinstance(l, str) and isinstance(r, str):
@@ -706,27 +732,18 @@ class Interpreter(Parser):
 		self.stack.append(l * r)
 
 	def post_div(self, node):
-		if not self.evaluate:
-			return
-
 		l, r = self.getOperands()
 
 		#print("div", type(l), l, type(r), r)
 		self.stack.append(l / r)
 
 	def post_mod(self, node):
-		if not self.evaluate:
-			return
-
 		l, r = self.getOperands()
 
 		#print("mod", type(l), l, type(r), r)
 		self.stack.append(l % r)
 
 	def post_factor(self, node):
-		if not self.evaluate:
-			return
-
 		op = self.stack.pop()
 		#print("factor", op)
 
@@ -740,21 +757,12 @@ class Interpreter(Parser):
 			self.stack.append(~op)
 
 	def post_True(self, node):
-		if not self.evaluate:
-			return
-
 		self.stack.append(True)
 
 	def post_False(self, node):
-		if not self.evaluate:
-			return
-
 		self.stack.append(False)
 
 	def post_IDENT(self, node):
-		if not self.evaluate:
-			return
-
 		if self.prefix + node.match in self.fields:
 			self.stack.append(optimizeValue(self.fields[self.prefix + node.match]))
 		elif node.match in self.functions:
@@ -763,21 +771,12 @@ class Interpreter(Parser):
 			self.stack.append(None)
 
 	def post_NUMBER(self, node):
-		if not self.evaluate:
-			return
-
 		self.stack.append(optimizeValue(node.match))
 
 	def post_STRING(self, node):
-		if not self.evaluate:
-			return
-
 		self.stack.append(node.match[1:-1])
 
 	def post_strings(self, node):
-		if not self.evaluate:
-			return
-
 		s = ""
 		for i in range(len(node.children)):
 			s = str(self.stack.pop()) + s
@@ -785,9 +784,6 @@ class Interpreter(Parser):
 		self.stack.append(s)
 
 	def post_list(self, node):
-		if not self.evaluate:
-			return
-
 		l = []
 		for i in range(0, len(node.children)):
 			l.append(self.stack.pop())
