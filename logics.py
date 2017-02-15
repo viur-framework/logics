@@ -651,6 +651,13 @@ class Interpreter(Parser):
 
 	# Evaluational-depending traversal functions
 
+	def post_if_else(self, node):
+		alt = self.stack.pop()
+		expr = self.stack.pop()
+		res = self.stack.pop()
+
+		self.stack.append(res if expr else alt)
+
 	def post_or_test(self, node):
 		for i in range(1, len(node.children)):
 			r = self.stack.pop()
