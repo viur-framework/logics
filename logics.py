@@ -616,7 +616,9 @@ class Interpreter(Parser):
 		value = self.stack.pop()
 		#print("entity", value)
 
-		for tail in node.children[1:]:
+		for i, tail in enumerate(node.children[1:]):
+			#print("ENTITY", type(value), i, tail.symbol, tail.match)
+
 			if value is None:
 				break
 
@@ -627,6 +629,9 @@ class Interpreter(Parser):
 				# are allowed to be called from logics.
 				if tail.match in dir(value):
 					value = getattr(value, tail.match)
+
+				elif isinstance(value, dict) and tail.match in value.keys():
+					value = value[tail.match]
 
 				continue
 			else:
