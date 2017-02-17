@@ -212,6 +212,11 @@ class Parser(pynetree.Parser):
 		    "return arguments[0].length;" # fixme JavaScript
 		)
 
+		self.functions["join"] = Function(
+			lambda l, d: str(d).join(l),
+		    "return arguments[0].length;" # fixme JavaScript
+		)
+
 
 	def compile(self, src):
 		return self.parse(src)
@@ -640,11 +645,14 @@ class Interpreter(Parser):
 
 				#print("entity", value, tail)
 
+			#print("OK", value, tail)
+
 			if callable(value):
 				#print("entity", value, tail)
 				try:
 					value = value(*tail)
 				except:
+					#raise
 					value = None
 			else:
 				try:
