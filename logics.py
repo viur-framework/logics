@@ -635,8 +635,8 @@ class Interpreter(Parser):
 				if tail.match in dir(value):
 					value = getattr(value, tail.match)
 
-				elif isinstance(value, dict) and tail.match in value.keys():
-					value = value[tail.match]
+				elif isinstance(value, dict):
+					value = value.get(tail.match)
 
 				continue
 			else:
