@@ -570,8 +570,6 @@ class Interpreter(Parser):
 				# Allow for post-process function in the emit info.
 				if callable(self.emits[node.key]):
 					self.emits[node.key](node, *args, **kwargs)
-				elif self.emits[node.key]:
-					print(self.emits[node.key])
 
 		elif isinstance(node, list):
 			for item in node:
