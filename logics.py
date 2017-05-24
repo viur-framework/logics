@@ -704,9 +704,15 @@ class Interpreter(Parser):
 			elif op == "<>" or op == "!=":
 				self.stack.append(l != r)
 			elif op == "in":
-				self.stack.append(l in r)
+				if r:
+					self.stack.append(l in r)
+				else:
+					self.stack.append(False)
 			elif op == "not_in":
-				self.stack.append(l not in r)
+				if r:
+					self.stack.append(l not in r)
+				else:
+					self.stack.append(True)
 
 	def post_add(self, node):
 		l, r = self.getOperands(False)
