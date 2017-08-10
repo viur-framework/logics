@@ -1,3 +1,20 @@
+v0.6
+----
+
+- Modified directory structure to fit to setup.py/distutils
+- Added setup.py and some scripts for deployment on PyPI
+
+v0.5
+----
+
+- Enabled single-line and multi-line comments in grammars
+- Extended AST construction to save matching substring also along the parse-tree
+  with nodes representing nonterminals. This may be useful in some traversal
+  functions.
+- Added argparse command-line parser to use pynetree from the command-line.
+- Moved examples to examples/ folder.
+- pynetree.Node now providing a dump() function (moved from pynetree.Parser)
+
 v0.4
 ----
 

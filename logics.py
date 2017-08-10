@@ -146,7 +146,10 @@ class Parser(pynetree.Parser):
 							| atom
 							;
 
-			trailer         : '(' list ')' | '[' expression ']' | '.' IDENT ;
+			trailer         : '(' list ')'
+							| '[' expression ']'
+							| '.' IDENT
+							;
 
 			atom		    : ( "True" | "False" )
 							| NUMBER
@@ -169,12 +172,12 @@ class Parser(pynetree.Parser):
 		self.functions = {}
 
 		self.functions["upper"] = Function(
-			lambda x: str.upper(x),
+			lambda x: str(x).upper(),
 			"return String(arguments[0]).toUpperCase();"
 		)
 
 		self.functions["lower"] = Function(
-			lambda x: str.lower(x),
+			lambda x: str(x).lower(),
 		    "return String(arguments[0]).toLowerCase();"
 		)
 
@@ -568,7 +571,7 @@ class Interpreter(Parser):
 			# Post-processing function
 			if not perform(postPrefix, *args, **kwargs):
 				# Allow for post-process function in the emit info.
-				if callable(self.emits[node.key]):
+				if node.key and callable(self.emits[node.key]):
 					self.emits[node.key](node, *args, **kwargs)
 
 		elif isinstance(node, list):
@@ -621,11 +624,13 @@ class Interpreter(Parser):
 
 		for i, tail in enumerate(node.children[1:]):
 			#print("ENTITY", type(value), i, tail.symbol, tail.match)
-
 			if value is None:
 				break
 
 			if tail.symbol == "IDENT":
+				# Expand list into its first entry when expansion is continued here.
+				if isinstance(value, list) and len(value) == 1:
+					value = value[0]
 
 				# fixme: This is *not* the desired behavior!
 				# Later it must be checked which object-related functions
@@ -644,7 +649,6 @@ class Interpreter(Parser):
 				#print("entity", value, tail)
 
 			#print("OK", value, tail)
-
 			if callable(value):
 				#print("entity", value, tail)
 				try:
