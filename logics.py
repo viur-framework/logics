@@ -47,7 +47,7 @@ def parseFloat(s, ret = 0.0):
 
 	return ret
 
-def optimizeValue(val, allow = [int, bool, float, list, dict, str], default = str):
+def optimizeValue(val, allow = [int, bool, float, list, dict, str, unicode], default = str):
 	"""
 	Evaluates the best matching value.
 	"""
@@ -807,7 +807,7 @@ class Interpreter(Parser):
 		self.stack.append(optimizeValue(node.match, allow=[int, float], default=0))
 
 	def post_STRING(self, node):
-		self.stack.append(node.match[1:-1])
+		self.stack.append(node.match[1:-1].decode("string_escape"))
 
 	def post_strings(self, node):
 		s = ""
@@ -827,7 +827,7 @@ class Interpreter(Parser):
 
 
 if __name__ == "__main__":
-	import argparse
+	import argparse, json
 
 	ap = argparse.ArgumentParser(description="ViUR Logics Expressional Language")
 
@@ -847,8 +847,16 @@ if __name__ == "__main__":
 	ap.add_argument("-V", "--version", action="version", version="ViUR logics %s" % __version__)
 
 	args = ap.parse_args()
-	expr = args.expression
 	done = False
+
+	# Try to read input from a file.
+	try:
+		f = open(args.expression, "rb")
+		expr = f.read()
+		f.close()
+
+	except IOError:
+		expr = args.expression
 
 	vars = {}
 
@@ -862,7 +870,16 @@ if __name__ == "__main__":
 	# Read variables
 	if args.var:
 		for var in args.var:
-			vars[var[0]] = var[1]
+			try:
+				f = open(var[1], "rb")
+				vars[var[0]] = json.loads(f.read())
+				f.close()
+
+			except ValueError:
+				vars[var[0]] = None
+
+			except IOError:
+				vars[var[0]] = var[1]
 
 	if args.debug:
 		print("vars", vars)
@@ -886,4 +903,5 @@ if __name__ == "__main__":
 	if not done:
 		vil = Parser()
 		ast = vil.parse(expr)
-		vil.dump(ast)
+		if ast:
+			ast.dump()
