@@ -807,18 +807,18 @@ class Interpreter(Parser):
 		self.stack.append(optimizeValue(node.match, allow=[int, float], default=0))
 
 	def post_STRING(self, node):
-		self.stack.append(node.match[1:-1].decode("string_escape"))
+		self.stack.append(str(node.match[1:-1]))
 
 	def post_strings(self, node):
 		s = ""
-		for i in range(len(node.children)):
+		for _ in range(len(node.children)):
 			s = str(self.stack.pop()) + s
 
 		self.stack.append(s)
 
 	def post_list(self, node):
 		l = []
-		for i in range(0, len(node.children)):
+		for _ in range(0, len(node.children)):
 			l.append(self.stack.pop())
 
 		l.reverse()

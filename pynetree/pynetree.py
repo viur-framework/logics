@@ -67,7 +67,7 @@ class Node(object):
 		return s
 
 	def check(self, symbol):
-		return self.symbol == symbol
+		return (self.emit or self.symbol) == symbol
 
 	def contains(self, symbol):
 		return bool(self.select(symbol, 0))
