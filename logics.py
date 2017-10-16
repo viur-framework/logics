@@ -92,7 +92,7 @@ class Parser(pynetree.Parser):
 			%skip		    /\\s+|#.*\n/;
 
 			@IDENT		    /[A-Za-z_][A-Za-z0-9_]*/;
-			@STRING 	    /"[^"]*"|'[^']*'/;
+			@STRING 	    /"(\\\\.|[^"])*"|'(\\\\.|[^'])*'/;
 			@NUMBER 	    /[0-9]+\.[0-9]*|[0-9]*\.[0-9]+|[0-9]+/;
 
 			logic$          : expression
@@ -807,7 +807,21 @@ class Interpreter(Parser):
 		self.stack.append(optimizeValue(node.match, allow=[int, float], default=0))
 
 	def post_STRING(self, node):
-		self.stack.append(str(node.match[1:-1]))
+		def replaceEscapeStrings(s):
+			for seq, ch in {
+				"n": "\n",
+				"r": "\r",
+				"t": "\t",
+				"v": "\v",
+				"\"": "\"",
+				"\'": "\'",
+				"\\": "\\"
+			}.items():
+				s = s.replace("\\%s" % seq, ch)
+
+			return s
+
+		self.stack.append(replaceEscapeStrings(str(node.match[1:-1])))
 
 	def post_strings(self, node):
 		s = ""
