@@ -1,5 +1,7 @@
-//#!model			insensitive;
-//#!language		"python";
+// Compile & run with latest UniCC v1.3-develop using the command:
+//
+//  unicc -w -l python -o l logics.par
+//	python l.py
 
 #whitespaces    @whitespace ;
 
@@ -79,7 +81,6 @@ atom		    : ( "True" | "False" )
 comprehension   := '[' expression "for" @IDENT
 							"in" expression ( "if" expression )? ']'
 				;
-
 
 list            := expression (',' expression )*
 				|
