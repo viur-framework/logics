@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
 """
-logics is the attempt of implementing a domain-specific, Python-style expressional language that can be
-compiled and executed in any of ViURs runtime contexts.
+logics is the attempt of implementing a domain-specific, Python-style
+expressional language that can be compiled and executed in any of ViURs runtime
+contexts.
 """
 
 __author__ = "Jan Max Meyer"
@@ -11,7 +12,7 @@ __version__ = "0.4"
 __license__ = "LGPLv3"
 __status__ = "Beta"
 
-import pynetree
+import parse
 
 def parseInt(s, ret = 0):
 	"""
@@ -82,92 +83,12 @@ class Function(object):
 		self.js = js
 
 
-class Parser(pynetree.Parser):
+class Parser(parse.Parser):
 
 	functions = None
 
 	def __init__(self):
-		super(Parser, self).__init__(
-			"""
-			%skip		    /\\s+|#.*\n/;
-
-			@IDENT		    /[A-Za-z_][A-Za-z0-9_]*/;
-			@STRING 	    /"(\\\\.|[^"])*"|'(\\\\.|[^'])*'/;
-			@NUMBER 	    /[0-9]+\.[0-9]*|[0-9]*\.[0-9]+|[0-9]+/;
-
-			logic$          : expression
-							;
-
-			expression      : test ;
-
-			test   	        : if_else
-							| or_test
-							;
-
-			@if_else        : or_test 'if' or_test 'else' test
-							;
-
-			or_test		    : @( and_test ( 'or' and_test )+ )
-							| and_test
-							;
-
-			and_test	    : @( not_test ( 'and' not_test )+ )
-							| not_test
-							;
-
-			not_test	    : @( 'not' not_test )
-							| comparison
-							;
-
-			comparison	    : @(expr ( ( "==" | ">=" | "<=" | "<" | ">" | "<>" | "!="
-											| @in( 'in' ) | @not_in( 'not' 'in' ) ) expr)+ )
-							| expr
-							;
-
-			expr		    : @add( expr '+' term )
-							| @sub( expr '-' term )
-							| term
-							;
-
-			term		    : @mul( term '*' factor )
-							| @div( term '/' factor )
-							| @mod( term '%' factor )
-							| factor;
-
-			factor		    : @( ( "+" | "-" | "~" ) factor)
-							| power
-							;
-
-			power		    : @(entity "**" factor)
-							| entity
-							;
-
-			entity          : @( atom trailer+ )
-							| atom
-							;
-
-			trailer         : '(' list ')'
-							| '[' expression ']'
-							| '.' IDENT
-							;
-
-			atom		    : ( "True" | "False" )
-							| NUMBER
-							| IDENT
-							| @strings( STRING+ )
-							| comprehension
-							| '[' list ']'
-							| @( '(' expression ')' )
-							;
-
-			@comprehension  : '[' expression 'for' IDENT 'in' expression ( 'if' expression )? ']'
-							;
-
-
-			@list           : expression (',' expression )*
-			                |
-			                ;
-			""")
+		super(Parser, self).__init__()
 
 		self.functions = {}
 
@@ -223,6 +144,70 @@ class Parser(pynetree.Parser):
 
 	def compile(self, src):
 		return self.parse(src)
+
+	def traverse(self, node, prePrefix = "pre_", passPrefix = "pass_", postPrefix = "post_", *args, **kwargs):
+		"""
+		Generic AST traversal function.
+
+		This function allows to walk over the generated abstract syntax tree created by :meth:`pynetree.Parser.parse`
+		and calls functions before, by iterating over and after the node are walked.
+
+		:param node: The tree node to print.
+		:param prePrefix: Prefix for pre-processed functions, named prePrefix + symbol.
+		:param passPrefix: Prefix for functions processed by passing though children, named passPrefix + symbol.
+		:param postPrefix: Prefix for post-processed functions, named postPrefix + symbol.
+		:param args: Arguments passed to these functions as *args.
+		:param kwargs: Keyword arguments passed to these functions as **kwargs.
+		"""
+		def perform(prefix, loop = None, *args, **kwargs):
+			if not (node.emit or node.symbol):
+				return False
+
+			if loop is not None:
+				kwargs["_loopIndex"] = loop
+
+			for x in range(0, 2):
+				if x == 0:
+					fname = "%s%s" % (prefix, node.emit or node.symbol)
+				else:
+					if node.rule is None:
+						break
+
+					fname = "%s%s_%d" % (prefix, node.emit or node.symbol, node.rule)
+
+				if fname and fname in dir(self) and callable(getattr(self, fname)):
+					getattr(self, fname)(node, *args, **kwargs)
+					return True
+
+				elif loop is not None:
+					fname += "_%d" % loop
+
+					if fname and fname in dir(self) and callable(getattr(self, fname)):
+						getattr(self, fname)(node, *args, **kwargs)
+						return True
+
+			return False
+
+		# Pre-processing function
+		perform(prePrefix, *args, **kwargs)
+
+		# Run through the children.
+		for count, i in enumerate(node.children):
+			self.traverse(i, prePrefix, passPrefix, postPrefix, *args, **kwargs)
+
+			# Pass-processing function
+			perform(passPrefix, loop=count, *args, **kwargs)
+
+		# Post-processing function
+		if not perform(postPrefix, *args, **kwargs):
+
+			# Allow for post-process function in the emit info.
+			if callable(self.emits[node.key]):
+				self.emits[node.key](node, *args, **kwargs)
+
+			# Else, just dump the emitting value.
+			elif self.emits[node.key]:
+				print(self.emits[node.key])
 
 
 class JSCompiler(Parser):
@@ -481,7 +466,6 @@ class JSCompiler(Parser):
 		self.stack.append(node.match)
 
 
-
 class Interpreter(Parser):
 	"""
 	Interpreter class for the viurLogics.
@@ -516,7 +500,7 @@ class Interpreter(Parser):
 				return None
 
 			if dump:
-				self.dump(t)
+				t.dump()
 		else:
 			t = src
 
@@ -532,13 +516,7 @@ class Interpreter(Parser):
 				kwargs["_loopIndex"] = loop
 
 			for x in range(0, 2):
-				if x == 0:
-					fname = "%s%s" % (prefix, node.emit or node.symbol)
-				else:
-					if node.rule is None:
-						break
-
-					fname = "%s%s_%d" % (prefix, node.emit or node.symbol, node.rule)
+				fname = "%s%s" % (prefix, node.emit or node.symbol)
 
 				if fname and fname in dir(self) and callable(getattr(self, fname)):
 					getattr(self, fname)(node, *args, **kwargs)
@@ -556,7 +534,7 @@ class Interpreter(Parser):
 		if node is None:
 			return
 
-		if isinstance(node, pynetree.Node):
+		if isinstance(node, parse.Node):
 			# Don't run through the AST in case of "comprehension" or "entity".
 			if (node.emit or node.symbol) not in ["comprehension", "entity"]:
 				# Pre-processing function
@@ -858,6 +836,7 @@ if __name__ == "__main__":
 	                action="store_true")
 	ap.add_argument("-J", "--javascript+api", help="Compile expression to JavaScript with API",
 	                action="store_true")
+	ap.add_argument("-u", "--unicc", help="Use (faster!) UniCC-based parser instead of the pynetree-parser")
 	ap.add_argument("-V", "--version", action="version", version="ViUR logics %s" % __version__)
 
 	args = ap.parse_args()
