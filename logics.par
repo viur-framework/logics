@@ -3,6 +3,8 @@
 //  unicc -w -l python -o l logics.par
 //	python l.py
 
+#!mode			insensitive;
+
 #whitespaces    @whitespace ;
 
 @whitespace     ' \r\n\t'+
