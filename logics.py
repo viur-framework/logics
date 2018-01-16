@@ -14,6 +14,24 @@ __status__ = "Beta"
 
 import logics_parser as parser
 
+class ParseError(Exception):
+	"""
+	Yet never thrown...
+	"""
+
+	def __init__(self, s, offset):
+		row = s.count("\n", 0, offset) + 1
+		col = s.rfind("\n", 0, offset)
+		col = (offset + 1) if col < 1 else offset - col
+
+		super(ParseError, self).__init__(
+			"Parse error at line %d, column %d: >%s<" % (row, col, s[offset:]))
+
+		self.offset = offset
+		self.line = row
+		self.column = col
+
+
 def parseInt(s, ret = 0):
 	"""
 	Parses a value as int
@@ -150,7 +168,9 @@ class Parser(parser.Parser):
 	def compile(self, src):
 		return self.parse(src)
 
-	def traverse(self, node, prePrefix = "pre_", passPrefix = "pass_", postPrefix = "post_", *args, **kwargs):
+	def traverse(self, node, prePrefix = "pre_", passPrefix = "pass_",
+					postPrefix = "post_", loopPrefix = "loop_",
+						*args, **kwargs):
 		"""
 		Generic AST traversal function.
 
@@ -165,43 +185,38 @@ class Parser(parser.Parser):
 		:param kwargs: Keyword arguments passed to these functions as **kwargs.
 		"""
 		def perform(prefix, loop = None, *args, **kwargs):
-			if not (node.emit or node.symbol):
+			if not node.emit:
 				return False
 
 			if loop is not None:
 				kwargs["_loopIndex"] = loop
 
-			for x in range(0, 2):
-				if x == 0:
-					fname = "%s%s" % (prefix, node.emit or node.symbol)
-				else:
-					if node.rule is None:
-						break
+			fname = "%s%s" % (prefix, node.emit or node.symbol)
 
-					fname = "%s%s_%d" % (prefix, node.emit or node.symbol, node.rule)
+			if fname and fname in dir(self) and callable(getattr(self, fname)):
+				getattr(self, fname)(node, *args, **kwargs)
+				return True
+
+			elif loop is not None:
+				fname += "_%d" % loop
 
 				if fname and fname in dir(self) and callable(getattr(self, fname)):
 					getattr(self, fname)(node, *args, **kwargs)
 					return True
-
-				elif loop is not None:
-					fname += "_%d" % loop
-
-					if fname and fname in dir(self) and callable(getattr(self, fname)):
-						getattr(self, fname)(node, *args, **kwargs)
-						return True
 
 			return False
 
 		# Pre-processing function
 		perform(prePrefix, *args, **kwargs)
 
-		# Run through the children.
-		for count, i in enumerate(node.children):
-			self.traverse(i, prePrefix, passPrefix, postPrefix, *args, **kwargs)
+		if not perform(loopPrefix, *args, **kwargs):
+			# Run through the children.
+			for count, child in enumerate(node.children):
+				self.traverse(child, prePrefix, passPrefix, postPrefix,
+								loopPrefix, *args, **kwargs)
 
-			# Pass-processing function
-			perform(passPrefix, loop=count, *args, **kwargs)
+				# Pass-processing function
+				perform(passPrefix, loop=count, *args, **kwargs)
 
 		# Post-processing function
 		if not perform(postPrefix, *args, **kwargs):
@@ -512,90 +527,49 @@ class Interpreter(Parser):
 		self.traverse(t)
 		return self.stack.pop() if self.stack else None
 
-	def traverse(self, node, prePrefix = "pre_", passPrefix = "pass_", postPrefix = "post_", *args, **kwargs):
-		"""
-		Modified AST traversal function.
-		"""
-		def perform(prefix, loop = None, *args, **kwargs):
-			if loop is not None:
-				kwargs["_loopIndex"] = loop
-
-			for x in range(0, 2):
-				fname = "%s%s" % (prefix, node.emit or node.symbol)
-
-				if fname and fname in dir(self) and callable(getattr(self, fname)):
-					getattr(self, fname)(node, *args, **kwargs)
-					return True
-
-				elif loop is not None:
-					fname += "_%d" % loop
-
-					if fname and fname in dir(self) and callable(getattr(self, fname)):
-						getattr(self, fname)(node, *args, **kwargs)
-						return True
-
-			return False
-
-		if node is None:
-			return
-
-		if isinstance(node, parser.Node):
-			# Don't run through the AST in case of "comprehension" or "entity".
-			if (node.emit or node.symbol) not in ["comprehension", "entity"]:
-				# Pre-processing function
-				perform(prePrefix, *args, **kwargs)
-
-				for cnt, i in enumerate(node.children):
-					self.traverse(i, prePrefix, passPrefix, postPrefix, *args, **kwargs)
-
-					# Pass-processing function
-					perform(passPrefix, loop=cnt, *args, **kwargs)
-
-			# Post-processing function
-			if not perform(postPrefix, *args, **kwargs):
-				# Allow for post-process function in the emit info.
-				if node.key and callable(self.emits[node.key]):
-					self.emits[node.key](node, *args, **kwargs)
-
-		elif isinstance(node, list):
-			for item in node:
-				self.traverse(item, prePrefix, passPrefix, postPrefix, *args, **kwargs)
-
-		else:
-			raise ValueError()
-
 	# Traversal functions
+
+	def loop_comprehension(self, node):
+		pass # Do nothing
 
 	def post_comprehension(self, node):
 		#print("COMPREHENSION")
 		#print("COMPREHENSION", "begin", self.stack)
 		#self.dump(node.children[2])
 
-		self.traverse(node.children[2])
-		iter = self.stack.pop()
+		nexpr = node.children[0]
+		nvar = node.children[2]
+		niter = node.children[4]
+		nif = node.children[6] if len(node.children) > 5 else None
 
-		#print(iter)
+		self.traverse(niter)
+		iterator = self.stack.pop()
+
+		#print(iterator)
 
 		ret = []
 		ofields = self.fields
 		self.fields = tfields = self.fields.copy()
 
-		for var in iter or []:
-			tfields[self.prefix + node.children[1].match] = var
+		for var in iterator or []:
+			tfields[self.prefix + nvar.match] = var
 
-			if len(node.children) == 4:
-				self.traverse(node.children[3])
+			if nif:
+				self.traverse(nif)
 
 				if not self.stack.pop():
 					continue
 
-			self.traverse(node.children[0])
+			self.traverse(nexpr)
 			ret.append(self.stack.pop())
 
 		self.fields = ofields
 		self.stack.append(ret)
 
 		#print("COMPREHENSION", "end", self.stack)
+
+	def loop_entity(self, node):
+		pass # Do nothing
 
 	def post_entity(self, node):
 		#print("entity %d" % self.call_entity)

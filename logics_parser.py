@@ -27,6 +27,22 @@ class Node(object):
 		for child in self.children:
 			child.dump(level)
 
+
+class ParseError(Exception):
+	"""
+	Exception to be raised on a parse error.
+	"""
+
+	def __init__(self, row, col, expecting):
+		super(ParseError, self).__init__(
+			"Parse error at line %d, column %d, expecting %s" % (row, col,
+				", ".join([("%r" % symbol[0]) for symbol in expecting])))
+
+		self.line = row
+		self.column = col
+		self.expecting = expecting
+
+
 class ParserToken(object):
 	state = 0
 	line = 0
@@ -36,10 +52,11 @@ class ParserToken(object):
 
 	value = None
 
+
 class ParserControlBlock(object):
 
 	# Stack
-	stack = []
+	stack = None
 	tos = None
 
 	# Values
@@ -216,7 +233,7 @@ class Parser(object):
 		("atom -> comprehension", "", 1, 35),
 		("atom -> '[' list ']'", "", 3, 35),
 		("atom -> '(' expression ')'", "atom", 3, 35),
-		("comprehension -> '[' expression \"for\" @IDENT \"in\" expression &embedded_6? ']'", "comprehension", 8, 44),
+		("comprehension -> '[' expression \"for\" @IDENT \"in\" or_test &embedded_6? ']'", "comprehension", 8, 44),
 		("&embedded_6 -> \"if\" expression", "", 2, 41),
 		("&embedded_6? -> &embedded_6", "", 1, 38),
 		("&embedded_6? -> ", "", 0, 38),
@@ -329,7 +346,7 @@ class Parser(object):
 		((37, 3, 69), ),
 		((56, 3, 4), (49, 3, 2), (50, 2, 2), (48, 2, 3), (53, 2, 4), (55, 3, 16), (54, 2, 6), (58, 2, 7), (57, 3, 37), (59, 2, 8), (61, 3, 42), (60, 2, 9), (35, 2, 10), (42, 3, 54), (45, 2, 13), (44, 3, 60), ),
 		(),
-		((63, 2, 48), (56, 3, 1), (49, 3, 2), (50, 2, 2), (48, 2, 3), (53, 2, 4), (55, 3, 16), (54, 2, 6), (58, 2, 7), (57, 3, 37), (59, 2, 8), (61, 3, 42), (60, 2, 9), (35, 2, 10), (42, 3, 54), (45, 2, 13), (44, 3, 60), ),
+		((50, 2, 48), (48, 2, 3), (53, 2, 4), (55, 3, 16), (54, 2, 6), (58, 2, 7), (57, 3, 37), (59, 2, 8), (61, 3, 42), (60, 2, 9), (35, 2, 10), (42, 3, 54), (45, 2, 13), (44, 3, 60), ),
 		((41, 3, 65), (38, 2, 50), ),
 		((63, 3, 64), (56, 3, 1), (49, 3, 2), (50, 2, 2), (48, 2, 3), (53, 2, 4), (55, 3, 16), (54, 2, 6), (58, 2, 7), (57, 3, 37), (59, 2, 8), (61, 3, 42), (60, 2, 9), (35, 2, 10), (42, 3, 54), (45, 2, 13), (44, 3, 60), ),
 		()
@@ -513,6 +530,7 @@ class Parser(object):
 				s = input(">")
 
 		pcb = ParserControlBlock()
+		pcb.stack = []
 		pcb.input = s
 
 		pcb.tos = ParserToken()
@@ -529,10 +547,10 @@ class Parser(object):
 
 			# Get action table entry
 			if not self._get_act(pcb):
-				print("Parse Error")
-				print("Expecting %s" % ", ".join(self._symbols[sym][0]
-					for (sym, pcb.act, pcb.idx) in self._act[pcb.tos.state]))
-				break
+				raise ParseError(pcb.line, pcb.column,
+					[self._symbols[sym]
+						for (sym, pcb.act, pcb.idx)
+							in self._act[pcb.tos.state]])
 
 			#print("pcb.act = %d" % pcb.act)
 

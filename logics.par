@@ -81,7 +81,7 @@ atom            : ( "True" | "False" )
                 ;
 
 comprehension   := '[' expression "for" @IDENT
-                            "in" expression ( "if" expression )? ']'
+                            "in" or_test ( "if" expression )? ']'
                 ;
 
 list            := expression (',' expression )*
