@@ -83,7 +83,7 @@ class Template(Interpreter):
 		txt = ""
 
 		for c in node.children:
-			txt = self.stack.pop() + txt
+			txt = str(self.stack.pop()) + txt
 
 		self.stack.append(txt)
 
@@ -91,44 +91,48 @@ class Template(Interpreter):
 		pass # Just do nothing!
 
 	def post_tloop(self, node):
-		print(self.stack)
-
 		self.traverse(node.children[0])
-		iterator = self.stack.pop()
-
-		try:
-			iter(iterator)
-			isIterable = True
-		except TypeError:
-			isIterable = False
+		value = self.stack.pop()
 
 		txt = ""
 
-		if isIterable:
-			for i in iterator:
-				#self.execute(self.sat, fields, prefix=)
+		if isinstance(value, list):
+			fields = self.fields
+
+			for i in value:
+				if isinstance(i, dict):
+					if self.fields is fields:
+						self.fields = fields.copy()
+
+					self.fields.update(i)
+
 				self.traverse(node.children[1])
 				txt += self.stack.pop()
 
-		elif iterator:
-			node.children[1].dump()
+			self.fields = fields
+
+		elif value:
+			if isinstance(value, dict):
+				fields = self.fields
+				self.fields = fields.copy()
+				self.fields.update(value)
 
 			self.traverse(node.children[1])
 			txt = self.stack.pop()
 
-		print("txt = %r" % txt)
+			if isinstance(value, dict):
+				self.fields = fields
+
 		self.stack.append(txt)
 
 	def render(self, fields = None):
 		assert self.ast
 		return self.execute(self.ast, fields)
 
-x = Template("""
-hello
-{{#abc}}so{{#def}}lange{{/}}long{{/}}
-world {{xxx}}
-""")
+x = Template("""Hello {{xxx}}
+{{#persons}}{{name}} is {{age * 365}} days {{xxx}}
+{{/}}
+World!""")
 
-#x.ast.dump()
-print(x.render({"xxx": "Yolo", "abc": True}))
-
+print(x.render({"xxx": "Yolo", "persons": [{"name": "John", "age": 33}, {"name": "Doreen", "age": 25}]}))
+print(x.render({"xxx": "Yolo", "persons": {"name": "John", "age": 33}}))
