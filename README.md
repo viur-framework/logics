@@ -55,10 +55,7 @@ optional arguments:
 
 ## Dependencies
 
-logics is implemented using the pynetree Parsing Library, http://pynetree.org.
-
-pynetree is free software under the MIT license, and is included in this
-repository.
+logics is implemented using the UniCC Parser Generator, https://github.com/phorward/unicc.
 
 ## Examples
 
@@ -151,7 +148,7 @@ Help of any kind to extend and improve or enhance this project in any kind or wa
 
 ## License
 
-ViUR is Copyright (C) 2012-2017 by Mausbrand Informationssysteme GmbH.
+ViUR is Copyright (C) 2012-2018 by Mausbrand Informationssysteme GmbH.
 
 Mausbrand and ViUR are registered trademarks of Mausbrand Informationssysteme GmbH.
 

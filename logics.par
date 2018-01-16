@@ -1,9 +1,9 @@
-// Compile & run with latest UniCC v1.3-develop using the command:
+// Compile & run with latest UniCC v1.3 or higher, using the command:
 //
-//  unicc -w -l python -o l logics.par
-//	python l.py
+//  unicc -w -l python -o logics_parser logics.par
+//  python logics_parser.py
 
-#!mode			insensitive;
+#!mode          insensitive;
 
 #whitespaces    @whitespace ;
 
@@ -11,79 +11,79 @@
                 | "#" !'\n'* '\n'
                 ;
 
-@IDENT		    'A-Za-z_' 'A-Za-z0-9_'* 							= IDENT;
-@STRING 	    '"' ( '\\' . | !'"' )* '"'
-				| '\'' ( '\\' . | !'\'' )* '\''						= STRING;
-@NUMBER 	    '0-9'+ '.' '0-9'* | '0-9'* '.' '0-9'+ | '0-9'+ 		= NUMBER;
+@IDENT          'A-Za-z_' 'A-Za-z0-9_'*                             = IDENT;
+@STRING         '"' ( '\\' . | !'"' )* '"'
+                | '\'' ( '\\' . | !'\'' )* '\''                     = STRING;
+@NUMBER         '0-9'+ '.' '0-9'* | '0-9'* '.' '0-9'+ | '0-9'+      = NUMBER;
 
 logic$          : expression ;
 
 expression      : test ;
 
-test   	        : if_else
-				| or_test
-				;
+test            : if_else
+                | or_test
+                ;
 
 if_else         := or_test "if" or_test "else" test
-				;
+                ;
 
-or_test		    : and_test ( "or" and_test )+ 						= or_test
-				| and_test
-				;
+or_test         : and_test ( "or" and_test )+                       = or_test
+                | and_test
+                ;
 
-and_test	    : not_test ( "and" not_test )+ 						= and_test
-				| not_test
-				;
+and_test        : not_test ( "and" not_test )+                      = and_test
+                | not_test
+                ;
 
-not_test	    : "not" not_test									= not_test
-				| comparison
-				;
+not_test        : "not" not_test                                    = not_test
+                | comparison
+                ;
 
 comparison      : expr (( "==" | ">=" | "<=" | "<" | ">" | "<>" | "!="
-								| "in" | "not" "in") expr )+		= comparison
-				| expr
-				;
+                                | "in" | "not" "in") expr )+        = comparison
+                | expr
+                ;
 
-expr		    : expr '+' term										= add
-				| expr '-' term										= sub
-				| term
-				;
+expr            : expr '+' term                                     = add
+                | expr '-' term                                     = sub
+                | term
+                ;
 
-term		    : term '*' factor									= mul
-				| term '/' factor									= div
-				| term '%' factor									= mod
-				| factor;
+term            : term '*' factor                                   = mul
+                | term '/' factor                                   = div
+                | term '%' factor                                   = mod
+                | factor;
 
-factor		    : ( '+' | '-' | '~' ) factor						= factor
-				| power
-				;
+factor          : ( '+' | '-' | '~' ) factor                        = factor
+                | power
+                ;
 
-power		    : entity "**" factor								= power
-				| entity
-				;
+power           : entity "**" factor                                = power
+                | entity
+                ;
 
-entity          : atom trailer+										= entity
-				| atom
-				;
+entity          : atom trailer+                                     = entity
+                | atom
+                ;
 
 trailer         : '(' list ')'
-				| '[' expression ']'
-				| '.' @IDENT
-				;
+                | '[' expression ']'
+                | '.' @IDENT
+                ;
 
-atom		    : ( "True" | "False" )
-				| @NUMBER
-				| @IDENT
-				| @STRING+											= strings
-				| comprehension
-				| '[' list ']'
-				| '(' expression ')'								= atom
-				;
+atom            : ( "True" | "False" )
+                | @NUMBER
+                | @IDENT
+                | @STRING+                                          = strings
+                | comprehension
+                | '[' list ']'
+                | '(' expression ')'                                = atom
+                ;
 
 comprehension   := '[' expression "for" @IDENT
-							"in" expression ( "if" expression )? ']'
-				;
+                            "in" expression ( "if" expression )? ']'
+                ;
 
 list            := expression (',' expression )*
-				|
-				;
+                |
+                ;

@@ -7,12 +7,12 @@ contexts.
 """
 
 __author__ = "Jan Max Meyer"
-__copyright__ = "Copyright 2015-2017, Mausbrand Informationssysteme GmbH"
-__version__ = "0.4"
+__copyright__ = "Copyright 2015-2018, Mausbrand Informationssysteme GmbH"
+__version__ = "0.5"
 __license__ = "LGPLv3"
 __status__ = "Beta"
 
-import parse
+import logics_parser as parser
 
 def parseInt(s, ret = 0):
 	"""
@@ -83,7 +83,7 @@ class Function(object):
 		self.js = js
 
 
-class Parser(parse.Parser):
+class Parser(parser.Parser):
 
 	functions = None
 
@@ -100,6 +100,11 @@ class Parser(parse.Parser):
 		self.functions["lower"] = Function(
 			lambda x: str(x).lower(),
 		    "return String(arguments[0]).toLowerCase();"
+		)
+
+		self.functions["bool"] = Function(
+			lambda x: bool(x),
+		    "return Boolean(arguments[0]);"
 		)
 
 		self.functions["str"] = Function(
@@ -534,7 +539,7 @@ class Interpreter(Parser):
 		if node is None:
 			return
 
-		if isinstance(node, parse.Node):
+		if isinstance(node, parser.Node):
 			# Don't run through the AST in case of "comprehension" or "entity".
 			if (node.emit or node.symbol) not in ["comprehension", "entity"]:
 				# Pre-processing function
@@ -605,7 +610,7 @@ class Interpreter(Parser):
 			if value is None:
 				break
 
-			if tail.symbol == "IDENT":
+			if tail.emit == "IDENT":
 				# Expand list into its first entry when expansion is continued here.
 				if isinstance(value, list) and len(value) == 1:
 					value = value[0]
