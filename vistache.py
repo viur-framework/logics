@@ -18,7 +18,7 @@ class Template(Interpreter):
 		if dfn:
 			self.parse(dfn)
 
-	def parse(self, dfn):
+	def parse(self, s = None):
 		assert self.startDelimiter
 		assert self.endDelimiter
 		assert self.startBlock
@@ -29,23 +29,23 @@ class Template(Interpreter):
 		block = Node("tblock")
 		blocks = []
 
-		while dfn:
-			#print("dfn = %r" %dfn)
+		while s:
+			#print("s = %r" %s)
 
-			start = dfn.find(self.startDelimiter)
+			start = s.find(self.startDelimiter)
 			if start < 0:
 				break
 
-			end = dfn.find(self.endDelimiter, start + len(self.startDelimiter))
+			end = s.find(self.endDelimiter, start + len(self.startDelimiter))
 			if end < 0:
 				break
 
 			if start > 0:
-				block.children.append(Node("tstring", dfn[:start]))
+				block.children.append(Node("tstring", s[:start]))
 
 			start += len(self.startDelimiter)
 
-			expr = dfn[start:end]
+			expr = s[start:end]
 			end += len(self.endDelimiter)
 
 			#print("expr   = %r" % expr)
@@ -66,12 +66,12 @@ class Template(Interpreter):
 				expr = super(Template, self).parse(expr)
 				block.children.append(expr)
 
-			dfn = dfn[end:]
+			s = s[end:]
 
 		assert not blocks, "%d blocks unclosed!" % len(blocks)
 
-		if dfn:
-			block.children.append(Node("tstring", dfn))
+		if s:
+			block.children.append(Node("tstring", s))
 
 		self.ast = block
 
