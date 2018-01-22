@@ -150,22 +150,29 @@ class Parser(parser.Parser):
 	def compile(self, src):
 		return self.parse(src)
 
-	def traverse(self, node, prePrefix = "pre_", passPrefix = "pass_",
+	def traverse(self, node, obj = None, prePrefix = "pre_", passPrefix = "pass_",
 					postPrefix = "post_", loopPrefix = "loop_",
 						*args, **kwargs):
 		"""
 		Generic AST traversal function.
 
-		This function allows to walk over the generated abstract syntax tree created by :meth:`pynetree.Parser.parse`
-		and calls functions before, by iterating over and after the node are walked.
+		This function allows to walk over the generated abstract syntax tree created by
+		:meth:`logics.Parser.parse` and calls functions before, to loop, by iterating over
+		and after the node are walked.
 
-		:param node: The tree node to print.
-		:param prePrefix: Prefix for pre-processed functions, named prePrefix + symbol.
-		:param passPrefix: Prefix for functions processed by passing though children, named passPrefix + symbol.
-		:param postPrefix: Prefix for post-processed functions, named postPrefix + symbol.
+		:param node: The tree node to traverse.
+		:param obj: Object to traverse functions from, defaults to self.
+		:param prePrefix: Prefix for pre-processed functions, named prePrefix + emit.
+		:param passPrefix: Prefix for functions processed by passing though children, named passPrefix + emit.
+		:param postPrefix: Prefix for post-processed functions, named postPrefix + emit.
+		:param loopPrefix: Prefix for loop-processing functions, named loopPrefix + emit.
+
 		:param args: Arguments passed to these functions as *args.
 		:param kwargs: Keyword arguments passed to these functions as **kwargs.
 		"""
+		if obj is None:
+			obj = self
+
 		def perform(prefix, loop = None, *args, **kwargs):
 			if not node.emit:
 				return False
@@ -175,15 +182,15 @@ class Parser(parser.Parser):
 
 			fname = "%s%s" % (prefix, node.emit or node.symbol)
 
-			if fname and fname in dir(self) and callable(getattr(self, fname)):
-				getattr(self, fname)(node, *args, **kwargs)
+			if fname and fname in dir(obj) and callable(getattr(obj, fname)):
+				getattr(obj, fname)(node, *args, **kwargs)
 				return True
 
 			elif loop is not None:
 				fname += "_%d" % loop
 
-				if fname and fname in dir(self) and callable(getattr(self, fname)):
-					getattr(self, fname)(node, *args, **kwargs)
+				if fname and fname in dir(obj) and callable(getattr(obj, fname)):
+					getattr(obj, fname)(node, *args, **kwargs)
 					return True
 
 			return False
@@ -191,10 +198,12 @@ class Parser(parser.Parser):
 		# Pre-processing function
 		perform(prePrefix, *args, **kwargs)
 
+		# Loop-over function
 		if not perform(loopPrefix, *args, **kwargs):
+
 			# Run through the children.
 			for count, child in enumerate(node.children):
-				self.traverse(child, prePrefix, passPrefix, postPrefix,
+				self.traverse(child, obj, prePrefix, passPrefix, postPrefix,
 								loopPrefix, *args, **kwargs)
 
 				# Pass-processing function
@@ -202,7 +211,6 @@ class Parser(parser.Parser):
 
 		# Post-processing function
 		perform(postPrefix, *args, **kwargs)
-
 
 class JSCompiler(Parser):
 	"""
