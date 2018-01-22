@@ -28,18 +28,22 @@ class Node(object):
 			child.dump(level)
 
 
-class ParseError(Exception):
+class ParseException(Exception):
 	"""
 	Exception to be raised on a parse error.
 	"""
 
-	def __init__(self, row, col, expecting):
-		super(ParseError, self).__init__(
-			"Parse error at line %d, column %d, expecting %s" % (row, col,
-				", ".join([("%r" % symbol[0]) for symbol in expecting])))
+	def __init__(self, row, col, txt = None):
+		if isinstance(txt, list):
+			expecting = txt
+			txt = ("Line %d, column %d: Parse error, expecting %s" % (row, col, ", ".join([("%r" % symbol[0]) for symbol in txt])))
+		else:
+			expecting = None
 
-		self.line = row
-		self.column = col
+		super(ParseException, self).__init__(txt)
+
+		self.row = row
+		self.col = col
 		self.expecting = expecting
 
 
@@ -547,7 +551,7 @@ class Parser(object):
 
 			# Get action table entry
 			if not self._get_act(pcb):
-				raise ParseError(pcb.line, pcb.column,
+				raise ParseException(pcb.line, pcb.column,
 					[self._symbols[sym]
 						for (sym, pcb.act, pcb.idx)
 							in self._act[pcb.tos.state]])

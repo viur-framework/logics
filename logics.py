@@ -14,24 +14,6 @@ __status__ = "Beta"
 
 import logics_parser as parser
 
-class ParseError(Exception):
-	"""
-	Yet never thrown...
-	"""
-
-	def __init__(self, s, offset):
-		row = s.count("\n", 0, offset) + 1
-		col = s.rfind("\n", 0, offset)
-		col = (offset + 1) if col < 1 else offset - col
-
-		super(ParseError, self).__init__(
-			"Parse error at line %d, column %d: >%s<" % (row, col, s[offset:]))
-
-		self.offset = offset
-		self.line = row
-		self.column = col
-
-
 def parseInt(s, ret = 0):
 	"""
 	Parses a value as int
@@ -219,15 +201,7 @@ class Parser(parser.Parser):
 				perform(passPrefix, loop=count, *args, **kwargs)
 
 		# Post-processing function
-		if not perform(postPrefix, *args, **kwargs):
-
-			# Allow for post-process function in the emit info.
-			if callable(self.emits[node.key]):
-				self.emits[node.key](node, *args, **kwargs)
-
-			# Else, just dump the emitting value.
-			elif self.emits[node.key]:
-				print(self.emits[node.key])
+		perform(postPrefix, *args, **kwargs)
 
 
 class JSCompiler(Parser):

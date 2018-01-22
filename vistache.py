@@ -2,7 +2,7 @@
 #-*- coding: utf-8 -*-
 
 from logics import Interpreter
-from logics_parser import Node
+from logics_parser import Node, ParseException
 
 class Template(Interpreter):
 	startDelimiter = "{{"
@@ -18,7 +18,19 @@ class Template(Interpreter):
 		if dfn:
 			self.parse(dfn)
 
-	def parse(self, s = None):
+	def parse(self, s = None, row = 1, col = 1):
+
+		def updatePos(s, row, col):
+			rows = s.count("\n")
+			if rows:
+				row += rows
+				col = len(s[s.rfind("\n") + 1:])
+
+			else:
+				col += len(s)
+
+			return row, col
+
 		assert self.startDelimiter
 		assert self.endDelimiter
 		assert self.startBlock
@@ -41,34 +53,55 @@ class Template(Interpreter):
 				break
 
 			if start > 0:
+				row, col = updatePos(s[:start], row, col)
 				block.children.append(Node("tstring", s[:start]))
 
 			start += len(self.startDelimiter)
-
 			expr = s[start:end]
 			end += len(self.endDelimiter)
 
-			#print("expr   = %r" % expr)
+			#print("expr   = %r %d %d" % (expr, row, col))
 
 			if expr.startswith(self.startBlock):
+				row, col = updatePos(self.startDelimiter, row, col)
+
 				expr = expr[len(self.startBlock):]
-				expr = super(Template, self).parse(expr)
 
-				blocks.append((expr, block))
+				try:
+					node = super(Template, self).parse(expr)
+				except ParseException as e:
+					raise ParseException(row + e.row - 1, col + e.col - 1, e.expecting)
+
+				blocks.append((node, block))
 				block = Node("tblock")
-			elif expr.startswith(self.endBlock):
-				assert blocks, "endBlock without startBlock?"
 
-				expr, nblock = blocks.pop()
-				nblock.children.append(Node("tloop", children=[expr, block]))
+			elif expr.startswith(self.endBlock):
+				if not blocks:
+					raise ParseException(row, col, "Line %d, column %d: Closing block without opening block" % (row, col + 1))
+
+				row, col = updatePos(self.startDelimiter + expr, row, col)
+
+				node, nblock = blocks.pop()
+				nblock.children.append(Node("tloop", children=[node, block]))
 				block = nblock
+
 			else:
-				expr = super(Template, self).parse(expr)
-				block.children.append(expr)
+				row, col = updatePos(self.startDelimiter, row, col)
+
+				try:
+					node = super(Template, self).parse(expr)
+				except ParseException as e:
+					raise ParseException(row + e.row - 1, col + e.col - 1, e.expecting)
+
+				row, col = updatePos(expr, row, col)
+				block.children.append(node)
+
+			row, col = updatePos(self.endDelimiter, row, col)
 
 			s = s[end:]
 
-		assert not blocks, "%d blocks unclosed!" % len(blocks)
+		if blocks:
+			raise ParseException(row, col, "%d blocks are still open, expecting %s" % (len(blocks), "".join([("%s%s%s" % (self.startDelimiter, self.endBlock, self.endDelimiter)) for b in blocks])))
 
 		if s:
 			block.children.append(Node("tstring", s))
@@ -128,11 +161,3 @@ class Template(Interpreter):
 	def render(self, fields = None):
 		assert self.ast
 		return self.execute(self.ast, fields)
-
-x = Template("""Hello {{xxx}}
-{{#persons}}{{name}} is {{age * 365}} days {{xxx}}
-{{/}}
-World!""")
-
-print(x.render({"xxx": "Yolo", "persons": [{"name": "John", "age": 33}, {"name": "Doreen", "age": 25}]}))
-print(x.render({"xxx": "Yolo", "persons": {"name": "John", "age": 33}}))
