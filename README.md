@@ -1,12 +1,11 @@
-# logics
+# logics & vistache
 
 **logics** is an embeddable, expressional language with a Python-style syntax.
+**vistache** is a Mustache-like template engine powered by logics expressions.
 
 ## About
 
-The initial intention behind logics is to serve a well-known syntax for expressing validity checks across all ViUR modules, from the administration tools to server-side input checking as well as client-side input forms. Therefore, logics code is only specified once at a particular place, and can be executed in pure Python (also compiled with PyJS) or compiled into native JavaScript.
-
-Newer developments are also using logics also as some kind of universal templating language.
+The initial intention behind logics was to serve a well-known syntax for expressing validity checks across all ViUR modules. Starting from the administration tools to server-side input checking as well as client-side input forms. Therefore, logics code is only specified once at a particular place, and can be executed in pure Python (also compiled with PyJS) or compiled into native JavaScript.
 
 But logics is not intended to be a scripting language! Therefore it neither provides variable assignment, nor control structures like loops or jumps. Moreover, it is a language to...
 
@@ -55,7 +54,7 @@ optional arguments:
 
 ## Dependencies
 
-logics is implemented using the UniCC Parser Generator, https://github.com/phorward/unicc.
+logics is implemented using the parser generator [UniCC](https://github.com/phorward/unicc).
 
 ## Examples
 
@@ -129,6 +128,31 @@ class fieldSkel(Skeleton):
 	columns = stringBone(descr="Columns",
 							multiple=True,
 							params={"visibleIf": 'type == "table"'})
+```
+
+## Vistache, the template engine
+
+Vistache is an extension built on top of logics, allowing for a Mustache-like templating language. Likewise mustache, a template is first compiled into an executable representation, then it can be rendered with variable data.
+
+Instead of just outputting variables and performing conditional or iterative blocks, Vistage allows full logics expressions as shown in the example below.
+
+Vistache expressions:
+
+- `{{expression}}` outputs the result of expression
+- `{{#expression}}...{{/}}` executes the block between the # and the / if expression validates to true, but also loops over the block when the expression results in a list, with a context-related subscoping.
+
+```python
+from logics.vistache import Template
+
+x = Template("""Hello {{name}},
+
+{{#persons}}{{name}} is {{age * 365}} days old{{#age > 33}}, and {{name * age}} is very old ;-){{/}}
+{{/}}
+Sincerely,
+
+{{author}}""")
+
+print(x.render({"name": "Bernd", "author": "Jan", "persons": [{"name": "John", "age": 33}, {"name": "Doreen", "age": 25}, {"name": "Valdi", "age": 39}]}))
 ```
 
 ## Contributing
