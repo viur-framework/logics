@@ -36,7 +36,9 @@ class ParseException(Exception):
 	def __init__(self, row, col, txt = None):
 		if isinstance(txt, list):
 			expecting = txt
-			txt = ("Line %d, column %d: Parse error, expecting %s" % (row, col, ", ".join([("%r" % symbol[0]) for symbol in txt])))
+			txt = ("Line %d, column %d: Parse error, expecting %s" %
+					(row, col, ", ".join([("%r" % symbol[0])
+						for symbol in txt])))
 		else:
 			expecting = None
 
@@ -438,7 +440,7 @@ class Parser(object):
 		if pcb.buf:
 
 			# Perform position counting.
-			for pos in range(0, pcb.length):
+			for pos in range(0, pcb.len):
 				ch = pcb.buf[pos]
 				if ch == '\n':
 					pcb.line += 1
@@ -446,9 +448,9 @@ class Parser(object):
 				else:
 					pcb.column += 1
 
-			pcb.buf = pcb.buf[pcb.length:]
+			pcb.buf = pcb.buf[pcb.len:]
 
-		pcb.length = 0
+		pcb.len = 0
 		pcb.sym = -1
 
 	def _lex(self, pcb):
@@ -475,7 +477,7 @@ class Parser(object):
 
 					if self._dfa_accept[machine][state] > 0:
 						pcb.sym = self._dfa_accept[machine][state] - 1
-						pcb.length = length
+						pcb.len = length
 
 						# Test! (??)
 						if pcb.sym == 0:
@@ -494,7 +496,7 @@ class Parser(object):
 
 			# TODO: Semantic Terminal Selection?
 
-		#print("_lex", pcb.sym, pcb.length)
+		#print("_lex", pcb.sym, pcb.len)
 
 	def _get_sym(self, pcb):
 		# Get lookahead symbol
@@ -547,11 +549,11 @@ class Parser(object):
 			self._get_sym(pcb)
 
 			#print("pcb.sym = %d (%s)" % (pcb.sym, self._symbols[pcb.sym][0]))
-			#print("pcb.length = %d" % pcb.length)
+			#print("pcb.len = %d" % pcb.len)
 
 			# Get action table entry
 			if not self._get_act(pcb):
-				raise ParseException(pcb.line, pcb.column,
+				raise ParseError(pcb.line, pcb.column,
 					[self._symbols[sym]
 						for (sym, pcb.act, pcb.idx)
 							in self._act[pcb.tos.state]])
@@ -575,7 +577,7 @@ class Parser(object):
 
 				pcb.tos.line = pcb.line
 				pcb.tos.column = pcb.column
-				pcb.stack[-1 - 0].value = pcb.buf[:pcb.length]
+				pcb.stack[-1 - 0].value = pcb.buf[:pcb.len]
 
 				if pcb.tos.symbol[1]:
 					pcb.tos.node = Node(pcb.tos.symbol[1], pcb.stack[-1 - 0].value)
