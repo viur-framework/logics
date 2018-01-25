@@ -159,5 +159,7 @@ class Template(Interpreter):
 		self.stack.append(txt)
 
 	def render(self, fields = None):
-		assert self.ast
+		if not self.ast:
+			return ""
+
 		return self.execute(self.ast, fields)
