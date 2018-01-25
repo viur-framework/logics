@@ -520,9 +520,9 @@ class Interpreter(Parser):
 		#self.dump(node.children[2])
 
 		nexpr = node.children[0]
-		nvar = node.children[2]
-		niter = node.children[4]
-		nif = node.children[6] if len(node.children) > 5 else None
+		nvar = node.children[1]
+		niter = node.children[2]
+		nif = node.children[3] if len(node.children) > 3 else None
 
 		self.traverse(niter)
 		iterator = self.stack.pop()
