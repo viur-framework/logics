@@ -557,7 +557,7 @@ class Parser(object):
 
 			# Get action table entry
 			if not self._get_act(pcb):
-				raise ParseError(pcb.line, pcb.column,
+				raise ParseException(pcb.line, pcb.column,
 					[self._symbols[sym]
 						for (sym, pcb.act, pcb.idx)
 							in self._act[pcb.tos.state]])
