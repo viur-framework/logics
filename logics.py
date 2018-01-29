@@ -12,7 +12,7 @@ __version__ = "0.5"
 __license__ = "LGPLv3"
 __status__ = "Beta"
 
-import logics_parser as parser
+import parser
 
 def parseInt(s, ret = 0):
 	"""

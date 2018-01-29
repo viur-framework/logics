@@ -2,7 +2,7 @@
 #-*- coding: utf-8 -*-
 
 from logics import Interpreter
-from logics_parser import Node, ParseException
+from parser import Node, ParseException
 
 class Template(Interpreter):
 	startDelimiter = "{{"
