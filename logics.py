@@ -87,7 +87,7 @@ class Parser(parser.Parser):
 		)
 
 		self.functions["join"] = Function(
-			lambda l, d: str(d).join(l),
+			lambda l, d = ", ": str(d).join(l),
 		    "return arguments[0].length;" # fixme JavaScript
 		)
 
