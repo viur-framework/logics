@@ -1,7 +1,4 @@
-// Compile & run with latest UniCC v1.3 or higher, using the command:
-//
-//  unicc -w -l python -o logics_parser logics.par
-//  python logics_parser.py
+// UniCC grammar for ViUR logics
 
 #!mode          insensitive;
 
@@ -10,7 +7,6 @@
 @whitespace     ' \r\n\t'+
                 | "#" !'\n'* '\n'
                 ;
-
 
 @IDENT          'A-Za-z_' 'A-Za-z0-9_'*                             = IDENT;
 @STRING         '"' ( '\\' . | !'"' )* '"'

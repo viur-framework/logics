@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
+"""
+vistache is a template language based on the simplicity of Mustache,
+but allowing for expressions based on ViUR logics as its values.
+"""
 
 from logics import Interpreter
 from parser import Node, ParseException
@@ -77,7 +81,7 @@ class Template(Interpreter):
 
 			elif expr.startswith(self.endBlock):
 				if not blocks:
-					raise ParseException(row, col, "Line %d, column %d: Closing block without opening block" % (row, col + 1))
+					raise ParseException(row, col, "Closing block without opening block")
 
 				row, col = updatePos(self.startDelimiter + expr, row, col)
 

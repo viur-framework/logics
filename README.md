@@ -1,32 +1,19 @@
-# logics & vistache
+# logics / vistache
 
-**logics** is an embeddable, expressional language with a Python-style syntax.
-**vistache** is a Mustache-like template engine powered by logics expressions.
+**logics** is a domain-specific, embeddable expressional language with a Python-style syntax.
+
+**vistache** is a Mustache-style template engine powered by logics expressions.
 
 ## About
 
-The initial intention behind logics was to serve a well-known syntax for expressing validity checks across all ViUR modules. Starting from the administration tools to server-side input checking as well as client-side input forms. Therefore, logics code is only specified once at a particular place, and can be executed in pure Python (also compiled with PyJS) or compiled into native JavaScript.
+The initial intention behind logics was to serve a well-known syntax for expressing validity checks across all ViUR modules and execution platforms. Starting from the administration tools to server-side input checking as well as client-side input forms. Therefore, logics code is only specified once at a particular place, and can be executed in pure Python (also compiled with PyJS) or compiled into native JavaScript.
 
 But logics is not intended to be a scripting language! Therefore it neither provides variable assignment, nor control structures like loops or jumps. Moreover, it is a language to...
 
 - ...express validity checks.
 - ...perform template processing.
-- ...provide a way to perform customized data processing.
-
-
-**Warning:** This project is under heavy development and may change its API and/or semantics.
-
-## Features
-
-- Provides the classes `logics.Parser` as the plain parser,
-  - `logics.Interpreter` as the interpreter,
-  - and `logics.JSCompiler` as the JavaScript compiler
-- Logical operators `=`, `!=`, `<=`, `>=`, `in`, `not`, `not in`
-- Inline `<expression> if <condition> else <expression>`
-- Basic arithmetics `+`, `-`, `*`, `/`
-- Data types `bool`, `int`, `float`, `str`
-- An array type `[list]`
-- Some dynamically extendible build-in functions, like `upper()`, `lower()`, `str()`, `int()`, `float()`, `len()`
+- ...provide a way to perform customized data processing
+- ...provide a powerful template engine.
 
 ## Usage
 
@@ -52,43 +39,58 @@ optional arguments:
   -V, --version         show program's version number and exit
 ```
 
-## Dependencies
+## Building
 
-logics is implemented using the parser generator [UniCC](https://github.com/phorward/unicc).
+The logics parser is implemented using the [UniCC](https://github.com/phorward/unicc) parser generator and its newly established Python support. Install UniCC as instructed. Then, run ``make`` to build the logics parser.
 
 ## Examples
 
 Literals
 
-	"Hello World"
-	2016
-	23.5
-	True
-	[1,2,3]
+```python
+"Hello World"
+2016
+23.5
+True
+[1,2,3]
+```
 
-Arithmetic expressions
+Simple arithmetic expressions
 
-	23 / 5 + (1337 - 42)
+```python
+23 / 5 + (1337 - 42)
+```
 
 Concatenate current content of a field (variable) with a string literal
 
-	myfield + " is my value!"
+```python
+myfield + " is my value!"
+```
 
 Add enforced string content lengths of two fields firstname and lastname
 and test them for a total length greater than 32 characters
 
-	len(str(firstname)) + len(str(lastname)) > 32
+```python
+len(str(firstname)) + len(str(lastname)) > 32
+```
 
 Check if current content of field (variable) named `degree` is filled,
 and `mother` or `father`, or current integer value of field `age` is
 greater-equal 21 and lower-equal 42.
 
-	(degree and degree in ["mother", "father"])
-		or (int(age) >= 21 and int(age) <= 42)
+```python
+(degree and degree in ["mother", "father"]) or (int(age) >= 21 and int(age) <= 42)
+```
 
-## Logics in ViUR Vi
+Comprehensions are supported as well
 
-[ViUR vi](https://github.com/viur-framework/vi) currently supports logics to dynamically change input mask behavior depending on input data.
+```python
+sum([x for x in [10, 52, 18.4, 99, 874, 13, 86] if x > 25]) # Sum all values higher 25
+```
+
+### Logics-based dependency checks in ViUR
+
+The latest versions of [ViUR vi](https://github.com/viur-framework/vi) supports logics to dynamically change input mask behavior depending on input data.
 
 The logics expressions are triggered on an event base, when input field contents are changed.
 
@@ -132,14 +134,16 @@ class fieldSkel(Skeleton):
 
 ## Vistache, the template engine
 
-Vistache is an extension built on top of logics, allowing for a Mustache-like templating language. Likewise mustache, a template is first compiled into an executable representation, then it can be rendered with variable data.
+![Vistache Editor](https://lh3.googleusercontent.com/ygyA0TcqcR9id4MxzscYOqP0U49pHmKGnwvpwJ_iVdP6_LRRPkZK9KU5Ig5sSbeHm6zpe6Z6KkmUIp3zW7VI=s800)
+
+Vistache is an extension built on top of logics, allowing for a Mustache-like template language and engine. Likewise the original (Mustache)[http://mustache.github.io/], a template is first compiled into an executable representation, then it can be rendered with variable data.
 
 Instead of just outputting variables and performing conditional or iterative blocks, Vistage allows full logics expressions as shown in the example below.
 
 Vistache expressions:
 
 - `{{expression}}` outputs the result of expression
-- `{{#expression}}...{{/}}` executes the block between the # and the / if expression validates to true, but also loops over the block when the expression results in a list, with a context-related subscoping.
+- `{{#expression}}...{{/}}` executes the block between the # and the / if expression validates to true. It also loops over the block when the expression results in a list, with a context-related sub-scoping.
 
 ```python
 from logics.vistache import Template
@@ -159,9 +163,8 @@ print(x.render({"name": "Bernd", "author": "Jan", "persons": [{"name": "John", "
 
 We take a great interest in your opinion about ViUR. We appreciate your feedback and are looking forward to hear about your ideas. Share your visions or questions with us and participate in ongoing discussions.
 
-- [ViUR on the web](https://www.viur.is)
-- [#ViUR on freenode IRC](https://webchat.freenode.net/?channels=viur)
-- [ViUR on Google Community](https://plus.google.com/communities/102034046048891029088)
+- [ViUR website](https://www.viur.is)
+- [ViUR on GitHub](https://github.com/viur-framework)
 - [ViUR on Twitter](https://twitter.com/weloveViUR)
 
 ## Credits
