@@ -8,12 +8,14 @@
 
 The initial intention behind logics was to serve a well-known syntax for expressing validity checks across all ViUR modules and execution platforms. Starting from the administration tools to server-side input checking as well as client-side input forms. Therefore, logics code is only specified once at a particular place, and can be executed in pure Python (also compiled with PyJS) or compiled into native JavaScript.
 
-But logics is not intended to be a scripting language! Therefore it neither provides variable assignment, nor control structures like loops or jumps. Moreover, it is a language to...
+But logics is not intended to be a scripting language! Therefore it neither provides direct variable assignment, nor control structures like loops or jumps - except comprehensions.
 
-- ...express validity checks.
-- ...perform template processing.
-- ...provide a way to perform customized data processing
-- ...provide a powerful template engine.
+Moreover, it is a language and tool for...
+
+- ...expressing validity checks,
+- ...performing custom calculations,
+- ...providing customizable templating features,
+- ...making data-driven decisions in a restricted and secure context.
 
 ## Usage
 

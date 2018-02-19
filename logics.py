@@ -15,6 +15,15 @@ that can be compiled and executed in any of ViUR's runtime contexts.
 import parser
 from utility import parseInt, optimizeValue
 
+try:
+	# Test if we are in a PyJS environment
+	import __pyjamas__
+	_pyjsCompat = True
+
+except ImportError:
+	_pyjsCompat = False
+
+
 class Function(object):
 	def __init__(self, call, js):
 		if not callable(call):
@@ -86,8 +95,17 @@ class Parser(parser.Parser):
 		    "return arguments[0].length;" # fixme JavaScript
 		)
 
+		def pyjsLogicsJoin(l, d = ", "):
+			ret = ""
+			for i in l:
+				ret += str(i)
+				if i is not l[-1]:
+					ret += str(d)
+
+			return ret
+
 		self.functions["join"] = Function(
-			lambda l, d = ", ": str(d).join(l),
+			pyjsLogicsJoin if _pyjsCompat else lambda l, d = ", ": str(d).join(l),
 		    "return arguments[0].length;" # fixme JavaScript
 		)
 
