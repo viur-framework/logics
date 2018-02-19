@@ -134,9 +134,9 @@ class fieldSkel(Skeleton):
 
 ## Vistache, the template engine
 
-![Vistache Editor](https://lh3.googleusercontent.com/ygyA0TcqcR9id4MxzscYOqP0U49pHmKGnwvpwJ_iVdP6_LRRPkZK9KU5Ig5sSbeHm6zpe6Z6KkmUIp3zW7VI=s800)
+![Vistache Editor](https://lh3.googleusercontent.com/ygyA0TcqcR9id4MxzscYOqP0U49pHmKGnwvpwJ_iVdP6_LRRPkZK9KU5Ig5sSbeHm6zpe6Z6KkmUIp3zW7VI=s1024)
 
-Vistache is an extension built on top of logics, allowing for a Mustache-like template language and engine. Likewise the original (Mustache)[http://mustache.github.io/], a template is first compiled into an executable representation, then it can be rendered with variable data.
+Vistache is an extension built on top of logics, allowing for a Mustache-like template language and engine. Likewise the original [Mustache](https://mustache.github.io/), a template is first compiled into an executable representation, then it can be rendered with variable data.
 
 Instead of just outputting variables and performing conditional or iterative blocks, Vistage allows full logics expressions as shown in the example below.
 
