@@ -1,4 +1,4 @@
-# logics / vistache
+# ViUR logics & vistache
 
 **logics** is a domain-specific, embeddable expressional language with a Python-style syntax.
 
