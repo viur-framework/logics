@@ -7,6 +7,8 @@ This file documents any relevant changes done to logics.
 Previously referred as 0.7, released on: Not released yet.
 
 - Vistache Template Engine
+- Improved semantics in interpreter
+- Removed out-dated JavaScript compiler + API
 - Entirely new parser implemented with [UniCC v1.3](https://github.com/phorward/unicc)
 - New version numbering synchronized with ViUR
 - CHANGELOG added

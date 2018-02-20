@@ -7,6 +7,41 @@ but allowing for expressions based on ViUR logics as its values.
 
 from logics import Interpreter
 from parser import Node, ParseException
+from utility import parseInt
+
+def htmlInsertImage(info, size = None, fallback = None):
+	isServingUrl = False
+	size = parseInt(size, 0)
+
+	attr = {}
+
+	# Check for ViUR image info
+	if isinstance(info, dict) and all([key in info.keys() for key in ["dlkey", "servingurl"]]):
+		img = str(info["servingurl"])
+
+		title = info.get("title", info.get("name"))
+		if title:
+			attr["title"] = title
+
+		if not img:
+			img = "/file/download/" + str(info["dlkey"])
+		elif not img.startswith("/_ah/img/"): #DevServer must be punished!
+			isServingUrl = True
+			img += ("=s%d" % size)
+
+	# Use info as string
+	elif info:
+		img = str(info)
+
+	# Use fallback image
+	else:
+		img = str(fallback)
+
+	attr["src"] = img
+	if not isServingUrl and size > 0:
+		attr["width"] = size
+
+	return "<img " + " ".join([("%s=\"%s\"" % (k, v)) for k, v in attr.items()]) + ">"
 
 class Template(Interpreter):
 	startDelimiter = "{{"
@@ -18,6 +53,9 @@ class Template(Interpreter):
 	def __init__(self, dfn = None):
 		super(Template, self).__init__()
 		self.ast = None
+
+		# Vistache provides generator functions
+		self.addFunction(htmlInsertImage)
 
 		if dfn:
 			self.parse(dfn)
@@ -134,19 +172,30 @@ class Template(Interpreter):
 		txt = ""
 
 		if isinstance(value, list):
-			fields = self.fields
+			if value:
+				fields = self.fields
+				self.fields = fields.copy()
 
-			for i in value:
-				if isinstance(i, dict):
-					if self.fields is fields:
-						self.fields = fields.copy()
+				self.fields["loop"] = {
+					"length": len(value)
+				}
 
-					self.fields.update(i)
+				for idx, val in enumerate(value):
+					self.fields["loop"].update({
+						"item": val,
+						"index": idx + 1,
+						"index0": idx,
+						"first": val is value[0],
+						"last": val is value[-1]
+					})
 
-				self.traverse(node.children[1])
-				txt += self.stack.pop()
+					if isinstance(val, dict):
+						self.fields.update(val)
 
-			self.fields = fields
+					self.traverse(node.children[1])
+					txt += self.stack.pop()
+
+				self.fields = fields
 
 		elif value:
 			if isinstance(value, dict):
@@ -165,5 +214,7 @@ class Template(Interpreter):
 	def render(self, fields = None):
 		if not self.ast:
 			return ""
+
+		#self.ast.dump()
 
 		return self.execute(self.ast, fields)

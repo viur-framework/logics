@@ -4,8 +4,12 @@ def parseInt(s, ret = 0):
 	"""
 	Parses a value as int
 	"""
+	if s is None:
+		return ret
+
 	if not isinstance(s, str):
 		return int(s)
+
 	elif s:
 		if s[0] in "+-":
 			ts = s[1:]
@@ -21,8 +25,12 @@ def parseFloat(s, ret = 0.0):
 	"""
 	Parses a value as float.
 	"""
+	if s is None:
+		return ret
+
 	if not isinstance(s, str):
 		return float(s)
+
 	elif s:
 		if s[0] in "+-":
 			ts = s[1:]

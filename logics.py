@@ -13,7 +13,7 @@ that can be compiled and executed in any of ViUR's runtime contexts.
 """
 
 import parser
-from utility import parseInt, optimizeValue
+from utility import parseInt, parseFloat, optimizeValue
 
 try:
 	# Test if we are in a PyJS environment
@@ -23,92 +23,10 @@ try:
 except ImportError:
 	_pyjsCompat = False
 
-
-class Function(object):
-	def __init__(self, call, js):
-		if not callable(call):
-			raise TypeError("Parameter must be callable")
-
-		self.call = call
-
-		if not isinstance(js, str):
-			raise TypeError("Parameter must be str")
-
-		self.js = js
-
-
 class Parser(parser.Parser):
-
-	functions = None
 
 	def __init__(self):
 		super(Parser, self).__init__()
-
-		self.functions = {}
-
-		self.functions["upper"] = Function(
-			lambda x: str(x).upper(),
-			"return String(arguments[0]).toUpperCase();"
-		)
-
-		self.functions["lower"] = Function(
-			lambda x: str(x).lower(),
-		    "return String(arguments[0]).toLowerCase();"
-		)
-
-		self.functions["bool"] = Function(
-			lambda x: bool(x),
-		    "return Boolean(arguments[0]);"
-		)
-
-		self.functions["str"] = Function(
-			lambda x: str(x),
-		    "return String(arguments[0]);"
-		)
-
-		self.functions["int"] = Function(
-			lambda x: int(x),
-		    "return parseInt(arguments[0]);"
-		)
-
-		self.functions["float"] = Function(
-			lambda x: float(x),
-		    "return parseFloat(arguments[0]);"
-		)
-
-		self.functions["len"] = Function(
-			lambda x: len(x),
-		    "return arguments[0].length;"
-		)
-
-		self.functions["sum"] = Function(
-			lambda v: sum([optimizeValue(_, allow=[bool, int, float], default=0) for _ in v]),
-		    "return arguments[0].length;"   # fixme JavaScript
-		)
-		self.functions["max"] = Function(
-			lambda v: max(v),
-		    "return arguments[0].length;" # fixme JavaScript
-		)
-
-		self.functions["min"] = Function(
-			lambda v: min(v),
-		    "return arguments[0].length;" # fixme JavaScript
-		)
-
-		def pyjsLogicsJoin(l, d = ", "):
-			ret = ""
-			for i in l:
-				ret += str(i)
-				if i is not l[-1]:
-					ret += str(d)
-
-			return ret
-
-		self.functions["join"] = Function(
-			pyjsLogicsJoin if _pyjsCompat else lambda l, d = ", ": str(d).join(l),
-		    "return arguments[0].length;" # fixme JavaScript
-		)
-
 
 	def compile(self, src):
 		return self.parse(src)
@@ -120,7 +38,7 @@ class Parser(parser.Parser):
 		Generic AST traversal function.
 
 		This function allows to walk over the generated abstract syntax tree created by
-		:meth:`logics.Parser.parse` and calls functions before, to loop, by iterating over
+		:meth:`parser.Parser.parse()` and calls functions before, to loop, by iterating over
 		and after the node are walked.
 
 		:param node: The tree node to traverse.
@@ -175,261 +93,6 @@ class Parser(parser.Parser):
 		# Post-processing function
 		perform(postPrefix, *args, **kwargs)
 
-class JSCompiler(Parser):
-	"""
-	Compiler to emit viurLogics code as JavaScript code.
-	"""
-	stack = None
-
-	def __init__(self):
-		super(JSCompiler, self).__init__()
-		self.apiPrefix = "viurLogics"
-
-	def compile(self, src, fields = None):
-		self.stack = []
-
-		t = self.parse(src)
-		if not t:
-			return None
-
-		#self.dump(t)
-		self.traverse(t)
-
-		return self.stack.pop()
-
-	def api(self):
-		"""
-		Generates the portion of native JavaScript code required to implement
-		the semantics of the viurLogic language on pure JavaScript side.
-
-		:return: JavaScript code.
-		"""
-
-		s = str()
-
-		# GetField ------------------------------------------------------------
-		s += "function %sGetField(name)\n" % self.apiPrefix
-		s += """{
-	return document.getElementsByName(name)[0].value;
-}
-
-"""
-
-		# Add -----------------------------------------------------------------
-		s += "function %sAdd(a, b)\n" % self.apiPrefix
-		s += """{
-	if( typeof a == "string" || typeof b == "string" )
-		return String(a) + String(b);
-
-	if( typeof a != "number" )
-		a = a ? 1 : 0;
-	if( typeof b != "number" )
-		b = b ? 1 : 0;
-
-	return a + b;
-}
-
-"""
-		# Sub -----------------------------------------------------------------
-		s += "function %sSub(a, b)\n" % self.apiPrefix
-		s += """{
-	if( typeof a != "number" )
-		a = a ? 1 : 0;
-	if( typeof b != "number" )
-		b = b ? 1 : 0;
-
-	return a - b;
-}
-
-"""
-		# Mul -----------------------------------------------------------------
-		s += "function %sMul(a, b)\n" % self.apiPrefix
-		s += """{
-	if( typeof a == "string" || typeof b == "string" )
-	{
-		var cnt = 0;
-		var bs = "";
-		if( typeof a == "number" )
-		{
-			cnt = a;
-			bs = b;
-		}
-		else if( typeof b == "number" )
-		{
-			cnt = b;
-			bs = a;
-		}
-
-		var s = "";
-		while( cnt-- > 0 )
-			s += bs;
-
-		return s;
-	}
-
-	if( typeof a != "number" )
-		a = a ? 1 : 0;
-	if( typeof b != "number" )
-		b = b ? 1 : 0;
-
-	return a * b;
-}
-
-"""
-
-		# Div -----------------------------------------------------------------
-		s += "function %sDiv(a, b)\n" % self.apiPrefix
-		s += """{
-	if( typeof a != "number" )
-		a = typeof a == "boolean" ? (a ? 1 : 0) : 0;
-	if( typeof b != "number" )
-		b = typeof b == "boolean" ? (b ? 1 : 0) : 0;
-
-	return a / b;
-}
-
-"""
-
-		# In ------------------------------------------------------------------
-		s += "function %sIn(a, b)\n" % self.apiPrefix
-		s += """{
-	try
-	{
-		return b.indexOf(a) > -1 ? true : false;
-	}
-	catch(e)
-	{
-		return false;
-	}
-}
-
-"""
-
-		for f, o in self.functions.items():
-			s += "function %s_%s()\n{\n\t%s\n}\n\n" % (self.apiPrefix, f, o.js)
-
-		return s
-
-	def post_if_else(self, node):
-		alt = self.stack.pop()
-		expr = self.stack.pop()
-		res = self.stack.pop()
-
-		self.stack.append("%s ? %s : %s" % (expr, res, alt))
-
-	def post_or_test(self, node):
-		for i in range(1, len(node.children)):
-			r = self.stack.pop()
-			l = self.stack.pop()
-			self.stack.append("%s || %s" % (l, r))
-
-	def post_and_test(self, node):
-		for i in range(1, len(node.children)):
-			r = self.stack.pop()
-			l = self.stack.pop()
-			self.stack.append("%s && %s" % (l, r))
-
-	def post_not_test(self, node):
-		self.stack.append("!%s" % self.stack.pop())
-
-	def post_comparison(self, node):
-		for i in range(1, len(node.children), 2):
-			op = node.children[i].symbol
-			r = self.stack.pop()
-			l = self.stack.pop()
-
-			if op == "in":
-				self.stack.append("%sIn(%s, %s)" % (self.apiPrefix, l, r))
-			elif op == "not_in":
-				self.stack.append("!%sIn(%s, %s)" % (self.apiPrefix, l, r))
-			else:
-				if op == "<>":
-					op = "!="
-
-				self.stack.append("%s %s %s" % (l, op, r))
-
-	def post_add(self, node):
-		r = self.stack.pop()
-		l = self.stack.pop()
-		self.stack.append("%sAdd(%s, %s)" % (self.apiPrefix, l, r))
-
-	def post_sub(self, node):
-		r = self.stack.pop()
-		l = self.stack.pop()
-		self.stack.append("%sSub(%s, %s)" % (self.apiPrefix, l, r))
-
-	def post_mul(self, node):
-		r = self.stack.pop()
-		l = self.stack.pop()
-		self.stack.append("%sMul(%s, %s)" % (self.apiPrefix, l, r))
-
-	def post_div(self, node):
-		r = self.stack.pop()
-		l = self.stack.pop()
-		self.stack.append("%sDiv(%s, %s)" % (self.apiPrefix, l, r))
-
-	def post_mod(self, node):
-		r = self.stack.pop()
-		l = self.stack.pop()
-		self.stack.append("%sMod(%s, %s)" % (self.apiPrefix, l, r))
-
-	def post_factor(self, node):
-		op = self.stack.pop()
-
-		if isinstance(op, (str, unicode)):
-			self.stack.append(op)
-		elif node[1][0][0] == "+":
-			self.stack.append("+(%s)" % op)
-		elif node[1][0][0] == "-":
-			self.stack.append("-(%s)" % op)
-		else:
-			self.stack.append("~(%s)" % op)
-
-	def post_atom(self, node):
-		self.stack.append("(%s)" % self.stack.pop())
-
-	def post_call(self, node):
-		func = node.children[0].match
-
-		l = []
-		for i in range(1, len(node.children)):
-			l.append(self.stack.pop())
-
-		if not func in self.functions.keys():
-			return
-
-		l.reverse()
-		self.stack.append("%s_%s(%s)" % (self.apiPrefix, func, ", ".join(l)))
-
-	def post_path(self, node):
-		#fixme
-		name = node.children[0].match
-		if name in ["True", "False"]:
-			self.stack.append(name.lower())
-		else:
-			self.stack.append("%sGetField(\"%s\")" % (self.apiPrefix, name))
-
-	def post_STRING(self, node):
-		self.stack.append("\"%s\"" % node.match[1:-1])
-
-	def post_strings(self, node):
-		s = ""
-		for i in range(len(node.children)):
-			s = str(self.stack.pop()[1:-1]) + s
-
-		self.stack.append("\"%s\"" % s)
-
-	def post_list(self, node):
-		l = []
-		for i in range(0, len(node.children)):
-			l.append(self.stack.pop())
-
-		l.reverse()
-		self.stack.append("Array(" + ", ".join(l) + ")")
-
-	def post_NUMBER(self, node):
-		self.stack.append(node.match)
-
 
 class Interpreter(Parser):
 	"""
@@ -441,6 +104,46 @@ class Interpreter(Parser):
 		self.stack = []
 		self.fields = {}
 		self.prefix = ""
+
+		self.functions = {}
+
+		self.addFunction("upper", lambda x: str(x).upper())
+		self.addFunction("lower", lambda x: str(x).lower())
+		self.addFunction("bool", lambda x: bool(x))
+		self.addFunction("str", lambda x: str(x))
+		self.addFunction("int", lambda x: parseInt(parseFloat(x)))
+		self.addFunction("float", parseFloat)
+		self.addFunction("len", lambda x: len(x))
+		self.addFunction("sum", lambda v: sum([optimizeValue(_, allow=[bool, int, float], default=0) for _ in v]))
+		self.addFunction("min", lambda x: max(x))
+		self.addFunction("max", lambda x: min(x))
+
+		def _pyjsLogicsJoin(l, d = ", "):
+			ret = ""
+			for i in l:
+				ret += str(i)
+				if i is not l[-1]:
+					ret += str(d)
+
+			return ret
+
+		self.addFunction("join", _pyjsLogicsJoin if _pyjsCompat else lambda l, d = ", ": str(d).join(l))
+
+	def addFunction(self, name, fn = None):
+		"""
+		Adds a user-defined function.
+		:param name: Name of the function, or the function pointer.
+		:param fn: Function pointer, or None. If None, the functions' name will be evolved from the name as fn.
+		"""
+
+		if fn is None:
+			fn = name
+			name = fn.__name__
+
+		assert isinstance(name, str)
+		assert callable(fn)
+
+		self.functions[name] = fn
 
 	def getOperands(self, onlyNumeric = True):
 		r = self.stack.pop()
@@ -534,13 +237,8 @@ class Interpreter(Parser):
 				if isinstance(value, list) and len(value) == 1:
 					value = value[0]
 
-				# fixme: This is *not* the desired behavior!
-				# Later it must be checked which object-related functions
-				# are allowed to be called from logics.
-				if tail.match in dir(value):
-					value = getattr(value, tail.match)
-
-				elif isinstance(value, dict):
+				# Dive into dict by key
+				if isinstance(value, dict):
 					value = value.get(tail.match)
 
 				continue
@@ -552,15 +250,15 @@ class Interpreter(Parser):
 
 			#print("OK", value, tail)
 			if callable(value):
-				#print("entity", value, tail)
 				try:
 					value = value(*tail)
+
 				except:
-					#raise
 					value = None
 			else:
 				try:
 					value = value[tail]
+
 				except:
 					value = None
 
@@ -683,25 +381,13 @@ class Interpreter(Parser):
 	def post_False(self, node):
 		self.stack.append(False)
 
-	def post_call(self, node):
-		func = node.children[0].match
-
-		l = []
-		for i in range(1, len(node.children)):
-			l.append(self.stack.pop())
-
-		if not func in self.functions.keys():
-			return
-
-		self.stack.append(self.functions[func].call(*reversed(l)))
-
 	def post_IDENT(self, node):
 		var = self.prefix + node.match
 
 		if var in self.fields:
 			self.stack.append(optimizeValue(self.fields[var]) if self.fields[var] is not None else None)
 		elif node.match in self.functions:
-			self.stack.append(self.functions[node.match].call)
+			self.stack.append(self.functions[node.match])
 		else:
 			self.stack.append(None)
 
@@ -747,20 +433,12 @@ if __name__ == "__main__":
 
 	ap = argparse.ArgumentParser(description="ViUR Logics Expressional Language")
 
-	ap.add_argument("expression", type=str, help="The expression to compile")
+	ap.add_argument("expression", type=str, help="The expression to be processed")
 
 	ap.add_argument("-D", "--debug", help="Print debug output", action="store_true")
 	ap.add_argument("-e", "--environment", help="Import environment as variables", action="store_true")
-	ap.add_argument("-v", "--var",  help="Assign variables",
-	                action="append", nargs=2, metavar=("var", "value"))
-	ap.add_argument("-r", "--run", help="Run expression using interpreter",
-	                action="store_true")
-
-	ap.add_argument("-j", "--javascript", help="Compile expression to JavaScript",
-	                action="store_true")
-	ap.add_argument("-J", "--javascript+api", help="Compile expression to JavaScript with API",
-	                action="store_true")
-	ap.add_argument("-u", "--unicc", help="Use (faster!) UniCC-based parser instead of the pynetree-parser")
+	ap.add_argument("-v", "--var",  help="Assign variables", action="append", nargs=2, metavar=("var", "value"))
+	ap.add_argument("-r", "--run", help="Run expression using interpreter", action="store_true")
 	ap.add_argument("-V", "--version", action="version", version="ViUR logics %s" % __version__)
 
 	args = ap.parse_args()
@@ -804,16 +482,6 @@ if __name__ == "__main__":
 	if args.run:
 		vili = Interpreter()
 		print(vili.execute(expr, vars, args.debug))
-
-		done = True
-
-	if args.javascript or getattr(args, "javascript+api"):
-		viljs = JSCompiler()
-
-		if getattr(args, "javascript+api"):
-			print(viljs.api())
-
-		print(viljs.compile(expr))
 
 		done = True
 

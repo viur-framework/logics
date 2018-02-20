@@ -6,7 +6,7 @@
 
 ## About
 
-The initial intention behind logics was to serve a well-known syntax for expressing validity checks across all ViUR modules and execution platforms. Starting from the administration tools to server-side input checking as well as client-side input forms. Therefore, logics code is only specified once at a particular place, and can be executed in pure Python (also compiled with PyJS) or compiled into native JavaScript.
+The initial intention behind logics was to serve a well-known syntax for expressing validity checks across all ViUR modules and execution platforms. Thios starts from the administration tools to server-side input checking as well as client-side input forms and user-defined template processing. The first versions of logics where intended to allow expression compilation into native JavaScript also, to be executed on client-side without a logics interpreter.
 
 But logics is not intended to be a scripting language! Therefore it neither provides direct variable assignment, nor control structures like loops or jumps - except comprehensions.
 
@@ -22,28 +22,26 @@ Moreover, it is a language and tool for...
 *logics.py* can be used as a command-line tool for invocation and testing.
 
 ```
-usage: logics.py [-h] [-D] [-e] [-v var value] [-r] [-j] [-J] [-V] expression
+usage: logics.py [-h] [-D] [-e] [-v var value] [-r] [-V] expression
 
 ViUR Logics Expressional Language
 
 positional arguments:
-  expression            The expression to compile
+  expression            The expression to be processed
 
 optional arguments:
   -h, --help            show this help message and exit
   -D, --debug           Print debug output
   -e, --environment     Import environment as variables
   -v var value, --var var value
-						Assign variables
+                        Assign variables
   -r, --run             Run expression using interpreter
-  -j, --javascript      Compile expression to JavaScript
-  -J, --javascript+api  Compile expression to JavaScript with API
   -V, --version         show program's version number and exit
 ```
 
 ## Building
 
-The logics parser is implemented using the [UniCC](https://github.com/phorward/unicc) parser generator and its newly established Python support. Install UniCC as instructed. Then, run ``make`` to build the logics parser.
+The logics parser is implemented using the [UniCC](https://github.com/phorward/unicc) parser generator and its newly established Python support. Install UniCC as instructed in its README, or download a setup for your platform. Then, run `make` to build the logics parser.
 
 ## Examples
 
