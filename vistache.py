@@ -13,6 +13,9 @@ def htmlInsertImage(info, size = None, fallback = None):
 	isServingUrl = False
 	size = parseInt(size, 0)
 
+	if not info:
+		info = fallback
+
 	attr = {}
 
 	# Check for ViUR image info
@@ -33,15 +36,14 @@ def htmlInsertImage(info, size = None, fallback = None):
 	elif info:
 		img = str(info)
 
-	# Use fallback image
 	else:
-		img = str(fallback)
+		return ""
 
 	attr["src"] = img
 	if not isServingUrl and size > 0:
 		attr["width"] = size
 
-	return "<img " + " ".join([("%s=\"%s\"" % (k, v)) for k, v in attr.items()]) + ">"
+	return "<img " + " ".join([("%s=\"%s\"" % (k, v)) for k, v in attr.items() if v is not None]) + ">"
 
 class Template(Interpreter):
 	startDelimiter = "{{"
