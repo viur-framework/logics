@@ -115,8 +115,8 @@ class Interpreter(Parser):
 		self.addFunction("float", parseFloat)
 		self.addFunction("len", lambda x: len(x))
 		self.addFunction("sum", lambda v: sum([optimizeValue(_, allow=[bool, int, float], default=0) for _ in v]))
-		self.addFunction("min", lambda x: max(x))
-		self.addFunction("max", lambda x: min(x))
+		self.addFunction("max", lambda x: max(x))
+		self.addFunction("min", lambda x: min(x))
 
 		def _pyjsLogicsJoin(l, d = ", "):
 			ret = ""
