@@ -6,7 +6,9 @@
 
 ## About
 
-The initial intention behind logics was to serve a well-known syntax for expressing validity checks across all ViUR modules and execution platforms. Thios starts from the administration tools to server-side input checking as well as client-side input forms and user-defined template processing. The first versions of logics where intended to allow expression compilation into native JavaScript also, to be executed on client-side without a logics interpreter.
+The initial intention behind logics was to serve a well-known syntax for expressing validity checks across all ViUR modules and execution platforms. Thios starts from the administration tools to server-side input checking as well as client-side input forms and user-defined template processing.
+
+The first versions of logics where intended to allow bot direct expression execution and expression compilation into native JavaScript, to be executed on client-side without a logics interpreter. This feature was disabled for now, but may be re-implemented in future and when needed.
 
 But logics is not intended to be a scripting language! Therefore it neither provides direct variable assignment, nor control structures like loops or jumps - except comprehensions.
 
@@ -164,6 +166,7 @@ print(x.render({"name": "Bernd", "author": "Jan", "persons": [{"name": "John", "
 We take a great interest in your opinion about ViUR. We appreciate your feedback and are looking forward to hear about your ideas. Share your visions or questions with us and participate in ongoing discussions.
 
 - [ViUR website](https://www.viur.is)
+- [#ViUR on freenode IRC](https://webchat.freenode.net/?channels=viur)
 - [ViUR on GitHub](https://github.com/viur-framework)
 - [ViUR on Twitter](https://twitter.com/weloveViUR)
 

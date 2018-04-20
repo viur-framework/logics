@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
+"""
+logics is a domain-specific expressional language with a Python-styled syntax,
+that can be compiled and executed in any of ViUR's runtime contexts.
+"""
 
 __author__ = "Jan Max Meyer"
 __copyright__ = "Copyright 2015-2018 by Mausbrand Informationssysteme GmbH"
 __version__ = "2.2"
 __license__ = "LGPLv3"
 __status__ = "Beta"
-
-"""
-logics is a domain-specific expressional language with a Python-styled syntax,
-that can be compiled and executed in any of ViUR's runtime contexts.
-"""
 
 import parser
 from utility import parseInt, parseFloat, optimizeValue

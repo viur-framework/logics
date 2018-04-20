@@ -5,6 +5,12 @@ vistache is a template language based on the simplicity of Mustache,
 but allowing for expressions based on ViUR logics as its values.
 """
 
+__author__ = "Jan Max Meyer"
+__copyright__ = "Copyright 2018 by Mausbrand Informationssysteme GmbH"
+__version__ = "2.2"
+__license__ = "LGPLv3"
+__status__ = "Beta"
+
 from logics import Interpreter
 from parser import Node, ParseException
 from utility import parseInt
@@ -217,6 +223,63 @@ class Template(Interpreter):
 		if not self.ast:
 			return ""
 
-		#self.ast.dump()
-
 		return self.execute(self.ast, fields)
+
+if __name__ == "__main__":
+	import argparse, json
+
+	ap = argparse.ArgumentParser(description="ViUR Vistache Template Engine")
+
+	ap.add_argument("template", type=str, help="The template to be processed; This can either be a string or a file.")
+
+	ap.add_argument("-D", "--debug", help="Print debug output", action="store_true")
+	ap.add_argument("-e", "--environment", help="Import environment as variables", action="store_true")
+	ap.add_argument("-v", "--var",  help="Assign variables", action="append", nargs=2, metavar=("var", "value"))
+	ap.add_argument("-r", "--run", help="Run expression using interpreter", action="store_true")
+	ap.add_argument("-V", "--version", action="version", version="ViUR vistache %s" % __version__)
+
+	args = ap.parse_args()
+
+	# Try to read input from a file.
+	try:
+		f = open(args.template, "rb")
+		expr = f.read()
+		f.close()
+
+	except IOError:
+		expr = args.template
+
+	done = False
+	vars = {}
+
+	if args.debug:
+		print("expr", expr)
+
+	if args.environment:
+		import os
+		vars.update(os.environ)
+
+	# Read variables
+	if args.var:
+		for var in args.var:
+			try:
+				f = open(var[1], "rb")
+				vars[var[0]] = json.loads(f.read())
+				f.close()
+
+			except ValueError:
+				vars[var[0]] = None
+
+			except IOError:
+				vars[var[0]] = var[1]
+
+	if args.debug:
+		print("vars", vars)
+
+	tpl = Template(expr)
+	if args.run:
+		print(tpl.render(vars))
+		done = True
+
+	if not done:
+		tpl.ast.dump()
