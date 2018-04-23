@@ -2,9 +2,10 @@
 
 This file documents any relevant changes done to logics.
 
-## 2.2
+## 2.2 Etna
 
-Previously referred as 0.7, released on: Not released yet.
+(Previously referred as 0.7)
+Release date: Apr 23, 2018
 
 - Vistache Template Engine
 - Improved semantics in interpreter
@@ -15,7 +16,8 @@ Previously referred as 0.7, released on: Not released yet.
 
 ## 2.1
 
-Previously referred as 0.6, released on: Nov 02, 2017
+(Previously referred as 0.6)
+Release date: Nov 02, 2017
 
 - Many bugfixes and improvements
 - First version included in [ViUR vi](https://github.com/viur-framework/vi)
