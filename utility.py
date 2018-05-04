@@ -1,46 +1,76 @@
 #-*- coding: utf-8 -*-
 
-def parseInt(s, ret = 0):
+def parseInt(value, ret=0):
 	"""
-	Parses a value as int
+	Parses a value as int.
+
+	This function works similar to its JavaScript-pendant, and performs
+	checks to parse most of a string value as integer.
+
+	:param value: The value that should be parsed as integer.
+	:param ret: The default return value if no integer could be parsed.
+
+	:return: Either the parse value as int, or ret if parsing not possible.
 	"""
-	if s is None:
+	if value is None:
 		return ret
 
-	if not isinstance(s, str):
-		return int(s)
+	if not isinstance(value, str):
+		value = str(value)
 
-	elif s:
-		if s[0] in "+-":
-			ts = s[1:]
-		else:
-			ts = s
+	conv = ""
+	value = value.strip()
 
-		if ts and all([_ in "0123456789" for _ in ts]):
-			return int(s)
+	for ch in value:
+		if ch not in "+-0123456789":
+			break
 
-	return ret
+		conv += ch
 
-def parseFloat(s, ret = 0.0):
+	try:
+		return int(conv)
+	except ValueError:
+		return ret
+
+
+def parseFloat(value, ret=0.0):
 	"""
 	Parses a value as float.
+
+	This function works similar to its JavaScript-pendant, and performs
+	checks to parse most of a string value as float.
+
+	:param value: The value that should be parsed as float.
+	:param ret: The default return value if no integer could be parsed.
+
+	:return: Either the parse value as float, or ret if parsing not possible.
 	"""
-	if s is None:
+	if value is None:
 		return ret
 
-	if not isinstance(s, str):
-		return float(s)
+	if not isinstance(value, str):
+		value = str(value)
 
-	elif s:
-		if s[0] in "+-":
-			ts = s[1:]
-		else:
-			ts = s
+	conv = ""
+	value = value.strip()
+	dot = False
 
-		if ts and ts.count(".") <= 1 and all([_ in ".0123456789" for _ in ts]):
-			return float(s)
+	for ch in value:
+		if ch not in "+-0123456789.":
+			break
 
-	return ret
+		if ch == ".":
+			if dot:
+				break
+
+			dot = True
+
+		conv += ch
+
+	try:
+		return float(conv)
+	except ValueError:
+		return ret
 
 def optimizeValue(val, allow = [int, bool, float, list, dict, str, unicode], default = str):
 	"""
