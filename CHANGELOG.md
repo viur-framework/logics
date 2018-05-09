@@ -2,6 +2,11 @@
 
 This file documents any relevant changes done to logics.
 
+## [develop]
+
+- New {{|}} else block notation added to Vistache
+- Improved Vistache loop variable processing
+
 ## 2.2 Etna
 
 (Previously referred as 0.7)

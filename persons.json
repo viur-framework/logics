@@ -1,0 +1,15 @@
+[
+	{
+		"firstname": "John",
+		"city": "Johannesburg"
+	},
+	{
+		"firstname": "Bernd",
+		"dogs": ["Doge"]
+	},
+	{
+		"firstname": "Max",
+		"city": "Dortmund",
+		"dogs": ["Shugar", "Kira", "Akela"]
+	}
+]

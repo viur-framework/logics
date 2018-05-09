@@ -1,0 +1,3 @@
+{{#persons}}Hello {{firstname}}{{#city}} from {{city}}{{/}}!
+	{{# dogs and len(dogs) }}You have {{len(dogs)}} dog{{ "s" if len(dogs) > 1 else "" }} named {{#dogs}}{{#loop.last and not loop.first}} and {{/}}{{loop.item}}{{#loop.index < loop.length - 1}}, {{/}}{{/}}{{|}}There is no dog living with you.{{/}}
+{{/}}

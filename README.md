@@ -138,28 +138,84 @@ class fieldSkel(Skeleton):
 
 ![Vistache Editor](https://lh3.googleusercontent.com/ygyA0TcqcR9id4MxzscYOqP0U49pHmKGnwvpwJ_iVdP6_LRRPkZK9KU5Ig5sSbeHm6zpe6Z6KkmUIp3zW7VI=s1024)
 
-Vistache is an extension built on top of logics, allowing for a Mustache-like template language and engine. Likewise the original [Mustache](https://mustache.github.io/), a template is first compiled into an executable representation, then it can be rendered with variable data.
+Vistache is an extension built on top of logics, allowing for a [Mustache](https://mustache.github.io/)-like template language. Likewise the original Mustache, a template is first compiled into an executable representation, then it can be rendered with variable data.
 
-Instead of just outputting variables and performing conditional or iterative blocks, Vistage allows full logics expressions as shown in the example below.
+Instead of just outputting variables and performing conditional or iterative blocks, Vistage allows to use full logics expressions as shown in the example below.
 
 Vistache expressions:
 
-- `{{expression}}` outputs the result of expression
-- `{{#expression}}...{{/}}` executes the block between the # and the / if expression validates to true. It also loops over the block when the expression results in a list, with a context-related sub-scoping.
+- `{{expression}}` renders the result of expression
+- `{{#expression}}...{{/}}` renders the block between `{{#expression}}` and the `{{/}}` if the expression validates to true. It also loops over the block when the expression results in a list, with a context-related sub-scoping.
+- `{{#expression}}...{{|}}...{{/}}` renders the block between the `{{#expression}}` and the `{{|}}` if the expression validates to true, otherwise it renders the block between the `{{|}}` and `{{/}}`. It also loops over the first block when the expression results in a list, with a context-related sub-scoping.
 
-```python
-from logics.vistache import Template
+In case of a loop in the conditional blocks above, a variable `loop` is also made available in each scope, containing the following members:
 
-x = Template("""Hello {{name}},
+- `loop.length` is the number of items that are looped,
+- `loop.item` is the full context-based variable,
+- `loop.index` is the loop conter starting at 1,
+- `loop.index0` is the loop conter starting at 0,
+- `loop.first` is true on the first loop,
+- `loop.false` is true on the last loop.
 
-{{#persons}}{{name}} is {{age * 365}} days old{{#age > 33}}, and {{name * age}} is very old ;-){{/}}
+Running the template
+
+```vistache
+{{#persons}}Hello {{firstname}}
+	{{#city}} from {{city}}{{/}}!
+
+	{{# dogs and len(dogs) }}
+		You have {{len(dogs)}} dog{{ "s" if len(dogs) > 1 else "" }} named
+		{{#dogs}}
+			{{#loop.last and not loop.first}} and
+			{{/}}
+			{{loop.item}}
+			{{#loop.index < len(dogs) - 1}},
+			{{/}}
+		{{/}}
+	{{|}}
+		There is no dog living with you.
+	{{/}}
 {{/}}
-Sincerely,
-
-{{author}}""")
-
-print(x.render({"name": "Bernd", "author": "Jan", "persons": [{"name": "John", "age": 33}, {"name": "Doreen", "age": 25}, {"name": "Valdi", "age": 39}]}))
 ```
+
+with the JSON object
+
+```json
+[
+	{
+		"firstname": "John",
+		"city": "Johannesburg"
+	},
+	{
+		"firstname": "Bernd",
+		"dogs": ["Doge"]
+	},
+	{
+		"firstname": "Max",
+		"city": "Dortmund",
+		"dogs": ["Shugar", "Kira", "Akela"]
+	}
+]
+```
+
+results in the following output:
+
+```
+Hello John from Johannesburg!
+        There is no dog living with you.
+Hello Bernd!
+        You have 1 dog named Doge
+Hello Max from Dortmund!
+        You have 3 dogs named Shugar, Kira and Akela
+```
+
+Try it out by calling
+
+```bash
+python vistache.py -v persons persons.json -r persons.vistache
+```
+
+from a command-line.
 
 ## Contributing
 

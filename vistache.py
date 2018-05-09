@@ -56,6 +56,7 @@ class Template(Interpreter):
 	endDelimiter = "}}"
 
 	startBlock = "#"
+	altBlock = "|"
 	endBlock = "/"
 
 	def __init__(self, dfn = None):
@@ -84,6 +85,7 @@ class Template(Interpreter):
 		assert self.startDelimiter
 		assert self.endDelimiter
 		assert self.startBlock
+		assert self.altBlock
 		assert self.endBlock
 
 		assert self.startBlock != self.endBlock
@@ -122,7 +124,21 @@ class Template(Interpreter):
 				except ParseException as e:
 					raise ParseException(row + e.row - 1, col + e.col - 1, e.expecting)
 
-				blocks.append((node, block))
+				blocks.append((node, block, None))
+				block = Node("tblock")
+
+			elif expr.startswith(self.altBlock):
+				if not blocks:
+					raise ParseException(row, col, "Alternative block without opening block")
+
+				node, nblock, ablock = blocks[-1]
+				if ablock:
+					raise ParseException(row, col, "Multiple alternative blocks are not allowed")
+
+				blocks[-1] = (node, nblock, block)
+
+				row, col = updatePos(self.startDelimiter + expr, row, col)
+
 				block = Node("tblock")
 
 			elif expr.startswith(self.endBlock):
@@ -131,8 +147,12 @@ class Template(Interpreter):
 
 				row, col = updatePos(self.startDelimiter + expr, row, col)
 
-				node, nblock = blocks.pop()
-				nblock.children.append(Node("tloop", children=[node, block]))
+				node, nblock, ablock = blocks.pop()
+				if ablock:
+					nblock.children.append(Node("tloop", children=[node, ablock, block]))
+				else:
+					nblock.children.append(Node("tloop", children=[node, block, None]))
+
 				block = nblock
 
 			else:
@@ -182,6 +202,7 @@ class Template(Interpreter):
 		if isinstance(value, list):
 			if value:
 				fields = self.fields
+				keys = []
 				self.fields = fields.copy()
 
 				self.fields["loop"] = {
@@ -198,12 +219,19 @@ class Template(Interpreter):
 					})
 
 					if isinstance(val, dict):
+						for key in keys:
+							del self.fields[key]
+
 						self.fields.update(val)
+						keys = [key for key in self.fields.keys() if key != "loop" and key not in fields.keys()]
 
 					self.traverse(node.children[1])
 					txt += self.stack.pop()
 
 				self.fields = fields
+			elif node.children[2]:
+				self.traverse(node.children[2])
+				txt += self.stack.pop()
 
 		elif value:
 			if isinstance(value, dict):
@@ -216,6 +244,10 @@ class Template(Interpreter):
 
 			if isinstance(value, dict):
 				self.fields = fields
+
+		elif node.children[2]:
+			self.traverse(node.children[2])
+			txt += self.stack.pop()
 
 		self.stack.append(txt)
 
