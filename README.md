@@ -155,7 +155,7 @@ In case of a loop in the conditional blocks above, a variable `loop` is also mad
 - `loop.index` is the loop conter starting at 1,
 - `loop.index0` is the loop conter starting at 0,
 - `loop.first` is true on the first loop,
-- `loop.false` is true on the last loop.
+- `loop.last` is true on the last loop.
 
 Running the template
 
