@@ -6,6 +6,7 @@ This file documents any relevant changes done to logics.
 
 - New {{|}} else block notation added to Vistache
 - Improved Vistache loop variable processing
+- Avoid overriding existing keys within Vistache {{#if}} blocks
 
 ## 2.2 Etna
 

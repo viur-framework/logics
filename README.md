@@ -2,22 +2,22 @@
 
 **logics** is a domain-specific, embeddable expressional language with a Python-style syntax.
 
-**vistache** is a Mustache-style template engine powered by logics expressions.
+**vistache** is an easy-to-use template engine powered by logics expressions.
 
 ## About
 
-The initial intention behind logics was to serve a well-known syntax for expressing validity checks across all ViUR modules and execution platforms. Thios starts from the administration tools to server-side input checking as well as client-side input forms and user-defined template processing.
+The initial intention behind logics was to serve a well-known syntax for expressing validity checks across all ViUR modules and execution platforms. This starts from the administration tools to server-side input checking as well as client-side input forms and user-defined template processing.
 
-The first versions of logics where intended to allow bot direct expression execution and expression compilation into native JavaScript, to be executed on client-side without a logics interpreter. This feature was disabled for now, but may be re-implemented in future and when needed.
+The first version of logics was intended to allow both direct expression execution and expression compilation into native JavaScript code, to be executed on client-side without the need of a logics interpreter. This feature has been disabled for now, but may be re-implemented in future when needed.
 
-But logics is not intended to be a scripting language! Therefore it neither provides direct variable assignment, nor control structures like loops or jumps - except comprehensions.
+logics is __not__ intended to be a scripting language! Therefore it neither provides direct variable assignment, nor control structures like loops or jumps - except comprehensions.
 
 Moreover, it is a language and tool for...
 
 - ...expressing validity checks,
 - ...performing custom calculations,
 - ...providing customizable templating features,
-- ...making data-driven decisions in a restricted and secure context.
+- ...making data-driven decisions in a restricted and secure runtime context.
 
 ## Usage
 
@@ -106,39 +106,42 @@ The expressions are provided by extending skeleton bones to specific expressions
 
 ```python
 class fieldSkel(Skeleton):
-    type = selectOneBone(descr="Type",
-                            values={
-                                "level":u"Leveling",
-                                "bool":u"Boolean",
-                                "text":u"Text (single line)",
-                                "memo":u"Text (multi-line)",
-                                "select":u"Selection field",
-                                "table":u"Table",
-                                "query": u"Output field"},
-                            required=True, defaultValue="level")
-    value = stringBone(descr="Default value",
-                        params={"logic.visibleIf": 'type != "level"'})
-    entries = stringBone(descr="Possible values",
-                            params={"logic.visibleIf": 'type == "select"'},
-                            multiple=True)
-    required = booleanBone(descr="Required",
-                            params={"logic.visibleIf":
-                                        'type in ["text", "memo"]'},
-                            defaultValue=False)
-    multiple = booleanBone(descr="Multiple entries",
-                            params={"logic.visibleIf":
-                                        'type in ["text", "memo", "select"]'},
-                            defaultValue=False)
-    columns = stringBone(descr="Columns",
-                            multiple=True,
-                            params={"visibleIf": 'type == "table"'})
+    type = selectBone(
+        descr="Type",
+        values={
+            "none": u"None",
+            "text": u"Text (single line)",
+            "memo": u"Text (multi-line)",
+            "select": u"Selection field"
+        },
+        required=True, defaultValue="level"
+    )
+    value = stringBone(
+        descr="Default value",
+        params={"logic.visibleIf": 'type != "none"'}
+    )
+    entries = stringBone(
+        descr="Possible values",
+        params={"logic.visibleIf": 'type == "select"'},
+        multiple=True
+    )
+    required = booleanBone(
+        descr="Required",
+        params={"logic.visibleIf": 'type in ["text", "memo"]'},
+        defaultValue=False
+    )
+    multiple = booleanBone(
+        descr="Multiple entries",
+        params={"logic.visibleIf": 'type in ["text", "memo", "select"]'},
+        defaultValue=False
+    )
 ```
 
 ## Vistache, the template engine
 
 ![Vistache Editor](https://lh3.googleusercontent.com/ygyA0TcqcR9id4MxzscYOqP0U49pHmKGnwvpwJ_iVdP6_LRRPkZK9KU5Ig5sSbeHm6zpe6Z6KkmUIp3zW7VI=s1024)
 
-Vistache is an extension built on top of logics, allowing for a [Mustache](https://mustache.github.io/)-like template language. Likewise the original Mustache, a template is first compiled into an executable representation, then it can be rendered with variable data.
+Vistache is an extension built on top of logics, providing an easy-to-use template language with a [Mustache](https://mustache.github.io/)-like syntax. Likewise the original Mustache, a template is first compiled into an executable representation, then it can be rendered with variable data.
 
 Instead of just outputting variables and performing conditional or iterative blocks, Vistage allows to use full logics expressions as shown in the example below.
 

@@ -237,7 +237,7 @@ class Template(Interpreter):
 			if isinstance(value, dict):
 				fields = self.fields
 				self.fields = fields.copy()
-				self.fields.update(value)
+				self.fields.update({k: v for k, v in value.items() if k not in self.fields})
 
 			self.traverse(node.children[1])
 			txt = self.stack.pop()
