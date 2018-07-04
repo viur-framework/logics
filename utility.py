@@ -78,13 +78,13 @@ def optimizeValue(val, allow = [int, bool, float, list, dict, str, unicode], def
 	"""
 	# On string, check if parsing int or float is possible.
 	if isinstance(val, str):
-		v = parseInt(val, None)
-		if v is not None:
-			val = v
-		else:
-			v = parseFloat(val, None)
-			if v is not None:
-				val = v
+		try:
+			val = int(val)
+		except ValueError:
+			try:
+				val = float(val)
+			except ValueError:
+				pass
 
 	if any([isinstance(val, t) for t in allow]):
 		return val
