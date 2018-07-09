@@ -13,7 +13,7 @@ __status__ = "Beta"
 
 from logics import Interpreter
 from parser import Node, ParseException
-from utility import parseInt
+from utility import parseInt, parseFloat
 
 def htmlInsertImage(info, size = None, fallback = None):
 	isServingUrl = False
@@ -51,6 +51,26 @@ def htmlInsertImage(info, size = None, fallback = None):
 
 	return "<img " + " ".join([("%s=\"%s\"" % (k, v)) for k, v in attr.items() if v is not None]) + ">"
 
+def formatCurrency(value, deciDelimiter = ",", thousandDelimiter = "."):
+	ret = "%.2f" % parseFloat(value)
+	before, behind = ret.split(".", 1)
+
+	# PyJS sucks and cannot reverse() ...
+	rbefore = ""
+	for ch in before:
+		rbefore = ch + rbefore
+
+	ret = ""
+	for i, ch in enumerate(rbefore):
+		if i > 0 and i % 3 == 0:
+			ret = ch + thousandDelimiter + ret
+		else:
+			ret = ch + ret
+
+	ret = ret + deciDelimiter + behind
+	return ret.strip()
+
+
 class Template(Interpreter):
 	startDelimiter = "{{"
 	endDelimiter = "}}"
@@ -59,12 +79,15 @@ class Template(Interpreter):
 	altBlock = "|"
 	endBlock = "/"
 
-	def __init__(self, dfn = None):
+	def __init__(self, dfn = None, emptyValue = None):
 		super(Template, self).__init__()
 		self.ast = None
 
 		# Vistache provides generator functions
 		self.addFunction(htmlInsertImage)
+		self.addFunction(formatCurrency)
+
+		self.emptyValue = emptyValue
 
 		if dfn:
 			self.parse(dfn)
@@ -186,7 +209,11 @@ class Template(Interpreter):
 		txt = ""
 
 		for c in node.children:
-			txt = str(self.stack.pop()) + txt
+			v = self.stack.pop()
+			if v is None:
+				v = self.emptyValue
+
+			txt = str(v) + txt
 
 		self.stack.append(txt)
 
