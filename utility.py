@@ -72,11 +72,14 @@ def parseFloat(value, ret=0.0):
 	except ValueError:
 		return ret
 
-def optimizeValue(val, allow = [int, bool, float, list, dict, str, unicode], default = str):
+def optimizeValue(val, allow = [int, bool, float, list, dict, str], default = str):
 	"""
 	Evaluates the best matching value.
 	"""
 	# On string, check if parsing int or float is possible.
+	if isinstance(val, unicode):
+		val = val.encode("utf-8")
+
 	if isinstance(val, str):
 		try:
 			val = int(val)
