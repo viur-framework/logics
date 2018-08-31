@@ -76,18 +76,26 @@ def optimizeValue(val, allow = [int, bool, float, list, dict, str], default = st
 	"""
 	Evaluates the best matching value.
 	"""
-	# On string, check if parsing int or float is possible.
+
 	if isinstance(val, unicode):
 		val = val.encode("utf-8")
 
+	# On string, check if conversion to int or float is possible,
+	# if the entire value only consists of digits and does not start
+	# with a 0
 	if isinstance(val, str):
-		try:
-			val = int(val)
-		except ValueError:
-			try:
-				val = float(val)
-			except ValueError:
-				pass
+		if (len(val) > 1 and not val.startswith("0")) or len(val) == 1:
+			if all([c in "+-0123456789" for c in val]):
+				try:
+					val = int(val)
+				except ValueError:
+					pass
+
+			elif all([c in "+-0123456789." for c in val]):
+				try:
+					val = float(val)
+				except ValueError:
+					pass
 
 	if any([isinstance(val, t) for t in allow]):
 		return val

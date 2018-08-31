@@ -4,6 +4,7 @@ This file documents any relevant changes done to logics.
 
 ## [develop]
 
+- Changed semantics for softer value optimization
 - New {{|}} else block notation added to Vistache
 - Improved Vistache loop variable processing
 - Avoid overriding existing keys within Vistache {{#if}} blocks

@@ -143,7 +143,7 @@ class fieldSkel(Skeleton):
 
 Vistache is an extension built on top of logics, providing an easy-to-use template language with a [Mustache](https://mustache.github.io/)-like syntax. Likewise the original Mustache, a template is first compiled into an executable representation, then it can be rendered with variable data.
 
-Instead of just outputting variables and performing conditional or iterative blocks, Vistage allows to use full logics expressions as shown in the example below.
+Instead of just outputting variables and performing conditional or iterative blocks, Vistache allows to use full logics expressions as shown in the example below.
 
 Vistache expressions:
 
