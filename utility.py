@@ -76,9 +76,11 @@ def optimizeValue(val, allow = [int, bool, float, list, dict, str], default = st
 	"""
 	Evaluates the best matching value.
 	"""
-
-	if isinstance(val, unicode):
-		val = val.encode("utf-8")
+	try:
+		if isinstance(val, unicode):
+			val = val.encode("utf-8")
+	except:
+		pass
 
 	# On string, check if conversion to int or float is possible,
 	# if the entire value only consists of digits and does not start
