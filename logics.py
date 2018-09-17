@@ -233,7 +233,7 @@ class Interpreter(Parser):
 
 			if tail.emit == "IDENT":
 				# Expand list into its first entry when expansion is continued here.
-				if isinstance(value, list) and len(value) == 1:
+				if isinstance(value, list): # and len(value) == 1:
 					value = value[0]
 
 				# Dive into dict by key
