@@ -2,9 +2,12 @@
 
 This file documents any relevant changes done to logics.
 
-## [develop]
+## 2.3 Kilauea
+
+Currently under development.
 
 - Changed semantics for softer value optimization
+- New function ``formatCurrency()` for Vistache
 - New {{|}} else block notation added to Vistache
 - Improved Vistache loop variable processing
 - Avoid overriding existing keys within Vistache {{#if}} blocks
