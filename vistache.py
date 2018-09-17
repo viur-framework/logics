@@ -55,7 +55,7 @@ def formatCurrency(value, deciDelimiter = ",", thousandDelimiter = "."):
 	ret = "%.2f" % parseFloat(value)
 	before, behind = ret.split(".", 1)
 
-	# PyJS sucks and cannot reverse() ...
+	# PyJS cannot reverse() ...
 	rbefore = ""
 	for ch in before:
 		rbefore = ch + rbefore
@@ -79,7 +79,7 @@ class Template(Interpreter):
 	altBlock = "|"
 	endBlock = "/"
 
-	def __init__(self, dfn = None, emptyValue = None):
+	def __init__(self, dfn = None, emptyValue = None, replaceCharRefs = False):
 		super(Template, self).__init__()
 		self.ast = None
 
@@ -88,6 +88,7 @@ class Template(Interpreter):
 		self.addFunction(formatCurrency)
 
 		self.emptyValue = emptyValue
+		self.replaceCharRefs = replaceCharRefs
 
 		if dfn:
 			self.parse(dfn)
@@ -134,6 +135,13 @@ class Template(Interpreter):
 			start += len(self.startDelimiter)
 			expr = s[start:end]
 			end += len(self.endDelimiter)
+
+			if self.replaceCharRefs:
+				for find, repl in {
+					"&gt;": ">",
+				    "&lt;": "<"
+				}.items():
+					expr = expr.replace(find, repl)
 
 			#print("expr   = %r %d %d" % (expr, row, col))
 
