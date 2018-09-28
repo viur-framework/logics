@@ -127,6 +127,7 @@ class Interpreter(Parser):
 			return ret
 
 		self.addFunction("join", _pyjsLogicsJoin if _pyjsCompat else lambda l, d = ", ": str(d).join(l))
+		self.addFunction("split", lambda s, d=" ": s.split(d))
 
 	def addFunction(self, name, fn = None):
 		"""
