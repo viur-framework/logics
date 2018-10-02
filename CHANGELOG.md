@@ -4,9 +4,10 @@ This file documents any relevant changes done to logics.
 
 ## 2.3 Kilauea
 
-Currently under development.
+Release date: Oct 2, 2018
 
 - Changed semantics for softer value optimization
+- New function ``split()`` for logics
 - New function ``formatCurrency()` for Vistache
 - New {{|}} else block notation added to Vistache
 - Improved Vistache loop variable processing

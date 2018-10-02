@@ -7,7 +7,7 @@ that can be compiled and executed in any of ViUR's runtime contexts.
 
 __author__ = "Jan Max Meyer"
 __copyright__ = "Copyright 2015-2018 by Mausbrand Informationssysteme GmbH"
-__version__ = "2.2"
+__version__ = "2.3"
 __license__ = "LGPLv3"
 __status__ = "Beta"
 
