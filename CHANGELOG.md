@@ -2,7 +2,11 @@
 
 This file documents any relevant changes done to logics.
 
-## 2.3 Kilauea
+## [develop]
+
+Current development version.
+
+## [2.3] Kilauea
 
 Release date: Oct 2, 2018
 
@@ -13,7 +17,7 @@ Release date: Oct 2, 2018
 - Improved Vistache loop variable processing
 - Avoid overriding existing keys within Vistache {{#if}} blocks
 
-## 2.2 Etna
+## [2.2] Etna
 
 (Previously referred as 0.7)
 Release date: Apr 23, 2018
@@ -25,7 +29,7 @@ Release date: Apr 23, 2018
 - New version numbering synchronized with ViUR
 - CHANGELOG added
 
-## 2.1
+## [2.1]
 
 (Previously referred as 0.6)
 Release date: Nov 02, 2017
@@ -34,12 +38,12 @@ Release date: Nov 02, 2017
 - First version included in [ViUR vi](https://github.com/viur-framework/vi)
 - Major improvements
 
-## 0.5
+## [0.5]
 
 - Reworking the language and introducing the entity traversals, allowing
   for iterating and accessing indexes, keys or even functions
 
-## 0.4
+## [0.4]
 
 - Iterative comprehensions
 - Command-line interface
@@ -51,3 +55,11 @@ Release date: Nov 02, 2017
 - Conditional and arithmetic expressions
 - Demos implemented to run both in [ViUR vi](https://github.com/viur-framework/vi) and a native JavaScript frontend
 - JavaScript API
+
+
+[develop]: https://github.com/viur-framework/logics/compare/v2.3.0...develop
+[2.3]: https://github.com/viur-framework/logics/compare/v2.2.0...v2.3.0
+[2.2]: https://github.com/viur-framework/logics/compare/v2.1...v2.2.0
+[2.1]: https://github.com/viur-framework/logics/compare/v0.5...v2.1
+[0.5]: https://github.com/viur-framework/logics/compare/v0.4...v0.5
+[0.4]: https://github.com/viur-framework/logics/compare/v0.3...v0.4
