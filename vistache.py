@@ -15,7 +15,7 @@ from logics import Interpreter
 from parser import Node, ParseException
 from utility import parseInt, parseFloat
 
-def htmlInsertImage(info, size = None, fallback = None):
+def htmlInsertImage(info, size = None, fallback = None, flip = None):
 	isServingUrl = False
 	size = parseInt(size, 0)
 
@@ -37,6 +37,8 @@ def htmlInsertImage(info, size = None, fallback = None):
 		elif not img.startswith("/_ah/img/"): #DevServer must be punished!
 			isServingUrl = True
 			img += ("=s%d" % size)
+			if flip is True:
+				img += "-fh"
 
 	# Use info as string
 	elif info:
@@ -48,6 +50,8 @@ def htmlInsertImage(info, size = None, fallback = None):
 	attr["src"] = img
 	if not isServingUrl and size > 0:
 		attr["width"] = size
+	if not isServingUrl and flip is True:
+		attr["flip"] = "-fh"
 
 	return "<img " + " ".join([("%s=\"%s\"" % (k, v)) for k, v in attr.items() if v is not None]) + ">"
 
