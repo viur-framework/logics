@@ -25,7 +25,8 @@ class Node(object):
 			level += 1
 
 		for child in self.children:
-			child.dump(level)
+			if child:
+				child.dump(level)
 
 
 class ParseException(Exception):
@@ -60,42 +61,43 @@ class ParserToken(object):
 
 
 class ParserControlBlock(object):
+	def __init__(self, input):
 
-	# Stack
-	stack = None
-	tos = None
+		# Stack
+		self.stack = []
+		self.tos = None
 
-	# Values
-	ret = None
+		# Values
+		self.ret = None
 
-	# State
-	act = None
-	idx = None
-	lhs = None
+		# State
+		self.act = 0
+		self.idx = None
+		self.lhs = None
 
-	# Lookahead
-	sym = -1
-	old_sym = -1
-	len = 0
+		# Lookahead
+		self.sym = -1
+		self.old_sym = -1
+		self.len = 0
 
-	# Lexical analysis
-	lexem = None
-	next = None
-	eof = None
-	is_eof = None
+		# Lexical analysis
+		self.lexem = None
+		self.next = None
+		self.eof = None
+		self.is_eof = None
 
-	# Input buffering
-	input = None
-	buf = ""
+		# Input buffering
+		self.input = input
+		self.buf = ""
 
-	# Error handling
-	error_delay = 3
-	error_count = 0
+		# Error handling
+		self.error_delay = 3
+		self.error_count = 0
 
-	line = 1
-	column = 1
+		self.line = 1
+		self.column = 1
 
-	
+		
 
 
 class Parser(object):
@@ -104,6 +106,7 @@ class Parser(object):
 	_ERROR = 0
 	_REDUCE = 1
 	_SHIFT = 2
+	_SUCCESS = 4
 
 	# Parse tables
 	_symbols = (
@@ -444,8 +447,7 @@ class Parser(object):
 		if pcb.buf:
 
 			# Perform position counting.
-			for pos in range(0, pcb.len):
-				ch = pcb.buf[pos]
+			for ch in pcb.buf[0: pcb.len]:
 				if ch == '\n':
 					pcb.line += 1
 					pcb.column = 0
@@ -539,9 +541,8 @@ class Parser(object):
 			except NameError:
 				s = input(">")
 
-		pcb = ParserControlBlock()
-		pcb.stack = []
-		pcb.input = s
+		pcb = ParserControlBlock(s)
+		pcb.act = self._SHIFT
 
 		pcb.tos = ParserToken()
 		pcb.stack.append(pcb.tos)
@@ -549,7 +550,74 @@ class Parser(object):
 		while True:
 			#print("state = %d" % pcb.tos.state)
 
-			# TODO: Error Recovery
+			# Reduce
+			while pcb.act & self._REDUCE:
+
+				# Set default left-hand side
+				pcb.lhs = self._productions[pcb.idx][3]
+
+				#print("REDUCE", pcb.idx, self._productions[pcb.idx][0])
+				#print("state", pcb.tos.state)
+
+				# Call reduce function
+				#print("CALL", "_reduce_action_%d" % pcb.idx)
+				reduce_fn = getattr(self, "_reduce_action_%d" % pcb.idx, None)
+				if reduce_fn:
+					reduce_fn(pcb)
+
+				# Drop right-hand side
+				cnodes = None
+				for _ in range(0, self._productions[pcb.idx][2]):
+					item = pcb.stack.pop()
+
+					if item.node:
+						if cnodes is None:
+							cnodes = []
+
+						if isinstance(item.node, list):
+							cnodes = item.node + cnodes
+						else:
+							cnodes.insert(0, item.node)
+
+				pcb.tos = pcb.stack[-1]
+				pcb.tos.value = pcb.ret
+
+				# Handle AST nodes
+				if self._productions[pcb.idx][1]:
+					#print("%s = %s" % (self._productions[pcb.idx][0], self._productions[pcb.idx][1]))
+					node = Node(self._productions[pcb.idx][1],
+											children=cnodes)
+
+				else:
+					node = None
+
+				# Error enforced by semantics?
+				if pcb.act == self._ERROR:
+					break
+
+				# Goal symbol reduced, and stack is empty?
+				if pcb.lhs == 68 and len(pcb.stack) == 1:
+					pcb.tos.node = node or cnodes
+					self._clear_input(pcb)
+					pcb.act = self._SUCCESS;
+					break
+
+				self._get_go(pcb)
+
+				pcb.tos = ParserToken()
+				pcb.stack.append(pcb.tos)
+
+				pcb.tos.symbol = self._symbols[pcb.lhs]
+				pcb.tos.state = -1 if pcb.act & self._REDUCE else pcb.idx
+				pcb.tos.value = pcb.ret
+				pcb.tos.node = node or cnodes
+				pcb.tos.line = pcb.line
+				pcb.tos.column = pcb.column
+
+			if pcb.act == self._SUCCESS or pcb.act == self._ERROR:
+				break
+
+			# Get next input symbol
 			self._get_sym(pcb)
 
 			#print("pcb.sym = %d (%s)" % (pcb.sym, self._symbols[pcb.sym][0]))
@@ -557,6 +625,7 @@ class Parser(object):
 
 			# Get action table entry
 			if not self._get_act(pcb):
+				# TODO: Error Recovery
 				raise ParseException(pcb.line, pcb.column,
 					[self._symbols[sym]
 						for (sym, pcb.act, pcb.idx)
@@ -590,67 +659,6 @@ class Parser(object):
 					self._clear_input(pcb)
 					pcb.old_sym = -1
 
-			# Reduce
-			while pcb.act & self._REDUCE:
-
-				# Set default left-hand side
-				pcb.lhs = self._productions[pcb.idx][3]
-
-				#print("REDUCE", pcb.idx, self._productions[pcb.idx][0])
-				#print("state", pcb.tos.state)
-
-				# Call reduce function
-				#print("CALL", "_reduce_action_%d" % pcb.idx)
-				reduce_fn = getattr(self, "_reduce_action_%d" % pcb.idx, None)
-				if reduce_fn:
-					reduce_fn(pcb)
-
-				# Drop right-hand side
-				cnodes = None
-				for _ in range(0, self._productions[pcb.idx][2]):
-					item = pcb.stack.pop()
-
-					if item.node:
-						if cnodes is None:
-							cnodes = []
-
-						if isinstance(item.node, list):
-							cnodes = item.node + cnodes
-						else:
-							cnodes.insert(0, item.node)
-
-				pcb.tos = pcb.stack[-1]
-
-				# Handle AST nodes
-				if self._productions[pcb.idx][1]:
-					#print("%s = %s" % (self._productions[pcb.idx][0], self._productions[pcb.idx][1]))
-					node = Node(self._productions[pcb.idx][1],
-											children=cnodes)
-
-				else:
-					node = None
-
-				# Goal symbol reduced, and stack is empty?
-				if pcb.lhs == 68 and len(pcb.stack) == 1:
-					pcb.tos.node = node or cnodes
-					self._clear_input(pcb)
-					break
-
-				self._get_go(pcb)
-
-				pcb.tos = ParserToken()
-				pcb.stack.append(pcb.tos)
-
-				pcb.tos.symbol = self._symbols[pcb.lhs]
-				pcb.tos.state = -1 if pcb.act & self._REDUCE else pcb.idx
-				pcb.tos.value = pcb.ret
-				pcb.tos.node = node or cnodes
-				pcb.tos.line = pcb.line
-				pcb.tos.column = pcb.column
-
-			if pcb.act & self._REDUCE and pcb.idx == 0:
-				break
-
 		if pcb.ret is None and pcb.tos.node:
 			if isinstance(pcb.tos.node, list):
 				if len(pcb.tos.node) > 1:
@@ -674,4 +682,6 @@ if __name__ == "__main__":
 
 	if isinstance(ret, Node):
 		ret.dump()
+	else:
+		print(ret)
 
