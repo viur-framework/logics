@@ -220,22 +220,26 @@ class Interpreter(Parser):
 		pass # Do nothing
 
 	def post_entity(self, node):
-		#print("entity %d" % self.call_entity)
-		#self.dump(node)
+		#print("--- post_entity ---")
+		#node.dump()
 
 		self.traverse(node.children[0])
 		value = self.stack.pop()
-		#print("entity", value)
+		#print("post_entity: value = %r" % value)
 
 		for i, tail in enumerate(node.children[1:]):
-			#print("ENTITY", type(value), i, tail.symbol, tail.match)
+			#print("post_entity: i = %d, tail.emit = %r, value = %r" % (i, tail.emit, value))
 			if value is None:
 				break
 
 			if tail.emit == "IDENT":
 				# Expand list into its first entry when expansion is continued here.
-				if isinstance(value, list): # and len(value) == 1:
-					value = value[0]
+				if isinstance(value, list):
+					if len(value) > 0:
+						value = value[0]
+					else:
+						value = None
+						break
 
 				# Dive into dict by key
 				if isinstance(value, dict):
@@ -307,16 +311,18 @@ class Interpreter(Parser):
 				self.stack.append(l <= r)
 			elif op == "<>" or op == "!=":
 				self.stack.append(l != r)
+
 			elif op == "in":
-				if r:
+				try:
 					self.stack.append(l in r)
-				else:
+				except:
 					self.stack.append(False)
+
 			elif op == "not_in":
-				if r:
+				try:
 					self.stack.append(l not in r)
-				else:
-					self.stack.append(True)
+				except:
+					self.stack.append(False)
 
 	def post_add(self, node):
 		l, r = self.getOperands(False)
