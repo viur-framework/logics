@@ -15,7 +15,7 @@ from logics import Interpreter
 from parser import Node, ParseException
 from utility import parseInt, parseFloat
 
-def htmlInsertImage(info, size = None, fallback = None):
+def htmlInsertImage(info, size = None, fallback = None, flip = None):
 	isServingUrl = False
 	size = parseInt(size, 0)
 
@@ -23,6 +23,10 @@ def htmlInsertImage(info, size = None, fallback = None):
 		info = fallback
 
 	attr = {}
+
+	# check if image is supposed to be mirrored
+	if flip is True:
+		attr["style"] = "transform: scaleX(-1);"
 
 	# Check for ViUR image info
 	if isinstance(info, dict) and all([key in info.keys() for key in ["dlkey", "servingurl"]]):
@@ -50,6 +54,7 @@ def htmlInsertImage(info, size = None, fallback = None):
 		attr["width"] = size
 
 	return "<img " + " ".join([("%s=\"%s\"" % (k, v)) for k, v in attr.items() if v is not None]) + ">"
+
 
 def formatCurrency(value, deciDelimiter = ",", thousandDelimiter = "."):
 	ret = "%.2f" % parseFloat(value)
