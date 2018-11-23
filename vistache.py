@@ -24,6 +24,10 @@ def htmlInsertImage(info, size = None, fallback = None, flip = None):
 
 	attr = {}
 
+	# check if image is supposed to be mirrored
+	if flip is True:
+		attr["style"] = "transform: scaleX(-1);"
+
 	# Check for ViUR image info
 	if isinstance(info, dict) and all([key in info.keys() for key in ["dlkey", "servingurl"]]):
 		img = str(info["servingurl"])
@@ -38,10 +42,6 @@ def htmlInsertImage(info, size = None, fallback = None, flip = None):
 			isServingUrl = True
 			img += ("=s%d" % size)
 
-	# check if image is supposed to be mirrored
-	if flip is True:
-		attr["style"] = "transform: scaleX(-1);"
-
 	# Use info as string
 	elif info:
 		img = str(info)
@@ -53,8 +53,8 @@ def htmlInsertImage(info, size = None, fallback = None, flip = None):
 	if not isServingUrl and size > 0:
 		attr["width"] = size
 
-
 	return "<img " + " ".join([("%s=\"%s\"" % (k, v)) for k, v in attr.items() if v is not None]) + ">"
+
 
 def formatCurrency(value, deciDelimiter = ",", thousandDelimiter = "."):
 	ret = "%.2f" % parseFloat(value)
