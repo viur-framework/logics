@@ -37,8 +37,10 @@ def htmlInsertImage(info, size = None, fallback = None, flip = None):
 		elif not img.startswith("/_ah/img/"): #DevServer must be punished!
 			isServingUrl = True
 			img += ("=s%d" % size)
-			if flip is True:
-				img += "-fh"
+
+	# check if image is supposed to be mirrored
+	if flip is True:
+		attr["style"] = "transform: scaleX(-1);"
 
 	# Use info as string
 	elif info:
@@ -50,8 +52,7 @@ def htmlInsertImage(info, size = None, fallback = None, flip = None):
 	attr["src"] = img
 	if not isServingUrl and size > 0:
 		attr["width"] = size
-	if not isServingUrl and flip is True:
-		attr["flip"] = "-fh"
+
 
 	return "<img " + " ".join([("%s=\"%s\"" % (k, v)) for k, v in attr.items() if v is not None]) + ">"
 
