@@ -109,6 +109,10 @@ class Interpreter(Parser):
 		self.addFunction("sum", lambda v: sum([optimizeValue(_, allow=[bool, int, float], default=0) for _ in v]))
 		self.addFunction("max", lambda x: max(x))
 		self.addFunction("min", lambda x: min(x))
+		self.addFunction("replace", lambda s, f=" ", r="": strType(s).replace(f, r))
+		self.addFunction("lstrip", lambda s, c=" \t\r\n": strType(s).lstrip(c))
+		self.addFunction("rstrip", lambda s, c=" \t\r\n": strType(s).rstrip(c))
+		self.addFunction("strip", lambda s, c=" \t\r\n": strType(s).strip(c))
 
 		def _pyjsLogicsJoin(l, d = ", "):
 			ret = ""

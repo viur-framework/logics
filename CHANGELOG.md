@@ -6,6 +6,7 @@ This file documents any relevant changes done to logics.
 
 This is the current development version.
 
+- Feature: New functions `replace`, `rstrip`, `lstrip` and `strip`
 - Feature: Vistache-function `htmlInsertImage` improved to flip-parameter.
 - Bugfix: `logics.utility.strType` variable defines string type to use 
 - Bugfix: Empty list traversal handled more faithfully
