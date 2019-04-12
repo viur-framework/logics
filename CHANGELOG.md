@@ -2,9 +2,14 @@
 
 This file documents any relevant changes done to logics.
 
-## [develop]
+## [2.4] Agung
 
-Current development version.
+This is the current development version.
+
+- Feature: Vistache-function `htmlInsertImage` improved to flip-parameter.
+- Bugfix: `logics.utility.strType` variable defines string type to use 
+- Bugfix: Empty list traversal handled more faithfully
+- Bugfix: Stability in `in` and `not in` tests
 
 ## [2.3] Kilauea
 
@@ -58,6 +63,7 @@ Release date: Nov 02, 2017
 
 
 [develop]: https://github.com/viur-framework/logics/compare/v2.3.0...develop
+[2.4]: https://github.com/viur-framework/logics/compare/v2.3.0...develop
 [2.3]: https://github.com/viur-framework/logics/compare/v2.2.0...v2.3.0
 [2.2]: https://github.com/viur-framework/logics/compare/v2.1...v2.2.0
 [2.1]: https://github.com/viur-framework/logics/compare/v0.5...v2.1

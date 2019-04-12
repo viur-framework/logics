@@ -6,21 +6,14 @@ that can be compiled and executed in any of ViUR's runtime contexts.
 """
 
 __author__ = "Jan Max Meyer"
-__copyright__ = "Copyright 2015-2018 by Mausbrand Informationssysteme GmbH"
-__version__ = "2.3"
+__copyright__ = "Copyright 2015-2019 by Mausbrand Informationssysteme GmbH"
+__version__ = "2.4"
 __license__ = "LGPLv3"
 __status__ = "Beta"
 
 import parser
 from utility import parseInt, parseFloat, optimizeValue
-
-try:
-	# Test if we are in a PyJS environment
-	import __pyjamas__
-	_pyjsCompat = True
-
-except ImportError:
-	_pyjsCompat = False
+from utility import strType, _pyjsCompat
 
 class Parser(parser.Parser):
 
@@ -106,10 +99,10 @@ class Interpreter(Parser):
 
 		self.functions = {}
 
-		self.addFunction("upper", lambda x: str(x).upper())
-		self.addFunction("lower", lambda x: str(x).lower())
+		self.addFunction("upper", lambda x: strType(x).upper())
+		self.addFunction("lower", lambda x: strType(x).lower())
 		self.addFunction("bool", lambda x: bool(x))
-		self.addFunction("str", lambda x: str(x))
+		self.addFunction("str", lambda x: strType(x))
 		self.addFunction("int", lambda x: parseInt(parseFloat(x)))
 		self.addFunction("float", parseFloat)
 		self.addFunction("len", lambda x: len(x))
@@ -120,13 +113,13 @@ class Interpreter(Parser):
 		def _pyjsLogicsJoin(l, d = ", "):
 			ret = ""
 			for i in l:
-				ret += str(i)
+				ret += strType(i)
 				if i is not l[-1]:
-					ret += str(d)
+					ret += strType(d)
 
 			return ret
 
-		self.addFunction("join", _pyjsLogicsJoin if _pyjsCompat else lambda l, d = ", ": str(d).join(l))
+		self.addFunction("join", _pyjsLogicsJoin if _pyjsCompat else lambda l, d = ", ": strType(d).join(l))
 		self.addFunction("split", lambda s, d=" ": s.split(d))
 
 	def addFunction(self, name, fn = None):
@@ -140,7 +133,7 @@ class Interpreter(Parser):
 			fn = name
 			name = fn.__name__
 
-		assert isinstance(name, str)
+		assert isinstance(name, basestring)
 		assert callable(fn)
 
 		self.functions[name] = fn
@@ -162,7 +155,7 @@ class Interpreter(Parser):
 		self.fields = fields or {}
 		self.prefix = prefix or ""
 
-		if isinstance(src, str):
+		if isinstance(src, basestring):
 			t = self.compile(src)
 			if t is None:
 				return None
@@ -327,11 +320,9 @@ class Interpreter(Parser):
 	def post_add(self, node):
 		l, r = self.getOperands(False)
 
-		if isinstance(l, str) or isinstance(r, str):
-			if not isinstance(l, str):
-				l = str(l)
-			else:
-				r = str(r)
+		if isinstance(l, basestring) or isinstance(r, basestring):
+			l = strType(l)
+			r = strType(r)
 
 		#print("add", type(l), l, type(r), r)
 		self.stack.append(l + r)
@@ -345,9 +336,9 @@ class Interpreter(Parser):
 	def post_mul(self, node):
 		l, r = self.getOperands(False)
 
-		if isinstance(l, str) and isinstance(r, str):
+		if isinstance(l, basestring) and isinstance(r, basestring):
 			r = 0
-		elif isinstance(l, str) or isinstance(r, str):
+		elif isinstance(l, basestring) or isinstance(r, basestring):
 			if parseInt(l, None) is not None:
 				l = int(l)
 			elif parseInt(r, None) is not None:
@@ -372,7 +363,7 @@ class Interpreter(Parser):
 		op = self.stack.pop()
 		#print("factor", op)
 
-		if isinstance(op, str) or isinstance(op, unicode):
+		if isinstance(op, basestring):
 			self.stack.append(op)
 		elif node.children[0].match == "+":
 			self.stack.append(+op)
@@ -415,12 +406,12 @@ class Interpreter(Parser):
 
 			return s
 
-		self.stack.append(replaceEscapeStrings(str(node.match[1:-1])))
+		self.stack.append(replaceEscapeStrings(strType(node.match[1:-1])))
 
 	def post_strings(self, node):
 		s = ""
 		for _ in range(len(node.children)):
-			s = str(self.stack.pop()) + s
+			s = strType(self.stack.pop()) + s
 
 		self.stack.append(s)
 

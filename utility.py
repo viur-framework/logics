@@ -1,5 +1,16 @@
 #-*- coding: utf-8 -*-
 
+try:
+	# Test if we are in a PyJS environment
+	import __pyjamas__
+	_pyjsCompat = True
+
+except ImportError:
+	_pyjsCompat = False
+
+strType = str if _pyjsCompat else unicode
+
+
 def parseInt(value, ret=0):
 	"""
 	Parses a value as int.
@@ -15,8 +26,8 @@ def parseInt(value, ret=0):
 	if value is None:
 		return ret
 
-	if not isinstance(value, str):
-		value = str(value)
+	if not isinstance(value, basestring):
+		value = strType(value)
 
 	conv = ""
 	value = value.strip()
@@ -48,8 +59,8 @@ def parseFloat(value, ret=0.0):
 	if value is None:
 		return ret
 
-	if not isinstance(value, str):
-		value = str(value)
+	if not isinstance(value, basestring):
+		value = strType(value)
 
 	conv = ""
 	value = value.strip()
@@ -72,20 +83,14 @@ def parseFloat(value, ret=0.0):
 	except ValueError:
 		return ret
 
-def optimizeValue(val, allow = [int, bool, float, list, dict, str], default = str):
+def optimizeValue(val, allow = [int, bool, float, list, dict, basestring], default = strType):
 	"""
 	Evaluates the best matching value.
 	"""
-	try:
-		if isinstance(val, unicode):
-			val = val.encode("utf-8")
-	except:
-		pass
-
 	# On string, check if conversion to int or float is possible,
 	# if the entire value only consists of digits and does not start
 	# with a 0
-	if isinstance(val, str):
+	if isinstance(val, basestring):
 		if (len(val) > 1 and not val.startswith("0")) or len(val) == 1:
 			if all([c in "+-0123456789" for c in val]):
 				try:
