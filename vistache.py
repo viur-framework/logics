@@ -56,26 +56,6 @@ def htmlInsertImage(info, size = None, fallback = None, flip = None):
 	return "<img " + " ".join([("%s=\"%s\"" % (k, v)) for k, v in attr.items() if v is not None]) + ">"
 
 
-def formatCurrency(value, deciDelimiter = ",", thousandDelimiter = "."):
-	ret = "%.2f" % parseFloat(value)
-	before, behind = ret.split(".", 1)
-
-	# PyJS cannot reverse() ...
-	rbefore = ""
-	for ch in before:
-		rbefore = ch + rbefore
-
-	ret = ""
-	for i, ch in enumerate(rbefore):
-		if i > 0 and i % 3 == 0:
-			ret = ch + thousandDelimiter + ret
-		else:
-			ret = ch + ret
-
-	ret = ret + deciDelimiter + behind
-	return ret.strip()
-
-
 class Template(Interpreter):
 	startDelimiter = "{{"
 	endDelimiter = "}}"
@@ -90,7 +70,7 @@ class Template(Interpreter):
 
 		# Vistache provides generator functions
 		self.addFunction(htmlInsertImage)
-		self.addFunction(formatCurrency)
+		self.addFunction("formatCurrency", self.functions["currency"]) # Vistache compatiblity
 
 		self.emptyValue = emptyValue
 		self.replaceCharRefs = replaceCharRefs

@@ -6,8 +6,9 @@ This file documents any relevant changes done to logics.
 
 This is the current development version.
 
-- Feature: New functions `replace`, `rstrip`, `lstrip` and `strip`
-- Feature: Vistache-function `htmlInsertImage` improved to flip-parameter.
+- Feature: New functions `replace()`, `rstrip()`, `lstrip()` and `strip()`
+- Feature: Vistache-function `formatCurrency()` renamed to `currency()` and moved into Logics
+- Feature: Vistache-function `htmlInsertImage` improved to flip-parameter for image flipping
 - Bugfix: `logics.utility.strType` variable defines string type to use 
 - Bugfix: Empty list traversal handled more faithfully
 - Bugfix: Stability in `in` and `not in` tests

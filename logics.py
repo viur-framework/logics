@@ -124,7 +124,29 @@ class Interpreter(Parser):
 			return ret
 
 		self.addFunction("join", _pyjsLogicsJoin if _pyjsCompat else lambda l, d = ", ": strType(d).join(l))
+
 		self.addFunction("split", lambda s, d=" ": s.split(d))
+
+		def currency(value, deciDelimiter = ",", thousandDelimiter = "."):
+			ret = "%.2f" % parseFloat(value)
+			before, behind = ret.split(".", 1)
+
+			# PyJS cannot reverse() ...
+			rbefore = ""
+			for ch in before:
+				rbefore = ch + rbefore
+
+			ret = ""
+			for i, ch in enumerate(rbefore):
+				if i > 0 and i % 3 == 0:
+					ret = ch + thousandDelimiter + ret
+				else:
+					ret = ch + ret
+
+			ret = ret + deciDelimiter + behind
+			return ret.strip()
+
+		self.addFunction(currency)
 
 	def addFunction(self, name, fn = None):
 		"""
