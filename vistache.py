@@ -6,7 +6,7 @@ but allowing for expressions based on ViUR logics as its values.
 """
 
 __author__ = "Jan Max Meyer"
-__copyright__ = "Copyright 2018 by Mausbrand Informationssysteme GmbH"
+__copyright__ = "Copyright 2018-2019 by Mausbrand Informationssysteme GmbH"
 __version__ = "2.2"
 __license__ = "LGPLv3"
 __status__ = "Beta"

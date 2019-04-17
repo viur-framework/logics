@@ -127,7 +127,7 @@ class Interpreter(Parser):
 
 		self.addFunction("split", lambda s, d=" ": s.split(d))
 
-		def currency(value, deciDelimiter = ",", thousandDelimiter = "."):
+		def currency(value, deciDelimiter = ",", thousandDelimiter = ".", currency="€"):
 			ret = "%.2f" % parseFloat(value)
 			before, behind = ret.split(".", 1)
 
@@ -144,6 +144,11 @@ class Interpreter(Parser):
 					ret = ch + ret
 
 			ret = ret + deciDelimiter + behind
+
+			# append currency if defined
+			if currency:
+				ret += " " + currency
+
 			return ret.strip()
 
 		self.addFunction(currency)
