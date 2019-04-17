@@ -1,4 +1,4 @@
-from logics.vistache import Template
+from vistache import Template
 
 x = Template("""Hello {{name}},
 
