@@ -109,7 +109,22 @@ class Interpreter(Parser):
 		self.addFunction("sum", lambda v: sum([optimizeValue(_, allow=[bool, int, float], default=0) for _ in v]))
 		self.addFunction("max", lambda x: max(x))
 		self.addFunction("min", lambda x: min(x))
-		self.addFunction("replace", lambda s, f=" ", r="": strType(s).replace(f, r))
+
+		def _replace(s, f = " ", r=""):
+			# handle a list when passed to replace multiple strings
+			if isinstance(f, list):
+				for i in f:
+					s = _replace(s, i, r)
+
+				return s
+
+			f = strType(f)
+			if not f: #hack to 'find' the empty string, this causes endless-loop in PyJS
+				return "".join([(strType(r) + x) for x in strType(s)])
+
+			return strType(s).replace(f, strType(r))
+
+		self.addFunction("replace", _replace)
 		self.addFunction("lstrip", lambda s, c=" \t\r\n": strType(s).lstrip(c))
 		self.addFunction("rstrip", lambda s, c=" \t\r\n": strType(s).rstrip(c))
 		self.addFunction("strip", lambda s, c=" \t\r\n": strType(s).strip(c))
