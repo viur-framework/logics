@@ -11,9 +11,9 @@ __version__ = "2.4"
 __license__ = "LGPLv3"
 __status__ = "Beta"
 
-from logics import Interpreter
-from parser import Node, ParseException
-from utility import parseInt, parseFloat
+from .logics import Interpreter
+from .parser import Node, ParseException
+from .utility import parseInt, parseFloat
 
 def htmlInsertImage(info, size = None, fallback = None, flip = None):
 	isServingUrl = False

@@ -11,9 +11,9 @@ __version__ = "2.4"
 __license__ = "LGPLv3"
 __status__ = "Beta"
 
-import parser
-from utility import parseInt, parseFloat, optimizeValue
-from utility import strType, _pyjsCompat
+from . import parser
+from .utility import parseInt, parseFloat, optimizeValue
+from .utility import strType
 
 class Parser(parser.Parser):
 
@@ -113,18 +113,7 @@ class Interpreter(Parser):
 		self.addFunction("lstrip", lambda s, c=" \t\r\n": strType(s).lstrip(c))
 		self.addFunction("rstrip", lambda s, c=" \t\r\n": strType(s).rstrip(c))
 		self.addFunction("strip", lambda s, c=" \t\r\n": strType(s).strip(c))
-
-		def _pyjsLogicsJoin(l, d = ", "):
-			ret = ""
-			for i in l:
-				ret += strType(i)
-				if i is not l[-1]:
-					ret += strType(d)
-
-			return ret
-
-		self.addFunction("join", _pyjsLogicsJoin if _pyjsCompat else lambda l, d = ", ": strType(d).join(l))
-
+		self.addFunction("join", lambda l, d = ", ": strType(d).join(l))
 		self.addFunction("split", lambda s, d=" ": s.split(d))
 
 		def currency(value, deciDelimiter=",", thousandDelimiter=".", currencySign=u"€"):
@@ -164,7 +153,7 @@ class Interpreter(Parser):
 			fn = name
 			name = fn.__name__
 
-		assert isinstance(name, basestring)
+		assert isinstance(name, str)
 		assert callable(fn)
 
 		self.functions[name] = fn

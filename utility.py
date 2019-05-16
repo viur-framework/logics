@@ -1,14 +1,6 @@
 #-*- coding: utf-8 -*-
 
-try:
-	# Test if we are in a PyJS environment
-	import __pyjamas__
-	_pyjsCompat = True
-
-except ImportError:
-	_pyjsCompat = False
-
-strType = str if _pyjsCompat else unicode
+strType = str #fixme: This is now a relict!
 
 
 def parseInt(value, ret=0):
@@ -83,7 +75,7 @@ def parseFloat(value, ret=0.0):
 	except ValueError:
 		return ret
 
-def optimizeValue(val, allow = [int, bool, float, list, dict, basestring], default = strType):
+def optimizeValue(val, allow = [int, bool, float, list, dict, str], default = strType):
 	"""
 	Evaluates the best matching value.
 	"""
