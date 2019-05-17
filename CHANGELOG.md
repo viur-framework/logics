@@ -2,9 +2,13 @@
 
 This file documents any relevant changes done to logics.
 
-## [2.4] Agung
+## [develop] 
 
 This is the current development version.
+
+## [2.4.0] Agung
+
+Release date: May 17, 2019
 
 - Feature: New functions `replace()`, `rstrip()`, `lstrip()` and `strip()`
 - Feature: Vistache-function `formatCurrency()` renamed to `currency()`, added support for currency char and moved into Logics
@@ -13,7 +17,7 @@ This is the current development version.
 - Bugfix: Empty list traversal handled more faithfully
 - Bugfix: Stability in `in` and `not in` tests
 
-## [2.3] Kilauea
+## [2.3.0] Kilauea
 
 Release date: Oct 2, 2018
 
@@ -24,7 +28,7 @@ Release date: Oct 2, 2018
 - Improved Vistache loop variable processing
 - Avoid overriding existing keys within Vistache {{#if}} blocks
 
-## [2.2] Etna
+## [2.2.0] Etna
 
 (Previously referred as 0.7)
 Release date: Apr 23, 2018
@@ -36,7 +40,7 @@ Release date: Apr 23, 2018
 - New version numbering synchronized with ViUR
 - CHANGELOG added
 
-## [2.1]
+## [2.1.0]
 
 (Previously referred as 0.6)
 Release date: Nov 02, 2017
@@ -45,12 +49,12 @@ Release date: Nov 02, 2017
 - First version included in [ViUR vi](https://github.com/viur-framework/vi)
 - Major improvements
 
-## [0.5]
+## [0.5.0]
 
 - Reworking the language and introducing the entity traversals, allowing
   for iterating and accessing indexes, keys or even functions
 
-## [0.4]
+## [0.4.0]
 
 - Iterative comprehensions
 - Command-line interface
@@ -64,10 +68,10 @@ Release date: Nov 02, 2017
 - JavaScript API
 
 
-[develop]: https://github.com/viur-framework/logics/compare/v2.3.0...develop
-[2.4]: https://github.com/viur-framework/logics/compare/v2.3.0...develop
-[2.3]: https://github.com/viur-framework/logics/compare/v2.2.0...v2.3.0
-[2.2]: https://github.com/viur-framework/logics/compare/v2.1...v2.2.0
-[2.1]: https://github.com/viur-framework/logics/compare/v0.5...v2.1
-[0.5]: https://github.com/viur-framework/logics/compare/v0.4...v0.5
-[0.4]: https://github.com/viur-framework/logics/compare/v0.3...v0.4
+[develop]: https://github.com/viur-framework/logics/compare/v2.4.0...develop
+[2.4.0]: https://github.com/viur-framework/logics/compare/v2.3.0...v2.4.0
+[2.3.0]: https://github.com/viur-framework/logics/compare/v2.2.0...v2.3.0
+[2.2.0]: https://github.com/viur-framework/logics/compare/v2.1...v2.2.0
+[2.1.0]: https://github.com/viur-framework/logics/compare/v0.5...v2.1
+[0.5.0]: https://github.com/viur-framework/logics/compare/v0.4...v0.5
+[0.4.0]: https://github.com/viur-framework/logics/compare/v0.3...v0.4
