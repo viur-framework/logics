@@ -1,6 +1,6 @@
-# Change Log
+# Changelog
 
-This file documents any relevant changes done to logics.
+This file documents any relevant changes done to logics & vistache.
 
 ## [develop] 
 
@@ -11,11 +11,11 @@ This is the current development version.
 Release date: May 17, 2019
 
 - Feature: New functions `replace()`, `rstrip()`, `lstrip()` and `strip()`
-- Feature: Vistache-function `formatCurrency()` renamed to `currency()`, added support for currency char and moved into Logics
+- Feature: Vistache-function `formatCurrency()` renamed to `currency()`, added support for currency char and moved into logics
 - Feature: Vistache-function `htmlInsertImage` improved to flip-parameter for image flipping
 - Bugfix: `logics.utility.strType` variable defines string type to use 
-- Bugfix: Empty list traversal handled more faithfully
-- Bugfix: Stability in `in` and `not in` tests
+- Bugfix: More reliable empty list traversal
+- Bugfix: More reliable `in` and `not in` operators
 
 ## [2.3.0] Kilauea
 
