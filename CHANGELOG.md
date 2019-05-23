@@ -6,6 +6,12 @@ This file documents any relevant changes done to logics & vistache.
 
 This is the current development version.
 
+## [2.4.1] Agung
+
+Release date: May 24, 2019
+
+- Bugfix: unary operators (+, -, ~) where incorrectly traversed
+
 ## [2.4.0] Agung
 
 Release date: May 17, 2019
