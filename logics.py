@@ -7,7 +7,7 @@ that can be compiled and executed in any of ViUR's runtime contexts.
 
 __author__ = "Jan Max Meyer"
 __copyright__ = "Copyright 2015-2019 by Mausbrand Informationssysteme GmbH"
-__version__ = "2.4"
+__version__ = "2.4.1"
 __license__ = "LGPLv3"
 __status__ = "Beta"
 
@@ -405,18 +405,29 @@ class Interpreter(Parser):
 		#print("mod", type(l), l, type(r), r)
 		self.stack.append(l % r)
 
-	def post_factor(self, node):
+	def post_plus(self, node):
 		op = self.stack.pop()
-		#print("factor", op)
 
-		if isinstance(op, basestring):
-			self.stack.append(op)
-		elif node.children[0].match == "+":
+		try:
 			self.stack.append(+op)
-		elif node.children[0].match == "-":
+		except TypeError:
+			self.stack.append(op)
+
+	def post_minus(self, node):
+		op = self.stack.pop()
+
+		try:
 			self.stack.append(-op)
-		else:
+		except TypeError:
+			self.stack.append(op)
+
+	def post_complement(self, node):
+		op = self.stack.pop()
+
+		try:
 			self.stack.append(~op)
+		except TypeError:
+			self.stack.append(op)
 
 	def post_True(self, node):
 		self.stack.append(True)

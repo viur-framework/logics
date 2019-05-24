@@ -6,6 +6,12 @@ This file documents any relevant changes done to logics & vistache.
 
 This is the current development version.
 
+## [2.4.1] Agung
+
+Release date: May 24, 2019
+
+- Bugfix: unary operators (+, -, ~) where incorrectly traversed
+
 ## [2.4.0] Agung
 
 Release date: May 17, 2019
@@ -68,7 +74,8 @@ Release date: Nov 02, 2017
 - JavaScript API
 
 
-[develop]: https://github.com/viur-framework/logics/compare/v2.4.0...develop
+[develop]: https://github.com/viur-framework/logics/compare/v2.4.1...develop
+[2.4.1]: https://github.com/viur-framework/logics/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/viur-framework/logics/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/viur-framework/logics/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/viur-framework/logics/compare/v2.1...v2.2.0
