@@ -6,6 +6,8 @@ This file documents any relevant changes done to logics & vistache.
 
 This is the current development version.
 
+- Feature: Supporting slices-syntax as with Python
+
 ## [2.4.1] Agung
 
 Release date: May 24, 2019

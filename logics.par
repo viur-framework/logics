@@ -74,8 +74,13 @@ entity          : atom trailer+                                     = entity
                 | atom
                 ;
 
+opt_expression  : expression
+                |                                                   = null
+                ;
+
 trailer         : '(' list ')'
                 | '[' expression ']'
+                | '[' opt_expression ':' opt_expression ']'         = slice
                 | '.' @IDENT
                 ;
 

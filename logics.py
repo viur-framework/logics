@@ -7,7 +7,7 @@ that can be compiled and executed in any of ViUR's runtime contexts.
 
 __author__ = "Jan Max Meyer"
 __copyright__ = "Copyright 2015-2019 by Mausbrand Informationssysteme GmbH"
-__version__ = "2.4.1"
+__version__ = "2.5"
 __license__ = "LGPLv3"
 __status__ = "Beta"
 
@@ -267,7 +267,7 @@ class Interpreter(Parser):
 		#print("post_entity: value = %r" % value)
 
 		for i, tail in enumerate(node.children[1:]):
-			#print("post_entity: i = %d, tail.emit = %r, value = %r" % (i, tail.emit, value))
+			#print("post_entity: i = %d, tail.emit = %r, value = %r, stack = %r" % (i, tail.emit, value, self.stack))
 			if value is None:
 				break
 
@@ -287,20 +287,28 @@ class Interpreter(Parser):
 				continue
 			else:
 				self.traverse(tail)
-				tail = self.stack.pop()
 
-				#print("entity", value, tail)
+			#print("OK", value, self.stack)
 
-			#print("OK", value, tail)
-			if callable(value):
+			if tail.emit == "slice":
+				end = self.stack.pop()
+				start = self.stack.pop()
+
+				value = value[start:end]
+				
+			elif callable(value):
+				idx = self.stack.pop()
+
 				try:
-					value = value(*tail)
+					value = value(*idx)
 
 				except:
 					value = None
 			else:
+				idx = self.stack.pop()
+
 				try:
-					value = value[tail]
+					value = value[idx]
 
 				except:
 					value = None
@@ -480,6 +488,9 @@ class Interpreter(Parser):
 		l.reverse()
 
 		self.stack.append(l)
+		
+	def post_null(self, node):
+		self.stack.append(None)
 
 
 if __name__ == "__main__":
