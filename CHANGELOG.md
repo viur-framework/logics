@@ -2,10 +2,11 @@
 
 This file documents any relevant changes done to logics & vistache.
 
-## [develop] 
+## [develop] Vesuv
 
 This is the current development version.
 
+- Bugfix: More reliable value optimization within add and mul operators
 - Feature: Supporting slices-syntax as with Python
 
 ## [2.4.1] Agung
