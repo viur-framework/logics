@@ -2,10 +2,11 @@
 
 This file documents any relevant changes done to logics & vistache.
 
-## [develop] Vesuv 
+## [develop] Vesuv
 
 This is the current development version.
 
+- Bugfix: More reliable value optimization within add and mul operators
 - Feature: Supporting slices-syntax as with Python
 - Feature: New standard function `range()`
 

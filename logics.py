@@ -403,6 +403,10 @@ class Interpreter(Parser):
 			l = strType(l)
 			r = strType(r)
 
+		else:
+			l = optimizeValue(l, allow=[bool, int, float, list], default=0)
+			r = optimizeValue(r, allow=[bool, int, float, list], default=0)
+
 		#print("add", type(l), l, type(r), r)
 		self.stack.append(l + r)
 
@@ -422,6 +426,9 @@ class Interpreter(Parser):
 				l = int(l)
 			elif parseInt(r, None) is not None:
 				r = int(r)
+		else:
+			l = optimizeValue(l, allow=[bool, int, float], default=0)
+			r = optimizeValue(r, allow=[bool, int, float], default=0)
 
 		#print("mul", type(l), l, type(r), r)
 		self.stack.append(l * r)
