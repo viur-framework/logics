@@ -99,6 +99,8 @@ class Interpreter(Parser):
 
 		self.functions = {}
 
+		# ----------------------------------------------------------------------------------------
+
 		self.addFunction("upper", lambda x: strType(x).upper())
 		self.addFunction("lower", lambda x: strType(x).lower())
 		self.addFunction("bool", lambda x: bool(x))
@@ -109,6 +111,8 @@ class Interpreter(Parser):
 		self.addFunction("sum", lambda v: sum([optimizeValue(_, allow=[bool, int, float], default=0) for _ in v]))
 		self.addFunction("max", lambda x: max(x))
 		self.addFunction("min", lambda x: min(x))
+
+		# --- replace ----------------------------------------------------------------------------
 
 		def _replace(s, f = " ", r=""):
 			# handle a list when passed to replace multiple strings
@@ -125,9 +129,13 @@ class Interpreter(Parser):
 			return strType(s).replace(f, strType(r))
 
 		self.addFunction("replace", _replace)
+
+		# --- strip, lstrip, rstrip --------------------------------------------------------------
 		self.addFunction("lstrip", lambda s, c=" \t\r\n": strType(s).lstrip(c))
 		self.addFunction("rstrip", lambda s, c=" \t\r\n": strType(s).rstrip(c))
 		self.addFunction("strip", lambda s, c=" \t\r\n": strType(s).strip(c))
+
+		# --- join -------------------------------------------------------------------------------
 
 		def _pyjsLogicsJoin(l, d = ", "):
 			ret = ""
@@ -140,7 +148,11 @@ class Interpreter(Parser):
 
 		self.addFunction("join", _pyjsLogicsJoin if _pyjsCompat else lambda l, d = ", ": strType(d).join(l))
 
+		# --- split -------------------------------------------------------------------------------
+
 		self.addFunction("split", lambda s, d=" ": s.split(d))
+
+		# --- currency ----------------------------------------------------------------------------
 
 		def currency(value, deciDelimiter=",", thousandDelimiter=".", currencySign=u"€"):
 			ret = "%.2f" % parseFloat(value)
@@ -167,6 +179,19 @@ class Interpreter(Parser):
 			return ret.strip()
 
 		self.addFunction(currency)
+
+		# --- range -------------------------------------------------------------------------------
+
+		def _range(start, end=None, step=None):
+			if step:
+				return range(parseInt(start), parseInt(end), parseInt(step))
+			if end:
+				return range(parseInt(start), parseInt(end))
+
+			return range(parseInt(start))
+
+		self.addFunction("range", _range)
+
 
 	def addFunction(self, name, fn = None):
 		"""
