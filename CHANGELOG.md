@@ -9,6 +9,7 @@ This is the current development version.
 - Bugfix: More reliable value optimization within add and mul operators
 - Feature: Supporting slices-syntax as with Python
 - Feature: New standard function `range()`
+- Feature: New third "lastDelim" parameter for `join()`, allowing to generate strings like `a, b and c` automatically from `join(["a", "b", "c"], ", ", " and ")` 
 
 ## [2.4.1] Agung
 
