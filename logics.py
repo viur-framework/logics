@@ -138,6 +138,9 @@ class Interpreter(Parser):
 		# --- join -------------------------------------------------------------------------------
 
 		def _join(entries, delim=", ", lastDelim=None):
+			if not _pyjsCompat and lastDelim is None:
+				return strType(delim).join(entries)
+
 			ret = ""
 			for entry in entries:
 				ret += strType(entry)
@@ -150,11 +153,7 @@ class Interpreter(Parser):
 
 			return ret
 
-		self.addFunction("join", _join
-			if _pyjsCompat else
-				lambda entries, delim=", ", lastDelim=None:
-					strType(delim).join(entries) if lastDelim is None
-						else _join(entries, delim, lastDelim))
+		self.addFunction("join", _join)
 
 		# --- split -------------------------------------------------------------------------------
 
