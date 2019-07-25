@@ -137,16 +137,23 @@ class Interpreter(Parser):
 
 		# --- join -------------------------------------------------------------------------------
 
-		def _pyjsLogicsJoin(l, d = ", "):
+		def _join(entries, delim=", ", lastDelim=None):
+			if not _pyjsCompat and lastDelim is None:
+				return strType(delim).join(entries)
+
 			ret = ""
-			for i in l:
-				ret += strType(i)
-				if i is not l[-1]:
-					ret += strType(d)
+			for entry in entries:
+				ret += strType(entry)
+
+				if entry is not entries[-1]:
+					if lastDelim is not None and entry is entries[-2]:
+						ret += strType(lastDelim)
+					else:
+						ret += strType(delim)
 
 			return ret
 
-		self.addFunction("join", _pyjsLogicsJoin if _pyjsCompat else lambda l, d = ", ": strType(d).join(l))
+		self.addFunction("join", _join)
 
 		# --- split -------------------------------------------------------------------------------
 
