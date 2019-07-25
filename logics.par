@@ -1,4 +1,6 @@
-// UniCC grammar for ViUR logics
+// Grammar for ViUR logics
+// Compile with UniCC (https://github.com/phorward/unicc) using `unicc -swo parser -l python logics.par`
+
 #!mode          insensitive;
 #whitespaces    @whitespace ;
 
@@ -87,7 +89,8 @@ trailer         : '(' list ')'
 atom            : ( "True" | "False" )
                 | @NUMBER
                 | @IDENT
-                | @STRING+                                          = strings
+                | @STRING
+                | @STRING+                                          = concat
                 | comprehension
                 | '[' list ']'
                 | '(' expression ')'                                = atom

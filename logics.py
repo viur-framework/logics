@@ -512,7 +512,7 @@ class Interpreter(Parser):
 
 		self.stack.append(replaceEscapeStrings(strType(node.match[1:-1])))
 
-	def post_strings(self, node):
+	def post_concat(self, node):
 		s = ""
 		for _ in range(len(node.children)):
 			s = strType(self.stack.pop()) + s
