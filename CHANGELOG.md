@@ -2,9 +2,18 @@
 
 This file documents any relevant changes done to logics & vistache.
 
-## [develop] 
+## [develop]
 
 This is the current development version.
+
+## [2.5.0] Vesuv
+
+Release date: Jul 26, 2019
+
+- Bugfix: More reliable value optimization within add and mul operators
+- Feature: Supporting slices-syntax as with Python
+- Feature: New standard function `range()`
+- Feature: New third "lastDelim" parameter for `join()`, allowing to generate strings like `a, b and c` automatically from `join(["a", "b", "c"], ", ", " and ")` 
 
 ## [2.4.1] Agung
 
@@ -74,7 +83,8 @@ Release date: Nov 02, 2017
 - JavaScript API
 
 
-[develop]: https://github.com/viur-framework/logics/compare/v2.4.1...develop
+[develop]: https://github.com/viur-framework/logics/compare/v2.5.0...develop
+[2.5.0]: https://github.com/viur-framework/logics/compare/v2.4.1...v2.5.0
 [2.4.1]: https://github.com/viur-framework/logics/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/viur-framework/logics/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/viur-framework/logics/compare/v2.2.0...v2.3.0

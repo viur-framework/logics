@@ -7,7 +7,7 @@ that can be compiled and executed in any of ViUR's runtime contexts.
 
 __author__ = "Jan Max Meyer"
 __copyright__ = "Copyright 2015-2019 by Mausbrand Informationssysteme GmbH"
-__version__ = "2.4.1"
+__version__ = "2.5.0"
 __license__ = "LGPLv3"
 __status__ = "Beta"
 
@@ -99,6 +99,8 @@ class Interpreter(Parser):
 
 		self.functions = {}
 
+		# ----------------------------------------------------------------------------------------
+
 		self.addFunction("upper", lambda x: strType(x).upper())
 		self.addFunction("lower", lambda x: strType(x).lower())
 		self.addFunction("bool", lambda x: bool(x))
@@ -109,6 +111,8 @@ class Interpreter(Parser):
 		self.addFunction("sum", lambda v: sum([optimizeValue(_, allow=[bool, int, float], default=0) for _ in v]))
 		self.addFunction("max", lambda x: max(x))
 		self.addFunction("min", lambda x: min(x))
+
+		# --- replace ----------------------------------------------------------------------------
 
 		def _replace(s, f = " ", r=""):
 			# handle a list when passed to replace multiple strings
@@ -125,22 +129,37 @@ class Interpreter(Parser):
 			return strType(s).replace(f, strType(r))
 
 		self.addFunction("replace", _replace)
+
+		# --- strip, lstrip, rstrip --------------------------------------------------------------
 		self.addFunction("lstrip", lambda s, c=" \t\r\n": strType(s).lstrip(c))
 		self.addFunction("rstrip", lambda s, c=" \t\r\n": strType(s).rstrip(c))
 		self.addFunction("strip", lambda s, c=" \t\r\n": strType(s).strip(c))
 
-		def _pyjsLogicsJoin(l, d = ", "):
+		# --- join -------------------------------------------------------------------------------
+
+		def _join(entries, delim=", ", lastDelim=None):
+			if not _pyjsCompat and lastDelim is None:
+				return strType(delim).join(entries)
+
 			ret = ""
-			for i in l:
-				ret += strType(i)
-				if i is not l[-1]:
-					ret += strType(d)
+			for entry in entries:
+				ret += strType(entry)
+
+				if entry is not entries[-1]:
+					if lastDelim is not None and entry is entries[-2]:
+						ret += strType(lastDelim)
+					else:
+						ret += strType(delim)
 
 			return ret
 
-		self.addFunction("join", _pyjsLogicsJoin if _pyjsCompat else lambda l, d = ", ": strType(d).join(l))
+		self.addFunction("join", _join)
+
+		# --- split -------------------------------------------------------------------------------
 
 		self.addFunction("split", lambda s, d=" ": s.split(d))
+
+		# --- currency ----------------------------------------------------------------------------
 
 		def currency(value, deciDelimiter=",", thousandDelimiter=".", currencySign=u"€"):
 			ret = "%.2f" % parseFloat(value)
@@ -167,6 +186,19 @@ class Interpreter(Parser):
 			return ret.strip()
 
 		self.addFunction(currency)
+
+		# --- range -------------------------------------------------------------------------------
+
+		def _range(start, end=None, step=None):
+			if step:
+				return range(parseInt(start), parseInt(end), parseInt(step))
+			if end:
+				return range(parseInt(start), parseInt(end))
+
+			return range(parseInt(start))
+
+		self.addFunction("range", _range)
+
 
 	def addFunction(self, name, fn = None):
 		"""
@@ -267,7 +299,7 @@ class Interpreter(Parser):
 		#print("post_entity: value = %r" % value)
 
 		for i, tail in enumerate(node.children[1:]):
-			#print("post_entity: i = %d, tail.emit = %r, value = %r" % (i, tail.emit, value))
+			#print("post_entity: i = %d, tail.emit = %r, value = %r, stack = %r" % (i, tail.emit, value, self.stack))
 			if value is None:
 				break
 
@@ -287,20 +319,28 @@ class Interpreter(Parser):
 				continue
 			else:
 				self.traverse(tail)
-				tail = self.stack.pop()
 
-				#print("entity", value, tail)
+			#print("OK", value, self.stack)
 
-			#print("OK", value, tail)
-			if callable(value):
+			if tail.emit == "slice":
+				end = self.stack.pop()
+				start = self.stack.pop()
+
+				value = value[start:end]
+				
+			elif callable(value):
+				idx = self.stack.pop()
+
 				try:
-					value = value(*tail)
+					value = value(*idx)
 
 				except:
 					value = None
 			else:
+				idx = self.stack.pop()
+
 				try:
-					value = value[tail]
+					value = value[idx]
 
 				except:
 					value = None
@@ -370,6 +410,10 @@ class Interpreter(Parser):
 			l = strType(l)
 			r = strType(r)
 
+		else:
+			l = optimizeValue(l, allow=[bool, int, float, list], default=0)
+			r = optimizeValue(r, allow=[bool, int, float, list], default=0)
+
 		#print("add", type(l), l, type(r), r)
 		self.stack.append(l + r)
 
@@ -389,6 +433,9 @@ class Interpreter(Parser):
 				l = int(l)
 			elif parseInt(r, None) is not None:
 				r = int(r)
+		else:
+			l = optimizeValue(l, allow=[bool, int, float], default=0)
+			r = optimizeValue(r, allow=[bool, int, float], default=0)
 
 		#print("mul", type(l), l, type(r), r)
 		self.stack.append(l * r)
@@ -465,7 +512,7 @@ class Interpreter(Parser):
 
 		self.stack.append(replaceEscapeStrings(strType(node.match[1:-1])))
 
-	def post_strings(self, node):
+	def post_concat(self, node):
 		s = ""
 		for _ in range(len(node.children)):
 			s = strType(self.stack.pop()) + s
@@ -480,6 +527,9 @@ class Interpreter(Parser):
 		l.reverse()
 
 		self.stack.append(l)
+		
+	def post_null(self, node):
+		self.stack.append(None)
 
 
 if __name__ == "__main__":
