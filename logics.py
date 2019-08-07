@@ -234,16 +234,19 @@ class Interpreter(Parser):
 		self.prefix = prefix or ""
 
 		if isinstance(src, basestring):
-			t = self.compile(src)
-			if t is None:
-				return None
-
-			if dump:
-				t.dump()
+			ast = self.compile(src)
 		else:
-			t = src
+			ast = src
 
-		self.traverse(t)
+		if ast is None:
+			return None
+
+		assert isinstance(ast, parser.Node), "Execting parser.Node object"
+
+		if dump:
+			ast.dump()
+
+		self.traverse(ast)
 		return self.stack.pop() if self.stack else None
 
 	# Traversal functions
