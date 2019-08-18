@@ -1,7 +1,7 @@
-// UniCC grammar for ViUR logics
+// Grammar for ViUR logics
+// Compile with UniCC (https://github.com/phorward/unicc) using `unicc -swo parser -l python logics.par`
 
 #!mode          insensitive;
-
 #whitespaces    @whitespace ;
 
 @whitespace     ' \r\n\t'+
@@ -40,7 +40,7 @@ and_test        : not_test ( @AND not_test )+                      = and_test
                 | not_test
                 ;
 
-not_test        : @NOT not_test                                    = not_test
+not_test        : @NOT not_test                                     = not_test
                 | comparison
                 ;
 
@@ -62,7 +62,9 @@ term            : term '*' factor                                   = mul
                 | term '%' factor                                   = mod
                 | factor;
 
-factor          : ( '+' | '-' | '~' ) factor                        = factor
+factor          : '+' factor                                        = plus
+                | '-' factor                                        = minus
+                | '~' factor                                        = complement
                 | power
                 ;
 
@@ -74,15 +76,21 @@ entity          : atom trailer+                                     = entity
                 | atom
                 ;
 
+opt_expression  : expression
+                |                                                   = null
+                ;
+
 trailer         : '(' list ')'
                 | '[' expression ']'
+                | '[' opt_expression ':' opt_expression ']'         = slice
                 | '.' @IDENT
                 ;
 
 atom            : ( "True" | "False" )
                 | @NUMBER
                 | @IDENT
-                | @STRING+                                          = strings
+                | @STRING
+                | @STRING+                                          = concat
                 | comprehension
                 | '[' list ']'
                 | '(' expression ')'                                = atom
