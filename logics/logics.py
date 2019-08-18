@@ -138,7 +138,7 @@ class Interpreter(Parser):
 		# --- join -------------------------------------------------------------------------------
 
 		def _join(entries, delim=", ", lastDelim=None):
-			if not _pyjsCompat and lastDelim is None:
+			if lastDelim is None:
 				return strType(delim).join(entries)
 
 			ret = ""
@@ -164,14 +164,10 @@ class Interpreter(Parser):
 		def currency(value, deciDelimiter=",", thousandDelimiter=".", currencySign=u"€"):
 			ret = "%.2f" % parseFloat(value)
 			before, behind = ret.split(".", 1)
-
-			# PyJS cannot reverse() ...
-			rbefore = ""
-			for ch in before:
-				rbefore = ch + rbefore
+			before = reversed(before)
 
 			ret = ""
-			for i, ch in enumerate(rbefore):
+			for i, ch in enumerate(before):
 				if i > 0 and i % 3 == 0:
 					ret = ch + thousandDelimiter + ret
 				else:
@@ -233,7 +229,7 @@ class Interpreter(Parser):
 		self.fields = fields or {}
 		self.prefix = prefix or ""
 
-		if isinstance(src, basestring):
+		if isinstance(src, str):
 			ast = self.compile(src)
 		else:
 			ast = src
@@ -330,7 +326,7 @@ class Interpreter(Parser):
 				start = self.stack.pop()
 
 				value = value[start:end]
-				
+
 			elif callable(value):
 				idx = self.stack.pop()
 
@@ -409,7 +405,7 @@ class Interpreter(Parser):
 	def post_add(self, node):
 		l, r = self.getOperands(False)
 
-		if isinstance(l, basestring) or isinstance(r, basestring):
+		if isinstance(l, str) or isinstance(r, str):
 			l = strType(l)
 			r = strType(r)
 
@@ -429,9 +425,9 @@ class Interpreter(Parser):
 	def post_mul(self, node):
 		l, r = self.getOperands(False)
 
-		if isinstance(l, basestring) and isinstance(r, basestring):
+		if isinstance(l, str) and isinstance(r, str):
 			r = 0
-		elif isinstance(l, basestring) or isinstance(r, basestring):
+		elif isinstance(l, str) or isinstance(r, str):
 			if parseInt(l, None) is not None:
 				l = int(l)
 			elif parseInt(r, None) is not None:
@@ -530,7 +526,7 @@ class Interpreter(Parser):
 		l.reverse()
 
 		self.stack.append(l)
-		
+
 	def post_null(self, node):
 		self.stack.append(None)
 

@@ -18,7 +18,7 @@ def parseInt(value, ret=0):
 	if value is None:
 		return ret
 
-	if not isinstance(value, basestring):
+	if not isinstance(value, str):
 		value = strType(value)
 
 	conv = ""
@@ -51,7 +51,7 @@ def parseFloat(value, ret=0.0):
 	if value is None:
 		return ret
 
-	if not isinstance(value, basestring):
+	if not isinstance(value, str):
 		value = strType(value)
 
 	conv = ""
@@ -75,14 +75,14 @@ def parseFloat(value, ret=0.0):
 	except ValueError:
 		return ret
 
-def optimizeValue(val, allow = [int, bool, float, list, dict, str], default = strType):
+def optimizeValue(val, allow=[int, bool, float, list, dict, str], default=strType):
 	"""
 	Evaluates the best matching value.
 	"""
 	# On string, check if conversion to int or float is possible,
 	# if the entire value only consists of digits and does not start
 	# with a 0
-	if isinstance(val, basestring):
+	if isinstance(val, str):
 		if (len(val) > 1 and not val.startswith("0")) or len(val) == 1:
 			if all([c in "+-0123456789" for c in val]):
 				try:
