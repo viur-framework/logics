@@ -374,8 +374,8 @@ class Interpreter(Parser):
 		for i in range(1, len(node.children), 2):
 			op = node.children[i].emit or node.children[i].symbol
 
-			r = self.stack.pop()
-			l = self.stack.pop()
+			r = optimizeValue(self.stack.pop(), default=0)
+			l = optimizeValue(self.stack.pop(), default=0)
 
 			if op == "<":
 				self.stack.append(l < r)
