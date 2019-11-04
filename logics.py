@@ -199,6 +199,11 @@ class Interpreter(Parser):
 
 		self.addFunction("range", _range)
 
+		# --- fill --------------------------------------------------------------------------------
+
+		self.addFunction("lfill", lambda s, l, f=" ": "".join([str(f) for x in range(len(str(s)), parseInt(l))]) + str(s))
+		self.addFunction("rfill", lambda s, l, f=" ": str(s) + "".join([str(f) for x in range(len(str(s)), parseInt(l))]))
+
 
 	def addFunction(self, name, fn = None):
 		"""

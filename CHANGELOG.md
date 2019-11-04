@@ -6,6 +6,8 @@ This file documents any relevant changes done to logics & vistache.
 
 This is the current development version.
 
+- Feature: New function `lfill()` and `rfill()` implemented to fill strings with fill chars.
+
 ## [2.5.0] Vesuv
 
 Release date: Jul 26, 2019
