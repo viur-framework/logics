@@ -246,8 +246,6 @@ class Interpreter(Parser):
 		if ast is None:
 			return None
 
-		assert isinstance(ast, parser.Node), "Execting parser.Node object"
-
 		if dump:
 			ast.dump()
 
