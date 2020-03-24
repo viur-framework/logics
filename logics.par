@@ -13,6 +13,8 @@
                 | '\'' ( '\\' . | !'\'' )* '\''                     = STRING;
 @NUMBER         '0-9'+ '.' '0-9'* | '0-9'* '.' '0-9'+ | '0-9'+      = NUMBER;
 
+// This ugly terminal mapping below is only done because there's no
+// "don't recognize this string as AST-node"-option in UniCC v1.x
 @FOR            "for";
 @IF             "if";
 @ELSE           "else";
@@ -47,8 +49,18 @@ not_test        : @NOT not_test                                     = not_test
 in              := @IN ;
 not_in          := @NOT @IN ;
 
-comparison      : expr (( "==" | ">=" | "<=" | "<" | ">" | "<>" | "!="
-                                | in | not_in) expr )+              = comparison
+comparison_op   : "=="
+                | ">="
+                | "<="
+                | "<"
+                | ">"
+                | "<>"
+                | "!="
+                | in
+                | not_in
+                ;
+
+comparison      : expr (comparison_op expr )+                       = comparison
                 | expr
                 ;
 

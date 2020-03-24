@@ -377,37 +377,40 @@ class Interpreter(Parser):
 	def post_not_test(self, node):
 		self.stack.append(not self.stack.pop())
 
+	def binary_comparison(self, op, left, right):
+		if op == "<":
+			self.stack.append(left < right)
+		elif op == ">":
+			self.stack.append(left > right)
+		elif op == "==":
+			self.stack.append(left == right)
+		elif op == ">=":
+			self.stack.append(left >= right)
+		elif op == "<=":
+			self.stack.append(left <= right)
+		elif op == "<>" or op == "!=":
+			self.stack.append(left != right)
+
+		elif op == "in":
+			try:
+				self.stack.append(left in right)
+			except:
+				self.stack.append(False)
+
+		elif op == "not_in":
+			try:
+				self.stack.append(left not in right)
+			except:
+				self.stack.append(False)
+
 	def post_comparison(self, node):
 		for i in range(1, len(node.children), 2):
 			op = node.children[i].emit or node.children[i].symbol
 
-			r = self.stack.pop()
-			l = self.stack.pop()
+			right = self.stack.pop()
+			left = self.stack.pop()
 
-			if op == "<":
-				self.stack.append(l < r)
-			elif op == ">":
-				self.stack.append(l > r)
-			elif op == "==":
-				self.stack.append(l == r)
-			elif op == ">=":
-				self.stack.append(l >= r)
-			elif op == "<=":
-				self.stack.append(l <= r)
-			elif op == "<>" or op == "!=":
-				self.stack.append(l != r)
-
-			elif op == "in":
-				try:
-					self.stack.append(l in r)
-				except:
-					self.stack.append(False)
-
-			elif op == "not_in":
-				try:
-					self.stack.append(l not in r)
-				except:
-					self.stack.append(False)
+			self.binary_comparison(op, left, right)
 
 	def post_add(self, node):
 		l, r = self.getOperands(False)
