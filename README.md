@@ -7,11 +7,11 @@
 
 The initial intention behind logics was to serve a well-known syntax for expressing validity checks across all ViUR modules and execution platforms. This starts from the administration tools to server-side input checking as well as client-side input forms and user-defined template processing.
 
-The first version of logics was intended to allow both direct expression execution and expression compilation into native JavaScript code, to be executed on client-side without the need of a logics interpreter. This feature has been disabled for now, but may be re-implemented in future when needed.
+The first version of logics was intended to allow both direct expression execution and expression compilation into native JavaScript code, to be executed on the client without the need of a logics interpreter. This feature has been disabled for now, but may be re-implemented in the future when needed.
 
-logics is __not__ intended to be a scripting language! Therefore it neither provides direct variable assignment, nor control structures like loops or jumps - except comprehensions.
+logics is __not__ intended to be a scripting language! Therefore it neither provides direct variable assignment, nor control structures like loops or jumps - except for comprehensions.
 
-Moreover, it is a language and tool for...
+Rather than that, it is a language and tool for...
 
 - ...expressing validity checks,
 - ...performing custom calculations,
@@ -91,7 +91,7 @@ sum([x for x in [10, 52, 18.4, 99, 874, 13, 86] if x > 25]) # Sum all values hig
 
 ### Logics-based dependency checks in ViUR
 
-The latest versions of [ViUR vi](https://github.com/viur-framework/vi) supports logics to dynamically change input mask behavior depending on input data.
+The latest versions of [ViUR vi](https://github.com/viur-framework/vi) support logics to dynamically change input mask behavior depending on input data.
 
 The logics expressions are triggered on an event base, when input field contents are changed.
 
@@ -142,7 +142,7 @@ class fieldSkel(Skeleton):
 
 ![Vistache used in an editor](https://lh3.googleusercontent.com/ygyA0TcqcR9id4MxzscYOqP0U49pHmKGnwvpwJ_iVdP6_LRRPkZK9KU5Ig5sSbeHm6zpe6Z6KkmUIp3zW7VI=s1024)
 
-Vistache is an extension built on top of logics, providing an easy-to-use template language with a [Mustache](https://mustache.github.io/)-inspired syntax. Likewise the original Mustache, a template is first compiled into an executable representation, then it can be rendered with variable data.
+Vistache is an extension built on top of logics, providing an easy-to-use template language with a [Mustache](https://mustache.github.io/)-inspired syntax. Similar to the original Mustache, a template is first compiled into an executable representation, then it can be rendered with variable data.
 
 Instead of just outputting variables and performing conditional or iterative blocks, Vistache allows to use full logics expressions as shown in the example below.
 
@@ -223,7 +223,7 @@ from a command-line.
 
 ## Contributing
 
-We take a great interest in your opinion about ViUR. We appreciate your feedback and are looking forward to hear about your ideas. Share your visions or questions with us and participate in ongoing discussions.
+We take great interest in your opinion about ViUR. We appreciate your feedback and are looking forward to hear about your ideas. Share your vision or questions with us and participate in ongoing discussions.
 
 - [ViUR website](https://www.viur.is)
 - [#ViUR on freenode IRC](https://webchat.freenode.net/?channels=viur)
