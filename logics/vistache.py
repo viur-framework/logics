@@ -130,6 +130,7 @@ class Template(Interpreter):
 
 			#print("expr   = %r %d %d" % (expr, row, col))
 
+			# {{#}} startBlock
 			if expr.startswith(self.startBlock):
 				row, col = updatePos(self.startDelimiter, row, col)
 
@@ -140,36 +141,60 @@ class Template(Interpreter):
 				except ParseException as e:
 					raise ParseException(row + e.row - 1, col + e.col - 1, e.expecting)
 
-				blocks.append((node, block, None))
+				blocks.append((block, [node], []))
 				block = Node("tblock")
 
+			# {{|}} altBlock
 			elif expr.startswith(self.altBlock):
 				if not blocks:
 					raise ParseException(row, col, "Alternative block without opening block")
 
-				node, nblock, ablock = blocks[-1]
-				if ablock:
-					raise ParseException(row, col, "Multiple alternative blocks are not allowed")
+				row, col = updatePos(self.altBlock, row, col)
+				expr = expr[len(self.altBlock):]
 
-				blocks[-1] = (node, nblock, block)
+				parent, cnodes, cblocks = blocks[-1]
 
-				row, col = updatePos(self.startDelimiter + expr, row, col)
+				if expr.strip(): # look for else-if block
+					try:
+						node = super(Template, self).parse(expr.strip())
+					except ParseException as e:
+						raise ParseException(row + e.row - 1, col + e.col - 1, e.expecting)
 
+					cnodes.append(node)
+					
+				elif not cnodes[-1]: # disallow multiple else blocks
+					raise ParseException(row, col, "Multiple alternative blocks without condition are not allowed")
+				else:
+					cnodes.append(None) # else-block
+
+				cblocks.append(block)
+				blocks[-1] = (parent, cnodes, cblocks)
+
+				row, col = updatePos(expr, row, col)
 				block = Node("tblock")
 
+			# {{/#}} endBlock
 			elif expr.startswith(self.endBlock):
 				if not blocks:
 					raise ParseException(row, col, "Closing block without opening block")
 
 				row, col = updatePos(self.startDelimiter + expr, row, col)
 
-				node, nblock, ablock = blocks.pop()
-				if ablock:
-					nblock.children.append(Node("tloop", children=[node, ablock, block]))
-				else:
-					nblock.children.append(Node("tloop", children=[node, block, None]))
+				parent, cnodes, cblocks = blocks.pop()
+				cblocks.append(block)
+				
+				assert len(cnodes) == len(cblocks)
+				
+				node = None
+				while cnodes:
+					condition = cnodes.pop()
+					if not condition: #else
+						node = cblocks.pop()
+					else:
+						node = Node("tloop", children=[condition, cblocks.pop(), node])
 
-				block = nblock
+				parent.children.append(node)
+				block = parent
 
 			else:
 				row, col = updatePos(self.startDelimiter, row, col)

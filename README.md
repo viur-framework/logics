@@ -1,11 +1,11 @@
 # ViUR logics / ViUR vistache
 
-- **logics** is a domain-specific, embeddable expressional language with a Python-style syntax.
-- **vistache** is also part of the logics repository and provides a template language and engine powered by logics expressions.
+**logics** is a domain-specific, embeddable expressional language with a Python-style syntax.
+**vistache** provides a customizable template language and engine powered by logics expressions.
 
 ## About
 
-The initial intention behind logics was to serve a well-known syntax for expressing validity checks across all ViUR modules and execution platforms. This starts from the administration tools to server-side input checking as well as client-side input forms and user-defined template processing.
+The initial intention behind logics was to serve a well-known syntax for expressing validity checks across all ViUR modules and its execution platforms. This starts from the administration tools to server-side input checking as well as client-side input forms and user-defined template processing.
 
 The first version of logics was intended to allow both direct expression execution and expression compilation into native JavaScript code, to be executed on the client without the need of a logics interpreter. This feature has been disabled for now, but may be re-implemented in the future when needed.
 
@@ -138,19 +138,20 @@ class fieldSkel(Skeleton):
 
 ---
 
-## Vistache: A logics-based template language
+## Vistache: A logics-powered template language
 
-![Vistache used in an editor](https://lh3.googleusercontent.com/ygyA0TcqcR9id4MxzscYOqP0U49pHmKGnwvpwJ_iVdP6_LRRPkZK9KU5Ig5sSbeHm6zpe6Z6KkmUIp3zW7VI=s1024)
+![Vistache used in a template editor](https://lh3.googleusercontent.com/ygyA0TcqcR9id4MxzscYOqP0U49pHmKGnwvpwJ_iVdP6_LRRPkZK9KU5Ig5sSbeHm6zpe6Z6KkmUIp3zW7VI=s1024)
 
-Vistache is an extension built on top of logics, providing an easy-to-use template language with a [Mustache](https://mustache.github.io/)-inspired syntax. Similar to the original Mustache, a template is first compiled into an executable representation, then it can be rendered with variable data.
+Vistache is built on top of logics, providing an easy-to-use template language with a [Mustache](https://mustache.github.io/)-inspired syntax. Similar to the original Mustache, a template is first compiled into an executable representation, then it can be rendered with variable data.
 
 Instead of just outputting variables and performing conditional or iterative blocks, Vistache allows to use full logics expressions as shown in the example below.
 
 Vistache expressions:
 
-- `{{expression}}` renders the result of expression
+- `{{expression}}` just renders the result of expression
 - `{{#expression}}...{{/}}` renders the block between `{{#expression}}` and the `{{/}}` if the expression validates to true. It also loops over the block when the expression results in a list, with a context-related sub-scoping.
 - `{{#expression}}...{{|}}...{{/}}` renders the block between the `{{#expression}}` and the `{{|}}` if the expression validates to true, otherwise it renders the block between the `{{|}}` and `{{/}}`. It also loops over the first block when the expression results in a list, with a context-related sub-scoping.
+- `{{#expression}}...{{|other-expression1}}...{{|other-expression2}}...{{|}}...{{/}}` a variant of an if-elseif-elseif-else-construct.
 
 In case of a loop in the conditional blocks above, a variable `loop` is also made available in each scope, containing the following members:
 
@@ -160,6 +161,8 @@ In case of a loop in the conditional blocks above, a variable `loop` is also mad
 - `loop.index0` is the loop conter starting at 0,
 - `loop.first` is true on the first loop,
 - `loop.last` is true on the last loop.
+
+This feature is inspired by the Jinja2 template engine.
 
 Running the template
 
