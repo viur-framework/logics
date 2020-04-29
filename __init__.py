@@ -1,2 +1,2 @@
 #-*- coding: utf-8 -*-
-from . import vistache
+from .logics import Interpreter, parser, utility, vistache
