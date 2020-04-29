@@ -2,10 +2,11 @@
 
 This file documents any relevant changes done to logics & vistache.
 
-## [develop]
+## 3.0.0 [develop]
 
 This is the current development version.
 
+- Made Python3 compliant
 - Feature: New function `lfill()` and `rfill()` implemented to fill strings with fill chars.
 
 ## [2.5.0] Vesuv
