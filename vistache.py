@@ -6,14 +6,14 @@ but allowing for expressions based on ViUR logics as its values.
 """
 
 __author__ = "Jan Max Meyer"
-__copyright__ = "Copyright 2018-2019 by Mausbrand Informationssysteme GmbH"
-__version__ = "2.5.0"
+__copyright__ = "Copyright 2018-2020 by Mausbrand Informationssysteme GmbH"
+__version__ = "3.0.0"
 __license__ = "LGPLv3"
 __status__ = "Beta"
 
-from .logics import Interpreter
-from .parser import Node, ParseException
-from .utility import parseInt, parseFloat
+from logics import Interpreter
+from logics.parser import Node, ParseException
+from logics.utility import parseInt, parseFloat
 
 def htmlInsertImage(info, size = None, fallback = None, flip = None):
 	isServingUrl = False
@@ -294,7 +294,7 @@ if __name__ == "__main__":
 
 	# Try to read input from a file.
 	try:
-		f = open(args.template, "rb")
+		f = open(args.template, "r")
 		expr = f.read()
 		f.close()
 
@@ -315,7 +315,7 @@ if __name__ == "__main__":
 	if args.var:
 		for var in args.var:
 			try:
-				f = open(var[1], "rb")
+				f = open(var[1], "r")
 				vars[var[0]] = json.loads(f.read())
 				f.close()
 
