@@ -11,6 +11,7 @@ __version__ = "3.0.0"
 __license__ = "LGPLv3"
 __status__ = "Production"
 
+import string
 from .logics import Interpreter
 from .parser import Node, ParseException
 from .utility import parseInt, parseFloat
@@ -64,6 +65,9 @@ class Template(Interpreter):
 	altBlock = "|"
 	endBlock = "/"
 
+	stripLeft = "-"
+	stripRight = "-"
+
 	def __init__(self, dfn = None, emptyValue = None, replaceCharRefs = False):
 		super(Template, self).__init__()
 		self.ast = None
@@ -96,8 +100,10 @@ class Template(Interpreter):
 		assert self.startBlock
 		assert self.altBlock
 		assert self.endBlock
+		assert self.stripLeft
+		assert self.stripRight
 
-		assert self.startBlock != self.endBlock
+		assert self.startBlock != self.endBlock and self.startBlock != self.altBlock
 
 		block = Node("tblock")
 		blocks = []
@@ -105,21 +111,44 @@ class Template(Interpreter):
 		while s:
 			#print("s = %r" %s)
 
-			start = s.find(self.startDelimiter)
+			# First, isolate a valid logics expression from the stream
+
+			# Find start delimiter
+			estart = start = s.find(self.startDelimiter)
 			if start < 0:
 				break
 
-			end = s.find(self.endDelimiter, start + len(self.startDelimiter))
+			estart += len(self.startDelimiter)
+
+			# Find end delimiter
+			eend = end = s.find(self.endDelimiter, estart)
 			if end < 0:
-				break
+				break		
+			
+			# Check for right-strip marker
+			if s[end - len(self.stripRight):end] == self.stripRight:
+				eend -= len(self.stripRight)
+				end += len(self.endDelimiter)
 
+				# Strip right whitespace by moving the end pointer
+				while s[end] in string.whitespace:
+					end += 1		
+			else:
+				end += len(self.endDelimiter)
+
+			# Generate tstring node for static prefix
 			if start > 0:
-				row, col = updatePos(s[:start], row, col)
-				block.children.append(Node("tstring", s[:start]))
+				prefix = s[:start]
 
-			start += len(self.startDelimiter)
-			expr = s[start:end]
-			end += len(self.endDelimiter)
+				# Check for left-strip marker
+				if s[estart:].startswith(self.stripLeft):
+					estart += len(self.stripLeft)
+					prefix = prefix.rstrip(string.whitespace) #this should comply with the stripRight character set
+
+				row, col = updatePos(s[:start], row, col)
+				block.children.append(Node("tstring", prefix))
+
+			expr = s[estart:eend]
 
 			if self.replaceCharRefs:
 				for find, repl in {
@@ -129,6 +158,8 @@ class Template(Interpreter):
 					expr = expr.replace(find, repl)
 
 			#print("expr   = %r %d %d" % (expr, row, col))
+
+			# Now, compile the blocks into according AST nodes
 
 			# {{#}} startBlock
 			if expr.startswith(self.startBlock):
