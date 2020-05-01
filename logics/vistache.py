@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
 """
-vistache is a template language based on the simplicity of Mustache,
-but allowing for expressions based on ViUR logics as its values.
+vistache is a template language inspired by the simple syntax and semantics
+of Mustache, but allowing for expressions based on ViUR logics as its values.
 """
 
 __author__ = "Jan Max Meyer"
@@ -58,31 +58,38 @@ def htmlInsertImage(info, size = None, fallback = None, flip = None):
 
 
 class Template(Interpreter):
-	startDelimiter = "{{"
-	endDelimiter = "}}"
 
-	startBlock = "#"
-	altBlock = "|"
-	endBlock = "/"
+	def __init__(self,
+			dfn = None, emptyValue=None, replaceCharRefs=False,
+			startDelimiter="{{", endDelimiter="}}",
+			stripLeft="-", stripRight="-",
+			startBlock="#", altBlock="|", endBlock="/"
+		):
 
-	stripLeft = "-"
-	stripRight = "-"
-
-	def __init__(self, dfn = None, emptyValue = None, replaceCharRefs = False):
 		super(Template, self).__init__()
 		self.ast = None
+
+		self.emptyValue = emptyValue
+		self.replaceCharRefs = replaceCharRefs
+
+		self.startDelimiter = startDelimiter
+		self.endDelimiter = endDelimiter
+
+		self.stripLeft = stripLeft
+		self.stripRight = stripRight
+
+		self.startBlock = startBlock
+		self.altBlock = altBlock
+		self.endBlock = endBlock
 
 		# Vistache provides generator functions
 		self.addFunction(htmlInsertImage)
 		self.addFunction("formatCurrency", self.functions["currency"]) # Vistache compatiblity
 
-		self.emptyValue = emptyValue
-		self.replaceCharRefs = replaceCharRefs
-
 		if dfn:
 			self.parse(dfn)
 
-	def parse(self, s = None, row = 1, col = 1):
+	def parse(self, s=None, row=1, col=1):
 
 		def updatePos(s, row, col):
 			rows = s.count("\n")
@@ -334,16 +341,16 @@ class Template(Interpreter):
 		return self.execute(self.ast, fields)
 
 
-def main():
+
+def main(**kwargs):
 	import argparse, json
 
 	ap = argparse.ArgumentParser(description="ViUR Vistache Template Engine")
 
 	ap.add_argument("template", type=str, help="The template to be processed; This can either be a string or a file.")
-
 	ap.add_argument("-D", "--debug", help="Print debug output", action="store_true")
 	ap.add_argument("-e", "--environment", help="Import environment as variables", action="store_true")
-	ap.add_argument("-v", "--var",  help="Assign variables", action="append", nargs=2, metavar=("var", "value"))
+	ap.add_argument("-v", "--var",  help="Assign1 variables; value can also be a JSON-file", action="append", nargs=2, metavar=("var", "value"))
 	ap.add_argument("-r", "--run", help="Run expression using interpreter", action="store_true")
 	ap.add_argument("-V", "--version", action="version", version="vistache %s" % __version__)
 
@@ -385,7 +392,7 @@ def main():
 	if args.debug:
 		print("vars", vars)
 
-	tpl = Template(expr)
+	tpl = Template(dfn=expr, **kwargs)
 	if args.run:
 		print(tpl.render(vars))
 		done = True
