@@ -161,6 +161,7 @@ In case of a loop in the conditional blocks above, a variable `loop` is also mad
 - `loop.index0` is the loop conter starting at 0,
 - `loop.first` is true on the first loop,
 - `loop.last` is true on the last loop.
+- `loop.parent` points to the previous loop block variable (None on outer loop)
 
 This feature is inspired by the Jinja2 template engine.
 

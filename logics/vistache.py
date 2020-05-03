@@ -284,15 +284,19 @@ class Template(Interpreter):
 
 		if isinstance(value, list):
 			if value:
+				# Save & duplicate the current fields config
 				fields = self.fields
 				keys = []
 				self.fields = fields.copy()
 
+				# Setup loop variable
 				self.fields["loop"] = {
-					"length": len(value)
+					"length": len(value),
+					"parent": self.fields["loop"] if "loop" in self.fields and isinstance(self.fields["loop"], dict) else None
 				}
 
 				for idx, val in enumerate(value):
+					# Update loop variable on each iteration
 					self.fields["loop"].update({
 						"item": val,
 						"index": idx + 1,
@@ -308,9 +312,13 @@ class Template(Interpreter):
 						self.fields.update(val)
 						keys = [key for key in self.fields.keys() if key != "loop" and key not in fields.keys()]
 
+					# Call subsequent AST nodes
 					self.traverse(node.children[1])
+
+					# Enhance result
 					txt += self.stack.pop()
 
+				# Restore original fields
 				self.fields = fields
 			elif node.children[2]:
 				self.traverse(node.children[2])
