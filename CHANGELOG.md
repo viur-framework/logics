@@ -2,10 +2,13 @@
 
 This file documents any relevant changes done to logics & vistache.
 
-## [develop]
+## 3.0.0 [develop]
 
 This is the current development version.
 
+- Made Python3 compliant
+- Feature: Vistache extended to left- and right-whitespace stripping, e.g. `Hello     {{- 41 + 1 -}}    World` returns `Hello42World`. The `-` after the `{{` or in front of the `}}` indicates that whitespaces in the raw block before or after will be stripped.
+- Feature: Vistache extended to multiple `{{|}}`-blocks with different conditions
 - Feature: New function `lfill()` and `rfill()` implemented to fill strings with fill chars.
 
 ## [2.5.0] Vesuv
