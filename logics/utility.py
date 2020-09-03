@@ -84,17 +84,15 @@ def optimizeValue(val, allow=[int, bool, float, list, dict, str], default=strTyp
 		ival = parseInt(val, None) if int in allow else None
 		fval = parseFloat(val, None) if float in allow else None
 
-		if str not in allow:
-			if ival is not None and fval is not None:
-				if float(ival) == fval:
-					val = ival
-				else:
-					val = fval
-			elif fval is not None:
-				val = fval
-		elif fval is not None and str(fval) == val:
+		if fval is not None and str(fval) == val:
 			val = fval
 		elif ival is not None and str(ival) == val:
+			val = ival
+
+	# When a float fits into an int, store it as int
+	if isinstance(val, float) and float in allow and int in allow:
+		ival = int(val)
+		if float(ival) == val:
 			val = ival
 
 	if any([isinstance(val, t) for t in allow]):

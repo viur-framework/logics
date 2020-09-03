@@ -10,6 +10,7 @@ This is the current development version.
 - Feature: Vistache extended to left- and right-whitespace stripping, e.g. `Hello     {{- 41 + 1 -}}    World` returns `Hello42World`. The `-` after the `{{` or in front of the `}}` indicates that whitespaces in the raw block before or after will be stripped.
 - Feature: Vistache extended to multiple `{{|}}`-blocks with different conditions
 - Feature: New function `lfill()` and `rfill()` implemented to fill strings with fill chars.
+- Feature: New function `round()` for decimal rounding
 
 ## [2.5.0] Vesuv
 

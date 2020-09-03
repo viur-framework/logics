@@ -110,6 +110,7 @@ class Interpreter(Parser):
 		self.addFunction("sum", lambda v: sum([optimizeValue(_, allow=[bool, int, float], default=0) for _ in v]))
 		self.addFunction("max", lambda x: max(x))
 		self.addFunction("min", lambda x: min(x))
+		self.addFunction("round", lambda f, deci=0: optimizeValue(round(parseFloat(f), parseInt(deci))))
 
 		# --- replace ----------------------------------------------------------------------------
 
