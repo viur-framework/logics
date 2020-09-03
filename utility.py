@@ -87,22 +87,23 @@ def optimizeValue(val, allow = [int, bool, float, list, dict, basestring], defau
 	"""
 	Evaluates the best matching value.
 	"""
-	# On string, check if conversion to int or float is possible,
-	# if the entire value only consists of digits and does not start
-	# with a 0
+	# Perform string conversion into float or int, whatever fits best.
 	if isinstance(val, basestring):
-		if (len(val) > 1 and not val.startswith("0")) or len(val) == 1:
-			if all([c in "+-0123456789" for c in val]):
-				try:
-					val = int(val)
-				except ValueError:
-					pass
+		ival = parseInt(val, None) if int in allow else None
+		fval = parseFloat(val, None) if float in allow else None
 
-			elif all([c in "+-0123456789." for c in val]):
-				try:
-					val = float(val)
-				except ValueError:
-					pass
+		if basestring not in allow:
+			if ival is not None and fval is not None:
+				if float(ival) == fval:
+					val = ival
+				else:
+					val = fval
+			elif fval is not None:
+				val = fval
+		elif fval is not None and str(fval) == val:
+			val = fval
+		elif ival is not None and str(ival) == val:
+			val = ival
 
 	if any([isinstance(val, t) for t in allow]):
 		return val

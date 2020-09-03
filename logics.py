@@ -495,7 +495,7 @@ class Interpreter(Parser):
 		var = self.prefix + node.match
 
 		if var in self.fields:
-			self.stack.append(optimizeValue(self.fields[var]) if self.fields[var] is not None else None)
+			self.stack.append(self.fields[var])
 		elif node.match in self.functions:
 			self.stack.append(self.functions[node.match])
 		else:
