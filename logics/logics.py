@@ -449,10 +449,15 @@ class Interpreter(Parser):
 		self.stack.append(l / r)
 
 	def post_mod(self, node):
-		l, r = self.getOperands()
+		l, r = self.getOperands(onlyNumeric=False)
 
 		#print("mod", type(l), l, type(r), r)
-		self.stack.append(l % r)
+		try:
+			res = l % r
+		except TypeError:
+			res = l
+
+		self.stack.append(res)
 
 	def post_plus(self, node):
 		op = self.stack.pop()
