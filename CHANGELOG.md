@@ -2,11 +2,13 @@
 
 This file documents any relevant changes done to logics & vistache.
 
-## [develop]
+## [2.5.1] Vesuv
 
-This is the current development version.
-
+- Feature: Modulus formatting %
+- Feature: Grammar & interpreter modularization for unicc #extend-Feature
+- Feature: New round() function
 - Feature: New function `lfill()` and `rfill()` implemented to fill strings with fill chars.
+- Bugfix: Float value optimization and soft-value optimization
 
 ## [2.5.0] Vesuv
 
@@ -85,7 +87,8 @@ Release date: Nov 02, 2017
 - JavaScript API
 
 
-[develop]: https://github.com/viur-framework/logics/compare/v2.5.0...develop
+[develop]: https://github.com/viur-framework/logics/compare/v2.5.1...develop
+[2.5.1]: https://github.com/viur-framework/logics/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/viur-framework/logics/compare/v2.4.1...v2.5.0
 [2.4.1]: https://github.com/viur-framework/logics/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/viur-framework/logics/compare/v2.3.0...v2.4.0
