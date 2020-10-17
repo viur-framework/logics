@@ -1,8 +1,8 @@
 
-all: parser.py
+all: logics/parser.py
 
-parser.py: logics.par
-	unicc -swo parser -l python $?
+logics/parser.py: logics.par
+	unicc -swo logics/parser -l python $?
 
 clean:
-	rm -f parser.py
+	rm logics/parser.py

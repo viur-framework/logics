@@ -1,14 +1,6 @@
 #-*- coding: utf-8 -*-
 
-try:
-	# Test if we are in a PyJS environment
-	import __pyjamas__
-	_pyjsCompat = True
-
-except ImportError:
-	_pyjsCompat = False
-
-strType = str if _pyjsCompat else unicode
+strType = str #fixme: This is now a relict!
 
 
 def parseInt(value, ret=0):
@@ -26,7 +18,7 @@ def parseInt(value, ret=0):
 	if value is None:
 		return ret
 
-	if not isinstance(value, basestring):
+	if not isinstance(value, str):
 		value = strType(value)
 
 	conv = ""
@@ -59,7 +51,7 @@ def parseFloat(value, ret=0.0):
 	if value is None:
 		return ret
 
-	if not isinstance(value, basestring):
+	if not isinstance(value, str):
 		value = strType(value)
 
 	conv = ""
@@ -83,12 +75,12 @@ def parseFloat(value, ret=0.0):
 	except ValueError:
 		return ret
 
-def optimizeValue(val, allow = [int, bool, float, list, dict, basestring], default = strType):
+def optimizeValue(val, allow=[int, bool, float, list, dict, str], default=strType):
 	"""
 	Evaluates the best matching value.
 	"""
 	# Perform string conversion into float or int, whatever fits best.
-	if isinstance(val, basestring):
+	if isinstance(val, str):
 		ival = parseInt(val, None) if int in allow else None
 		fval = parseFloat(val, None) if float in allow else None
 
