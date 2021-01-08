@@ -222,11 +222,8 @@ class Interpreter(Parser):
 		l = self.stack.pop()
 
 		if onlyNumeric:
-			l = optimizeValue(l, allow = [bool, int, float], default=0)
-			r = optimizeValue(r, allow = [bool, int, float], default=0)
-		else:
-			l = optimizeValue(l, default=0)
-			r = optimizeValue(r, default=0)
+			l = optimizeValue(l, allow=[bool, int, float], default=0)
+			r = optimizeValue(r, allow=[bool, int, float], default=0)
 
 		return l, r
 
