@@ -6,22 +6,34 @@ that can be compiled and executed in any of ViUR's runtime contexts.
 """
 
 __author__ = "Jan Max Meyer"
-__copyright__ = "Copyright 2015-2019 by Mausbrand Informationssysteme GmbH"
-__version__ = "2.5.0"
+__copyright__ = "Copyright 2015-2021 by Mausbrand Informationssysteme GmbH"
+__version__ = "2.5.2"
 __license__ = "LGPLv3"
 __status__ = "Beta"
 
 import parser
-from utility import parseInt, parseFloat, optimizeValue
-from utility import strType, _pyjsCompat
+from utility import parseInt, parseFloat, optimizeValue, strType, _pyjsCompat
+
 
 class Parser(parser.Parser):
 
 	def __init__(self):
 		super(Parser, self).__init__()
 
-	def compile(self, src):
-		return self.parse(src)
+	def parse(self, src):
+		"""
+		Parses a logics expression into an abstract syntax tree.
+
+		:param src: The logics source to be compiled.
+
+		:return: Either returns the AST or throws a ParseException with useful information.
+		"""
+		if not src.endswith("\n"):
+			src += "\n"
+
+		return super(Parser, self).parse(src)
+
+	compile = parse
 
 	def traverse(self, node, obj = None, prePrefix = "pre_", passPrefix = "pass_",
 					postPrefix = "post_", loopPrefix = "loop_",
