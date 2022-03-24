@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="parser.js"></script>
+</head>
+<body>
+    <script>
+        let parser = new Parser();
+
+        class Logics {
+            constructor(s) {
+                this.ast = parser.parse(s);
+            }
+
+            run(values) {
+                let stack = [];
+                this.traverse(this.ast, stack, values || {});
+                console.log(stack);
+            }
+
+            traverse(node, stack, values) {
+                let events = ["pre", "loop", "pass", "post"];
+
+                for (let i = 0; i < events.length; ++i) {
+                    let event = events[i];
+                    let fn = this[event + "_" + node.emit];
+
+                    if (event === "pass" && node.children !== undefined) {
+                        for (let child of node.children) {
+                            this.traverse(child, stack, values);
+
+                            if (fn !== undefined) {
+                                fn(node, stack, values);
+                            }
+                        }
+                    }
+                    else if (fn !== undefined) {
+                        fn(node, stack, values);
+
+                        if (event === "loop") {
+                            i += 1;  // when loop callback exits, skip pass
+                        }
+                    }
+                }
+            }
+
+            post_STRING(node, stack) {
+                // Cut "..." from string.
+                stack.push(node.match.substring(1, node.match.length - 1));
+            }
+
+            post_NUMBER(node, stack) {
+                stack.push(parseFloat(node.match));
+            }
+
+            post_add(node, stack) {
+                let b = stack.pop();
+                let a = stack.pop();
+                stack.push(a + b);
+            }
+
+            post_mul(node, stack) {
+                let b = stack.pop();
+                let a = stack.pop();
+                stack.push(a * b);
+            }
+
+            post_sub(node, stack) {
+                let b = stack.pop();
+                let a = stack.pop();
+                stack.push(a - b);
+            }
+
+            post_div(node, stack) {
+                let b = stack.pop();
+                let a = stack.pop();
+                stack.push(a / b);
+            }
+        }
+
+        let calc = new Logics("'Hello World' + (1 + 2 * 3 + 4)");
+        calc.run();
+    </script>
+</body>
+</html>
