@@ -8,6 +8,27 @@
     <script>
         let parser = new Parser();
 
+        /*
+        function optimizeValue(val, allow=["number", "boolean", "string", "object"], fallback=window["String"]) {
+            if (typeof val == "string" && "number" in allow) {
+               let nval = parseFloat(val);
+               if (nval !== NaN ) {
+                   val = nval;
+               }
+            }
+
+            if (allow.some((t) => typeof val === t)) {
+                return val;
+            }
+
+            if (typeof fallback == "function") {
+                return fallback(val);
+            }
+
+            return fallback;
+        }
+        */
+
         class Logics {
             constructor(s) {
                 this.ast = parser.parse(s);
@@ -19,29 +40,58 @@
                 console.log(stack);
             }
 
+            /**
+             * Convert to JavaScript type into Logics string representation.
+             *
+             * @param value
+             * @returns {string}
+             */
+            stringValue(value) {
+                switch (value) {
+                    case null:
+                    case undefined:
+                        return "None"
+                    case true:
+                        return "True";
+                    case false:
+                        return "False";
+                    default:
+                        return value.toString()
+                }
+            }
+
+            /**
+             * General traversal function.
+             *
+             * This function performs pre, loop or pass and post operations.
+             * @param node
+             * @param stack
+             * @param values
+             */
             traverse(node, stack, values) {
-                let events = ["pre", "loop", "pass", "post"];
+                let fn;
 
-                for (let i = 0; i < events.length; ++i) {
-                    let event = events[i];
-                    let fn = this[event + "_" + node.emit];
+                if ((fn = this["pre_" + node.emit]) !== undefined) {
+                    fn.call(this, node, stack, values);
+                }
 
-                    if (event === "pass" && node.children !== undefined) {
-                        for (let child of node.children) {
-                            this.traverse(child, stack, values);
+                if ((fn = this["loop_" + node.emit]) !== undefined) {
+                    fn.call(this, node, stack, values);
+                }
+                else if (node.children !== undefined) {
+                    let fn = this["pass_" + node.emit];
 
-                            if (fn !== undefined) {
-                                fn(node, stack, values);
-                            }
+                    for (let child of node.children) {
+                        this.traverse(child, stack, values);
+
+                        if (fn !== undefined) {
+                            fn.call(this, node, stack, values);
                         }
                     }
-                    else if (fn !== undefined) {
-                        fn(node, stack, values);
+                }
 
-                        if (event === "loop") {
-                            i += 1;  // when loop callback exits, skip pass
-                        }
-                    }
+                if ((fn = this["post_" + node.emit]) !== undefined) {
+                    fn.call(this, node, stack, values);
                 }
             }
 
@@ -57,13 +107,28 @@
             post_add(node, stack) {
                 let b = stack.pop();
                 let a = stack.pop();
+
+                if (typeof a == "string" || typeof b == "string") {
+                    a = this.stringValue(a);
+                    b = this.stringValue(b);
+                }
+
                 stack.push(a + b);
             }
 
             post_mul(node, stack) {
                 let b = stack.pop();
                 let a = stack.pop();
-                stack.push(a * b);
+
+                if (typeof a == "string") {
+                    stack.push(a.repeat(parseInt(b)));
+                }
+                else if (typeof b == "string") {
+                    stack.push(b.repeat(parseInt(a)));
+                }
+                else {
+                    stack.push(a * b);
+                }
             }
 
             post_sub(node, stack) {
@@ -77,9 +142,17 @@
                 let a = stack.pop();
                 stack.push(a / b);
             }
+
+            post_True(_, stack) {
+                stack.push(true);
+            }
+
+            post_False(_, stack) {
+                stack.push(true);
+            }
         }
 
-        let calc = new Logics("'Hello World' + (1 + 2 * 3 + 4)");
+        let calc = new Logics("'Hello World' * 3 + (1 + 2 * 3 + 4) + True");
         calc.run();
     </script>
 </body>
