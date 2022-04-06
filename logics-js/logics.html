@@ -8,46 +8,114 @@
     <script>
         let parser = new Parser();
 
-        /*
-        function optimizeValue(val, allow=["number", "boolean", "string", "object"], fallback=window["String"]) {
-            if (typeof val == "string" && "number" in allow) {
-               let nval = parseFloat(val);
-               if (nval !== NaN ) {
-                   val = nval;
-               }
+        /** Wrapper for JavaScript values in the Logics VM, emulating
+         * Python-style values and JSON-serializable objects. */
+        class Value {
+            #value;  // private value property
+
+            constructor(value) {
+                if (value instanceof Value) {
+                    throw "value is already an instance of Value!";
+                }
+
+                this.#value = value;
             }
 
-            if (allow.some((t) => typeof val === t)) {
-                return val;
+            /// Return value's native JS value
+            valueOf() {
+                return this.#value;
             }
 
-            if (typeof fallback == "function") {
-                return fallback(val);
+            /// Check for string
+            type() {
+                switch (typeof this.#value) {
+                    case "undefined":
+                        return "NoneType";
+
+                    case "boolean":
+                        return "bool";
+
+                    case "number":
+                        if (this.#value % 1 === 0) {
+                            return "int";
+                        }
+
+                        return "float";
+
+                    case "string":
+                        return "str";
+
+                    case "object":
+                        if (this.#value instanceof Array) {
+                            for (let item of this.#value) {
+                                if (!Value.prototype.type.call(item)) {
+                                    return undefined;
+                                }
+                            }
+
+                            return "list";
+                        }
+                        else if (this.#value instanceof null) {
+                            return "NoneType";
+                        }
+
+                        for (let key of Object.keys(value)) {
+                            if (!Value.prototype.type.call(value[key])) {
+                                return undefined;
+                            }
+                        }
+
+                        return "dict";
+                }
             }
 
-            return fallback;
-        }
-        */
+            repr() {
+                switch (typeof this.#value) {
+                    case "undefined":
+                        return "None";
 
-        class Logics {
-            constructor(s) {
-                this.ast = parser.parse(s);
-            }
+                    case "boolean":
+                    case "number":
+                        return this.#value.toString();
 
-            run(values) {
-                let stack = [];
-                this.traverse(this.ast, stack, values || {});
-                console.log(stack);
+                    case "string":
+                        return "\"" + this.#value.toString().replace("\"", "\\\"") + "\"";
+
+                    case "object":
+                        if (this.#value instanceof Array) {
+                            return "[" +
+                                this.#value.map(
+                                    item => {
+                                        if (!item instanceof Value) {
+                                            item = new Value(item);
+                                        }
+
+                                        return item.repr()
+                                    }
+                                ).join(", ") + "]";
+                        } else if (this.#value === null) {
+                            return "None";
+                        }
+
+                        return "{" +
+                            Object.keys(this.#value).map(
+                                key => {
+                                    let value = this.#value[key];
+                                    if (!value instanceof Value) {
+                                        value = new Value(value);
+                                    }
+
+                                    return key + ": " + value.repr()
+                                }
+                            ).join(", ") + "}";
+                }
             }
 
             /**
-             * Convert to JavaScript type into Logics string representation.
-             *
-             * @param value
-             * @returns {string}
+             * Convert Value as Logics string representation.
              */
-            stringValue(value) {
-                switch (value) {
+            toString() {
+                switch (this.#value) {
                     case null:
                     case undefined:
                         return "None"
@@ -56,8 +124,81 @@
                     case false:
                         return "False";
                     default:
-                        return value.toString()
+                        switch (typeof this.#value) {
+                            case "string":
+                            case "number":
+                                return this.#value.toString();
+
+                            default:
+                                return this.repr()
+                        }
                 }
+            }
+
+            toBool() {
+                return Boolean(this.#value);
+            }
+
+            toInt() {
+                if (this.#value === true) {
+                    return 1;
+                }
+
+                return parseInt(this.#value) || 0;
+            }
+
+            toFloat() {
+                if (this.#value === true) {
+                    return 1.0;
+                }
+
+                return parseFloat(this.#value) || 0.0;
+            }
+
+            toList() {
+                let type = this.type();
+
+                if (type === "list") {
+                    return this.#value;
+                }
+                else if (type) {
+                    return [this.#value];
+                }
+
+                return null;
+            }
+
+            toDict() {
+                let type = this.type();
+
+                if (type === "dict") {
+                    return this.#value;
+                }
+                else if (type) {
+                    let dict = {};
+                    dict[this.#value] = this.#value;
+                    return dict;
+                }
+
+                return null;
+            }
+        }
+
+        /** The Logics VM in JavaScript */
+        class Logics {
+            /** Create a new VM with a given piece of code. */
+            constructor(src) {
+                this.ast = parser.parse(src);
+                this.functions = {};
+            }
+
+            /** Run the VM with a given set of values.
+             * Returns the topmost value of the stack, if any. */
+            run(values) {
+                let stack = [];
+                this.traverse(this.ast, stack, values || {});
+                console.log(stack);
+                return stack.pop();
             }
 
             /**
@@ -97,21 +238,38 @@
 
             post_STRING(node, stack) {
                 // Cut "..." from string.
-                stack.push(node.match.substring(1, node.match.length - 1));
+                stack.push(new Value(node.match.substring(1, node.match.length - 1)));
+            }
+
+            post_concat(node, stack) {
+                stack.push(new Value(stack.splice(-node.children.length).join("")));
+            }
+
+            post_list(node, stack) {
+                stack.push(new Value(stack.splice(-node.children.length)));
             }
 
             post_NUMBER(node, stack) {
-                stack.push(parseFloat(node.match));
+                stack.push(new Value(parseFloat(node.match)));
+            }
+
+            post_IDENT(node, stack, values) {
+                let name = node.match;
+
+                if (name in values) {
+                    stack.push(new Value(values[name]));
+                }
+                else if (name in functions) {
+                    stack.push(new Value(self.functions[name]));
+                }
+                else {
+                    stack.push(null);
+                }
             }
 
             post_add(node, stack) {
                 let b = stack.pop();
                 let a = stack.pop();
-
-                if (typeof a == "string" || typeof b == "string") {
-                    a = this.stringValue(a);
-                    b = this.stringValue(b);
-                }
 
                 stack.push(a + b);
             }
@@ -143,6 +301,29 @@
                 stack.push(a / b);
             }
 
+            post_mod(node, stack) {
+                let b = stack.pop();
+                let a = stack.pop();
+
+                //todo: format strings?
+                stack.push(a % b);
+            }
+
+            post_plus(node, stack) {
+                let val = stack.pop()
+                stack.push(+val || val);
+            }
+
+            post_minus(node, stack) {
+                let val = stack.pop();
+                stack.push(-val || val);
+            }
+
+            post_complement(node, stack) {
+                let val = stack.pop();
+                stack.push(~val || val);
+            }
+
             post_True(_, stack) {
                 stack.push(true);
             }
@@ -150,10 +331,15 @@
             post_False(_, stack) {
                 stack.push(true);
             }
+
+            post_null(_, stack) {
+                stack.push(null);
+            }
         }
 
-        let calc = new Logics("'Hello World' * 3 + (1 + 2 * 3 + 4) + True");
-        calc.run();
+        //let calc = new Logics("'Hello World' * 3 + (1 + 2 * 3 + 4) + True");
+        let calc = new Logics("10 + [\"Hello\" 'World', 'test'] + 'mein Esel Eckay'");
+        document.writeln(calc.run(), "<br>");
     </script>
 </body>
 </html>
