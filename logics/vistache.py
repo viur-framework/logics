@@ -17,7 +17,6 @@ from .parser import Node, ParseException
 from .utility import parseInt, parseFloat
 
 def htmlInsertImage(info, size = None, fallback = None, flip = None):
-    isServingUrl = False
     size = parseInt(size, 0)
 
     if not info:
@@ -30,8 +29,8 @@ def htmlInsertImage(info, size = None, fallback = None, flip = None):
         attr["style"] = "transform: scaleX(-1);"
 
     # Check for ViUR image info
-    if isinstance(info, dict) and all([key in info.keys() for key in ["dlkey", "servingurl"]]):
-        img = str(info["servingurl"])
+    if isinstance(info, dict) and all([key in info.keys() for key in ["dlkey", "downloadUrl"]]):
+        img = str(info["downloadUrl"])
 
         title = info.get("title", info.get("name"))
         if title:
@@ -39,9 +38,6 @@ def htmlInsertImage(info, size = None, fallback = None, flip = None):
 
         if not img:
             img = "/file/download/" + str(info["dlkey"])
-        elif not img.startswith("/_ah/img/"): #DevServer must be punished!
-            isServingUrl = True
-            img += ("=s%d" % size)
 
     # Use info as string
     elif info:
@@ -51,7 +47,7 @@ def htmlInsertImage(info, size = None, fallback = None, flip = None):
         return ""
 
     attr["src"] = img
-    if not isServingUrl and size > 0:
+    if size > 0:
         attr["width"] = size
 
     return "<img " + " ".join([("%s=\"%s\"" % (k, v)) for k, v in attr.items() if v is not None]) + ">"
