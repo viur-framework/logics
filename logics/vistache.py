@@ -17,394 +17,394 @@ from .parser import Node, ParseException
 from .utility import parseInt, parseFloat
 
 def htmlInsertImage(info, size = None, fallback = None, flip = None):
-	isServingUrl = False
-	size = parseInt(size, 0)
+    isServingUrl = False
+    size = parseInt(size, 0)
 
-	if not info:
-		info = fallback
+    if not info:
+        info = fallback
 
-	attr = {}
+    attr = {}
 
-	# check if image is supposed to be mirrored
-	if flip is True:
-		attr["style"] = "transform: scaleX(-1);"
+    # check if image is supposed to be mirrored
+    if flip is True:
+        attr["style"] = "transform: scaleX(-1);"
 
-	# Check for ViUR image info
-	if isinstance(info, dict) and all([key in info.keys() for key in ["dlkey", "servingurl"]]):
-		img = str(info["servingurl"])
+    # Check for ViUR image info
+    if isinstance(info, dict) and all([key in info.keys() for key in ["dlkey", "servingurl"]]):
+        img = str(info["servingurl"])
 
-		title = info.get("title", info.get("name"))
-		if title:
-			attr["title"] = title
+        title = info.get("title", info.get("name"))
+        if title:
+            attr["title"] = title
 
-		if not img:
-			img = "/file/download/" + str(info["dlkey"])
-		elif not img.startswith("/_ah/img/"): #DevServer must be punished!
-			isServingUrl = True
-			img += ("=s%d" % size)
+        if not img:
+            img = "/file/download/" + str(info["dlkey"])
+        elif not img.startswith("/_ah/img/"): #DevServer must be punished!
+            isServingUrl = True
+            img += ("=s%d" % size)
 
-	# Use info as string
-	elif info:
-		img = str(info)
+    # Use info as string
+    elif info:
+        img = str(info)
 
-	else:
-		return ""
+    else:
+        return ""
 
-	attr["src"] = img
-	if not isServingUrl and size > 0:
-		attr["width"] = size
+    attr["src"] = img
+    if not isServingUrl and size > 0:
+        attr["width"] = size
 
-	return "<img " + " ".join([("%s=\"%s\"" % (k, v)) for k, v in attr.items() if v is not None]) + ">"
+    return "<img " + " ".join([("%s=\"%s\"" % (k, v)) for k, v in attr.items() if v is not None]) + ">"
 
 
 class Template(Interpreter):
 
-	def __init__(self,
-			dfn = None, emptyValue=None, replaceCharRefs=False,
-			startDelimiter="{{", endDelimiter="}}",
-			stripLeft="-", stripRight="-",
-			startBlock="#", altBlock="|", endBlock="/"
-		):
-
-		super(Template, self).__init__()
-		self.ast = None
+    def __init__(self,
+            dfn = None, emptyValue=None, replaceCharRefs=False,
+            startDelimiter="{{", endDelimiter="}}",
+            stripLeft="-", stripRight="-",
+            startBlock="#", altBlock="|", endBlock="/"
+        ):
 
-		self.emptyValue = emptyValue
-		self.replaceCharRefs = replaceCharRefs
+        super(Template, self).__init__()
+        self.ast = None
 
-		self.startDelimiter = startDelimiter
-		self.endDelimiter = endDelimiter
+        self.emptyValue = emptyValue
+        self.replaceCharRefs = replaceCharRefs
 
-		self.stripLeft = stripLeft
-		self.stripRight = stripRight
+        self.startDelimiter = startDelimiter
+        self.endDelimiter = endDelimiter
 
-		self.startBlock = startBlock
-		self.altBlock = altBlock
-		self.endBlock = endBlock
+        self.stripLeft = stripLeft
+        self.stripRight = stripRight
 
-		# Vistache provides generator functions
-		self.addFunction(htmlInsertImage)
-		self.addFunction("formatCurrency", self.functions["currency"]) # Vistache compatiblity
+        self.startBlock = startBlock
+        self.altBlock = altBlock
+        self.endBlock = endBlock
 
-		if dfn:
-			self.parse(dfn)
+        # Vistache provides generator functions
+        self.addFunction(htmlInsertImage)
+        self.addFunction("formatCurrency", self.functions["currency"]) # Vistache compatiblity
 
-	def parse(self, s=None, row=1, col=1):
+        if dfn:
+            self.parse(dfn)
 
-		def updatePos(s, row, col):
-			rows = s.count("\n")
-			if rows:
-				row += rows
-				col = len(s[s.rfind("\n") + 1:])
+    def parse(self, s=None, row=1, col=1):
 
-			else:
-				col += len(s)
+        def updatePos(s, row, col):
+            rows = s.count("\n")
+            if rows:
+                row += rows
+                col = len(s[s.rfind("\n") + 1:])
 
-			return row, col
+            else:
+                col += len(s)
 
-		assert self.startDelimiter
-		assert self.endDelimiter
-		assert self.startBlock
-		assert self.altBlock
-		assert self.endBlock
-		assert self.stripLeft
-		assert self.stripRight
+            return row, col
 
-		assert self.startBlock != self.endBlock and self.startBlock != self.altBlock
+        assert self.startDelimiter
+        assert self.endDelimiter
+        assert self.startBlock
+        assert self.altBlock
+        assert self.endBlock
+        assert self.stripLeft
+        assert self.stripRight
 
-		block = Node("tblock")
-		blocks = []
+        assert self.startBlock != self.endBlock and self.startBlock != self.altBlock
 
-		while s:
-			#print("s = %r" %s)
+        block = Node("tblock")
+        blocks = []
 
-			# First, isolate a valid logics expression from the stream
+        while s:
+            #print("s = %r" %s)
 
-			# Find start delimiter
-			estart = start = s.find(self.startDelimiter)
-			if start < 0:
-				break
-
-			estart += len(self.startDelimiter)
-
-			# Find end delimiter
-			eend = end = s.find(self.endDelimiter, estart)
-			if end < 0:
-				break		
-			
-			# Check for right-strip marker
-			if s[end - len(self.stripRight):end] == self.stripRight:
-				eend -= len(self.stripRight)
-				end += len(self.endDelimiter)
-
-				# Strip right whitespace by moving the end pointer
-				while s[end] in string.whitespace:
-					end += 1		
-			else:
-				end += len(self.endDelimiter)
-
-			# Generate tstring node for static prefix
-			if start > 0:
-				prefix = s[:start]
-
-				# Check for left-strip marker
-				if s[estart:].startswith(self.stripLeft):
-					estart += len(self.stripLeft)
-					prefix = prefix.rstrip(string.whitespace) #this should comply with the stripRight character set
+            # First, isolate a valid logics expression from the stream
 
-				row, col = updatePos(s[:start], row, col)
-				block.children.append(Node("tstring", prefix))
+            # Find start delimiter
+            estart = start = s.find(self.startDelimiter)
+            if start < 0:
+                break
 
-			expr = s[estart:eend]
+            estart += len(self.startDelimiter)
 
-			if self.replaceCharRefs:
-				for find, repl in {
-					"&gt;": ">",
-				    "&lt;": "<"
-				}.items():
-					expr = expr.replace(find, repl)
+            # Find end delimiter
+            eend = end = s.find(self.endDelimiter, estart)
+            if end < 0:
+                break
 
-			#print("expr   = %r %d %d" % (expr, row, col))
+            # Check for right-strip marker
+            if s[end - len(self.stripRight):end] == self.stripRight:
+                eend -= len(self.stripRight)
+                end += len(self.endDelimiter)
 
-			# Now, compile the blocks into according AST nodes
+                # Strip right whitespace by moving the end pointer
+                while s[end] in string.whitespace:
+                    end += 1
+            else:
+                end += len(self.endDelimiter)
 
-			# {{#}} startBlock
-			if expr.startswith(self.startBlock):
-				row, col = updatePos(self.startDelimiter, row, col)
+            # Generate tstring node for static prefix
+            if start > 0:
+                prefix = s[:start]
 
-				expr = expr[len(self.startBlock):]
+                # Check for left-strip marker
+                if s[estart:].startswith(self.stripLeft):
+                    estart += len(self.stripLeft)
+                    prefix = prefix.rstrip(string.whitespace) #this should comply with the stripRight character set
 
-				try:
-					node = super(Template, self).parse(expr)
-				except ParseException as e:
-					raise ParseException(row + e.row - 1, col + e.col - 1, e.expecting)
+                row, col = updatePos(s[:start], row, col)
+                block.children.append(Node("tstring", prefix))
 
-				blocks.append((block, [node], []))
-				block = Node("tblock")
+            expr = s[estart:eend]
 
-			# {{|}} altBlock
-			elif expr.startswith(self.altBlock):
-				if not blocks:
-					raise ParseException(row, col, "Alternative block without opening block")
+            if self.replaceCharRefs:
+                for find, repl in {
+                    "&gt;": ">",
+                    "&lt;": "<"
+                }.items():
+                    expr = expr.replace(find, repl)
 
-				row, col = updatePos(self.altBlock, row, col)
-				expr = expr[len(self.altBlock):]
+            #print("expr   = %r %d %d" % (expr, row, col))
 
-				parent, cnodes, cblocks = blocks[-1]
+            # Now, compile the blocks into according AST nodes
 
-				if expr.strip(): # look for else-if block
-					try:
-						node = super(Template, self).parse(expr.strip())
-					except ParseException as e:
-						raise ParseException(row + e.row - 1, col + e.col - 1, e.expecting)
+            # {{#}} startBlock
+            if expr.startswith(self.startBlock):
+                row, col = updatePos(self.startDelimiter, row, col)
 
-					cnodes.append(node)
-					
-				elif not cnodes[-1]: # disallow multiple else blocks
-					raise ParseException(row, col, "Multiple alternative blocks without condition are not allowed")
-				else:
-					cnodes.append(None) # else-block
+                expr = expr[len(self.startBlock):]
 
-				cblocks.append(block)
-				blocks[-1] = (parent, cnodes, cblocks)
+                try:
+                    node = super(Template, self).parse(expr)
+                except ParseException as e:
+                    raise ParseException(row + e.row - 1, col + e.col - 1, e.expecting)
 
-				row, col = updatePos(expr, row, col)
-				block = Node("tblock")
+                blocks.append((block, [node], []))
+                block = Node("tblock")
 
-			# {{/#}} endBlock
-			elif expr.startswith(self.endBlock):
-				if not blocks:
-					raise ParseException(row, col, "Closing block without opening block")
+            # {{|}} altBlock
+            elif expr.startswith(self.altBlock):
+                if not blocks:
+                    raise ParseException(row, col, "Alternative block without opening block")
 
-				row, col = updatePos(self.startDelimiter + expr, row, col)
+                row, col = updatePos(self.altBlock, row, col)
+                expr = expr[len(self.altBlock):]
 
-				parent, cnodes, cblocks = blocks.pop()
-				cblocks.append(block)
-				
-				assert len(cnodes) == len(cblocks)
-				
-				node = None
-				while cnodes:
-					condition = cnodes.pop()
-					if not condition: #else
-						node = cblocks.pop()
-					else:
-						node = Node("tloop", children=[condition, cblocks.pop(), node])
+                parent, cnodes, cblocks = blocks[-1]
 
-				parent.children.append(node)
-				block = parent
+                if expr.strip(): # look for else-if block
+                    try:
+                        node = super(Template, self).parse(expr.strip())
+                    except ParseException as e:
+                        raise ParseException(row + e.row - 1, col + e.col - 1, e.expecting)
 
-			else:
-				row, col = updatePos(self.startDelimiter, row, col)
+                    cnodes.append(node)
 
-				try:
-					node = super(Template, self).parse(expr)
-				except ParseException as e:
-					raise ParseException(row + e.row - 1, col + e.col - 1, e.expecting)
+                elif not cnodes[-1]: # disallow multiple else blocks
+                    raise ParseException(row, col, "Multiple alternative blocks without condition are not allowed")
+                else:
+                    cnodes.append(None) # else-block
 
-				row, col = updatePos(expr, row, col)
-				block.children.append(node)
+                cblocks.append(block)
+                blocks[-1] = (parent, cnodes, cblocks)
 
-			row, col = updatePos(self.endDelimiter, row, col)
+                row, col = updatePos(expr, row, col)
+                block = Node("tblock")
 
-			s = s[end:]
+            # {{/#}} endBlock
+            elif expr.startswith(self.endBlock):
+                if not blocks:
+                    raise ParseException(row, col, "Closing block without opening block")
 
-		if blocks:
-			raise ParseException(row, col, "%d blocks are still open, expecting %s" % (len(blocks), "".join([("%s%s%s" % (self.startDelimiter, self.endBlock, self.endDelimiter)) for b in blocks])))
+                row, col = updatePos(self.startDelimiter + expr, row, col)
 
-		if s:
-			block.children.append(Node("tstring", s))
+                parent, cnodes, cblocks = blocks.pop()
+                cblocks.append(block)
 
-		self.ast = block
+                assert len(cnodes) == len(cblocks)
 
+                node = None
+                while cnodes:
+                    condition = cnodes.pop()
+                    if not condition: #else
+                        node = cblocks.pop()
+                    else:
+                        node = Node("tloop", children=[condition, cblocks.pop(), node])
 
-	def post_tstring(self, node):
-		self.stack.append(node.match)
+                parent.children.append(node)
+                block = parent
 
-	def post_tblock(self, node):
-		txt = ""
+            else:
+                row, col = updatePos(self.startDelimiter, row, col)
 
-		for c in node.children:
-			v = self.stack.pop()
-			if v is None:
-				v = self.emptyValue
+                try:
+                    node = super(Template, self).parse(expr)
+                except ParseException as e:
+                    raise ParseException(row + e.row - 1, col + e.col - 1, e.expecting)
 
-			txt = str(v) + txt
+                row, col = updatePos(expr, row, col)
+                block.children.append(node)
 
-		self.stack.append(txt)
+            row, col = updatePos(self.endDelimiter, row, col)
 
-	def loop_tloop(self, node):
-		pass # Just do nothing!
+            s = s[end:]
 
-	def post_tloop(self, node):
-		self.traverse(node.children[0])
-		value = self.stack.pop()
+        if blocks:
+            raise ParseException(row, col, "%d blocks are still open, expecting %s" % (len(blocks), "".join([("%s%s%s" % (self.startDelimiter, self.endBlock, self.endDelimiter)) for b in blocks])))
 
-		txt = ""
+        if s:
+            block.children.append(Node("tstring", s))
 
-		if isinstance(value, list):
-			if value:
-				# Save & duplicate the current fields config
-				fields = self.fields
-				keys = []
-				self.fields = fields.copy()
+        self.ast = block
 
-				# Setup loop variable
-				self.fields["loop"] = {
-					"length": len(value),
-					"parent": self.fields["loop"] if "loop" in self.fields and isinstance(self.fields["loop"], dict) else None
-				}
 
-				for idx, val in enumerate(value):
-					# Update loop variable on each iteration
-					self.fields["loop"].update({
-						"item": val,
-						"index": idx + 1,
-						"index0": idx,
-						"first": val is value[0],
-						"last": val is value[-1]
-					})
+    def post_tstring(self, node):
+        self.stack.append(node.match)
 
-					if isinstance(val, dict):
-						for key in keys:
-							del self.fields[key]
+    def post_tblock(self, node):
+        txt = ""
 
-						self.fields.update(val)
-						keys = [key for key in self.fields.keys() if key != "loop" and key not in fields.keys()]
+        for c in node.children:
+            v = self.stack.pop()
+            if v is None:
+                v = self.emptyValue
 
-					# Call subsequent AST nodes
-					self.traverse(node.children[1])
+            txt = str(v) + txt
 
-					# Enhance result
-					txt += self.stack.pop()
+        self.stack.append(txt)
 
-				# Restore original fields
-				self.fields = fields
-			elif node.children[2]:
-				self.traverse(node.children[2])
-				txt += self.stack.pop()
+    def loop_tloop(self, node):
+        pass # Just do nothing!
 
-		elif value:
-			if isinstance(value, dict):
-				fields = self.fields
-				self.fields = fields.copy()
-				self.fields.update({k: v for k, v in value.items() if k not in self.fields})
+    def post_tloop(self, node):
+        self.traverse(node.children[0])
+        value = self.stack.pop()
 
-			self.traverse(node.children[1])
-			txt = self.stack.pop()
+        txt = ""
 
-			if isinstance(value, dict):
-				self.fields = fields
+        if isinstance(value, list):
+            if value:
+                # Save & duplicate the current fields config
+                fields = self.fields
+                keys = []
+                self.fields = fields.copy()
 
-		elif node.children[2]:
-			self.traverse(node.children[2])
-			txt += self.stack.pop()
+                # Setup loop variable
+                self.fields["loop"] = {
+                    "length": len(value),
+                    "parent": self.fields["loop"] if "loop" in self.fields and isinstance(self.fields["loop"], dict) else None
+                }
 
-		self.stack.append(txt)
+                for idx, val in enumerate(value):
+                    # Update loop variable on each iteration
+                    self.fields["loop"].update({
+                        "item": val,
+                        "index": idx + 1,
+                        "index0": idx,
+                        "first": val is value[0],
+                        "last": val is value[-1]
+                    })
 
-	def render(self, fields = None):
-		if not self.ast:
-			return ""
+                    if isinstance(val, dict):
+                        for key in keys:
+                            del self.fields[key]
 
-		return self.execute(self.ast, fields)
+                        self.fields.update(val)
+                        keys = [key for key in self.fields.keys() if key != "loop" and key not in fields.keys()]
+
+                    # Call subsequent AST nodes
+                    self.traverse(node.children[1])
+
+                    # Enhance result
+                    txt += self.stack.pop()
+
+                # Restore original fields
+                self.fields = fields
+            elif node.children[2]:
+                self.traverse(node.children[2])
+                txt += self.stack.pop()
+
+        elif value:
+            if isinstance(value, dict):
+                fields = self.fields
+                self.fields = fields.copy()
+                self.fields.update({k: v for k, v in value.items() if k not in self.fields})
+
+            self.traverse(node.children[1])
+            txt = self.stack.pop()
+
+            if isinstance(value, dict):
+                self.fields = fields
+
+        elif node.children[2]:
+            self.traverse(node.children[2])
+            txt += self.stack.pop()
+
+        self.stack.append(txt)
+
+    def render(self, fields = None):
+        if not self.ast:
+            return ""
+
+        return self.execute(self.ast, fields)
 
 
 
 def main(**kwargs):
-	import argparse, json
+    import argparse, json
 
-	ap = argparse.ArgumentParser(description="ViUR Vistache Template Engine")
+    ap = argparse.ArgumentParser(description="ViUR Vistache Template Engine")
 
-	ap.add_argument("template", type=str, help="The template to be processed; This can either be a string or a file.")
-	ap.add_argument("-D", "--debug", help="Print debug output", action="store_true")
-	ap.add_argument("-e", "--environment", help="Import environment as variables", action="store_true")
-	ap.add_argument("-v", "--var",  help="Assign1 variables; value can also be a JSON-file", action="append", nargs=2, metavar=("var", "value"))
-	ap.add_argument("-r", "--run", help="Run expression using interpreter", action="store_true")
-	ap.add_argument("-V", "--version", action="version", version="vistache %s" % __version__)
+    ap.add_argument("template", type=str, help="The template to be processed; This can either be a string or a file.")
+    ap.add_argument("-D", "--debug", help="Print debug output", action="store_true")
+    ap.add_argument("-e", "--environment", help="Import environment as variables", action="store_true")
+    ap.add_argument("-v", "--var",  help="Assign1 variables; value can also be a JSON-file", action="append", nargs=2, metavar=("var", "value"))
+    ap.add_argument("-r", "--run", help="Run expression using interpreter", action="store_true")
+    ap.add_argument("-V", "--version", action="version", version="vistache %s" % __version__)
 
-	args = ap.parse_args()
+    args = ap.parse_args()
 
-	# Try to read input from a file.
-	try:
-		f = open(args.template, "r")
-		expr = f.read()
-		f.close()
+    # Try to read input from a file.
+    try:
+        f = open(args.template, "r")
+        expr = f.read()
+        f.close()
 
-	except IOError:
-		expr = args.template
+    except IOError:
+        expr = args.template
 
-	done = False
-	vars = {}
+    done = False
+    vars = {}
 
-	if args.debug:
-		print("expr", expr)
+    if args.debug:
+        print("expr", expr)
 
-	if args.environment:
-		import os
-		vars.update(os.environ)
+    if args.environment:
+        import os
+        vars.update(os.environ)
 
-	# Read variables
-	if args.var:
-		for var in args.var:
-			try:
-				f = open(var[1], "r")
-				vars[var[0]] = json.loads(f.read())
-				f.close()
+    # Read variables
+    if args.var:
+        for var in args.var:
+            try:
+                f = open(var[1], "r")
+                vars[var[0]] = json.loads(f.read())
+                f.close()
 
-			except ValueError:
-				vars[var[0]] = None
+            except ValueError:
+                vars[var[0]] = None
 
-			except IOError:
-				vars[var[0]] = var[1]
+            except IOError:
+                vars[var[0]] = var[1]
 
-	if args.debug:
-		print("vars", vars)
+    if args.debug:
+        print("vars", vars)
 
-	tpl = Template(dfn=expr, **kwargs)
-	if args.run:
-		print(tpl.render(vars))
-		done = True
+    tpl = Template(dfn=expr, **kwargs)
+    if args.run:
+        print(tpl.render(vars))
+        done = True
 
-	if not done:
-		tpl.ast.dump()
+    if not done:
+        tpl.ast.dump()
 
