@@ -383,6 +383,9 @@ class Interpreter(Parser):
         self.stack.append(not self.stack.pop())
 
     def binary_comparison(self, op, left, right):
+        left = optimizeValue(left, default=0)
+        right = optimizeValue(right, default=0)
+
         if op == "<":
             self.stack.append(left < right)
         elif op == ">":
