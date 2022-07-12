@@ -5,6 +5,9 @@
     <script src="parser.js"></script>
 </head>
 <body>
+    <input id="prompt" placeholder="Logics">
+    <ul id="result"></ul>
+
     <script>
         let parser = new Parser();
 
@@ -182,6 +185,57 @@
 
                 return null;
             }
+
+            add(op) {
+                if( this.type() === "str" || op.type() === "str" ) {
+                    return new Value(this.toString() + op.toString());
+                }
+
+                if( this.type() === "float" || op.type() === "float" ) {
+                    return new Value(this.toFloat() + op.toFloat());
+                }
+
+                return new Value(this.toInt() + op.toInt());
+            }
+
+            sub(op) {
+                if( this.type() === "float" || op.type() === "float" ) {
+                    return new Value(this.toFloat() - op.toFloat());
+                }
+
+                return new Value(this.toInt() - op.toInt());
+            }
+
+            mul(op) {
+                if (this.type() === "str") {
+                    return new Value(this.toString().repeat(op.toInt()));
+                }
+                else if (op.type() === "str") {
+                    return new Value(op.toString().repeat(this.toInt()));
+                }
+
+                if( this.type() === "float" || op.type() === "float" ) {
+                    return new Value(this.toFloat() * op.toFloat());
+                }
+
+                return new Value(this.toInt() * op.toInt());
+            }
+
+            div(op) {
+                if( this.type() === "float" || op.type() === "float" ) {
+                    return new Value(this.toFloat() / op.toFloat());
+                }
+
+                return new Value(this.toInt() / op.toInt());
+            }
+
+            mod(op) {
+                if( this.type() === "float" || op.type() === "float" ) {
+                    return new Value(this.toFloat() % op.toFloat());
+                }
+
+                return new Value(this.toInt() % op.toInt());
+            }
         }
 
         /** The Logics VM in JavaScript */
@@ -189,6 +243,11 @@
             /** Create a new VM with a given piece of code. */
             constructor(src) {
                 this.ast = parser.parse(src);
+                console.log(this.ast, this.ast === false);
+                if (this.ast === false) {
+                    throw "Parse error";
+                }
+
                 this.functions = {};
             }
 
@@ -270,43 +329,31 @@
             post_add(node, stack) {
                 let b = stack.pop();
                 let a = stack.pop();
-
-                stack.push(a + b);
+                stack.push(a.add(b));
             }
 
             post_mul(node, stack) {
                 let b = stack.pop();
                 let a = stack.pop();
-
-                if (typeof a == "string") {
-                    stack.push(a.repeat(parseInt(b)));
-                }
-                else if (typeof b == "string") {
-                    stack.push(b.repeat(parseInt(a)));
-                }
-                else {
-                    stack.push(a * b);
-                }
+                stack.push(a.mul(b));
             }
 
             post_sub(node, stack) {
                 let b = stack.pop();
                 let a = stack.pop();
-                stack.push(a - b);
+                stack.push(a.sub(b));
             }
 
             post_div(node, stack) {
                 let b = stack.pop();
                 let a = stack.pop();
-                stack.push(a / b);
+                stack.push(a.div(b));
             }
 
             post_mod(node, stack) {
                 let b = stack.pop();
                 let a = stack.pop();
-
-                //todo: format strings?
-                stack.push(a % b);
+                stack.push(a.mod(b));
             }
 
             post_plus(node, stack) {
@@ -337,9 +384,25 @@
             }
         }
 
-        //let calc = new Logics("'Hello World' * 3 + (1 + 2 * 3 + 4) + True");
-        let calc = new Logics("10 + [\"Hello\" 'World', 'test'] + 'mein Esel Eckay'");
-        document.writeln(calc.run(), "<br>");
+        document.querySelector("#prompt").addEventListener(
+            "change",
+            (e) => {
+                let calc;
+
+                try {
+                    calc = new Logics(e.target.value);
+                }
+                catch (e) {
+                    console.log(e);
+                    return;
+                }
+
+                let li = document.createElement("li");
+                li.innerText = calc.run().toString();
+                document.querySelector("#result").appendChild(li);
+            }
+        )
+
     </script>
 </body>
 </html>
