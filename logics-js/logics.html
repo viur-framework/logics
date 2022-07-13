@@ -49,19 +49,21 @@
                         return "str";
 
                     case "object":
+                        // Check if every item of the array has a valid Logics type.
                         if (this.#value instanceof Array) {
                             for (let item of this.#value) {
                                 if (!Value.prototype.type.call(item)) {
-                                    return undefined;
+                                    return undefined;  // Not a supported object
                                 }
                             }
 
                             return "list";
                         }
-                        else if (this.#value instanceof null) {
+                        else if (this.#value === null) {
                             return "NoneType";
                         }
 
+                        // Check if every property of the object has a valid Logics type.
                         for (let key of Object.keys(value)) {
                             if (!Value.prototype.type.call(value[key])) {
                                 return undefined;
@@ -243,7 +245,6 @@
             /** Create a new VM with a given piece of code. */
             constructor(src) {
                 this.ast = parser.parse(src);
-                console.log(this.ast, this.ast === false);
                 if (this.ast === false) {
                     throw "Parse error";
                 }
@@ -318,11 +319,11 @@
                 if (name in values) {
                     stack.push(new Value(values[name]));
                 }
-                else if (name in functions) {
-                    stack.push(new Value(self.functions[name]));
+                else if (name in this.functions) {
+                    stack.push(new Value(this.functions[name]));
                 }
                 else {
-                    stack.push(null);
+                    stack.push(new Value(null));
                 }
             }
 
@@ -389,17 +390,20 @@
             (e) => {
                 let calc;
 
+                let li = document.createElement("li");
+                document.querySelector("#result").appendChild(li);
+                li.appendChild(document.createTextNode(e.target.value + " = "));
+
                 try {
                     calc = new Logics(e.target.value);
+                    li.appendChild(document.createTextNode(calc.run().toString()));
                 }
-                catch (e) {
-                    console.log(e);
-                    return;
+                catch (exception) {
+                    console.log(exception);
+                    li.style.color = "red";
+                    li.appendChild(document.createTextNode(exception.toString()));
                 }
 
-                let li = document.createElement("li");
-                li.innerText = calc.run().toString();
-                document.querySelector("#result").appendChild(li);
             }
         )
 
