@@ -5,7 +5,7 @@
     <script src="parser.js"></script>
 </head>
 <body>
-    <input id="prompt" placeholder="Logics">
+    <textarea id="prompt" placeholder="Logics"></textarea>
     <ul id="result"></ul>
 
     <script>
@@ -14,14 +14,18 @@
         /** Wrapper for JavaScript values in the Logics VM, emulating
          * Python-style values and JSON-serializable objects. */
         class Value {
-            #value;  // private value property
+            #value;  // private property: The native value
+            #type;  // private property: Logics type name
 
             constructor(value) {
                 if (value instanceof Value) {
-                    throw "value is already an instance of Value!";
+                    this.#value = value.valueOf();
+                    this.#type = value.type();
                 }
-
-                this.#value = value;
+                else {
+                    this.#value = value;
+                    this.#type = this.type();
+                }
             }
 
             /// Return value's native JS value
@@ -29,8 +33,12 @@
                 return this.#value;
             }
 
-            /// Check for string
+            /// Returns the Logics value type; The type is cached in this.#type, for further usage.
             type() {
+                if (this.#type !== undefined) {
+                    return this.#type;
+                }
+
                 switch (typeof this.#value) {
                     case "undefined":
                         return "NoneType";
@@ -53,7 +61,7 @@
                         if (this.#value instanceof Array) {
                             for (let item of this.#value) {
                                 if (!Value.prototype.type.call(item)) {
-                                    return undefined;  // Not a supported object
+                                    throw new Error("Cannot fully convert Array into a valid Logics type");
                                 }
                             }
 
@@ -66,7 +74,7 @@
                         // Check if every property of the object has a valid Logics type.
                         for (let key of Object.keys(value)) {
                             if (!Value.prototype.type.call(value[key])) {
-                                return undefined;
+                                throw new Error("Cannot fully convert Object into a valid Logics type");
                             }
                         }
 
@@ -74,37 +82,42 @@
                 }
             }
 
+            /// Return the value's representation
             repr() {
-                switch (typeof this.#value) {
-                    case "undefined":
+                switch (this.type()) {
+                    case "NoneType":
                         return "None";
 
-                    case "boolean":
-                    case "number":
+                    case "bool":
+                        return this.#value ? "True" : "False";
+
+                    case "int":
+                    case "float":
                         return this.#value.toString();
 
-                    case "string":
+                    case "str":
                         return "\"" + this.#value.toString().replace("\"", "\\\"") + "\"";
 
-                    case "object":
-                        if (this.#value instanceof Array) {
-                            return "[" +
-                                this.#value.map(
-                                    item => {
-                                        if (!item instanceof Value) {
-                                            item = new Value(item);
-                                        }
-
-                                        return item.repr()
+                    case "list":
+                       return "[" +
+                            this.#value.map(
+                                item => {
+                                    if (!item instanceof Value) {
+                                        item = new Value(item);
                                     }
-                                ).join(", ") + "]";
-                        } else if (this.#value === null) {
-                            return "None";
-                        }
 
+                                    return item.repr()
+                                }
+                            ).join(", ") + "]";
+
+                    case "dict":
                         return "{" +
                             Object.keys(this.#value).map(
                                 key => {
+                                    if (!key instanceof Value) {
+                                        key = new Value(key);
+                                    }
+
                                     let value = this.#value[key];
                                     if (!value instanceof Value) {
                                         value = new Value(value);
@@ -113,6 +126,9 @@
                                     return key + ": " + value.repr()
                                 }
                             ).join(", ") + "}";
+
+                    default:
+                        throw new Error("Unimplemented repr for " + this.type());
                 }
             }
 
@@ -120,30 +136,23 @@
              * Convert Value as Logics string representation.
              */
             toString() {
-                switch (this.#value) {
-                    case null:
-                    case undefined:
-                        return "None"
-                    case true:
-                        return "True";
-                    case false:
-                        return "False";
-                    default:
-                        switch (typeof this.#value) {
-                            case "string":
-                            case "number":
-                                return this.#value.toString();
+                switch (this.type()) {
+                    case "str":
+                    case "float":
+                    case "int":
+                        return this.#value.toString();
 
-                            default:
-                                return this.repr()
-                        }
+                    default:
+                        return this.repr();
                 }
             }
 
+            // Returns JS-native boolean value.
             toBool() {
                 return Boolean(this.#value);
             }
 
+            // Returns JS-native int value.
             toInt() {
                 if (this.#value === true) {
                     return 1;
@@ -152,6 +161,7 @@
                 return parseInt(this.#value) || 0;
             }
 
+            // Returns JS-native float value.
             toFloat() {
                 if (this.#value === true) {
                     return 1.0;
@@ -160,6 +170,7 @@
                 return parseFloat(this.#value) || 0.0;
             }
 
+            // Returns JS-native list value.
             toList() {
                 let type = this.type();
 
@@ -173,6 +184,7 @@
                 return null;
             }
 
+            // Returns JS-native dict value.
             toDict() {
                 let type = this.type();
 
@@ -188,6 +200,7 @@
                 return null;
             }
 
+            // Performs an add-operation with another Value object.
             add(op) {
                 if( this.type() === "str" || op.type() === "str" ) {
                     return new Value(this.toString() + op.toString());
@@ -200,6 +213,7 @@
                 return new Value(this.toInt() + op.toInt());
             }
 
+            // Performs a sub-operation with another Value object.
             sub(op) {
                 if( this.type() === "float" || op.type() === "float" ) {
                     return new Value(this.toFloat() - op.toFloat());
@@ -208,6 +222,7 @@
                 return new Value(this.toInt() - op.toInt());
             }
 
+            // Performs a mul-operation with another Value object.
             mul(op) {
                 if (this.type() === "str") {
                     return new Value(this.toString().repeat(op.toInt()));
@@ -223,6 +238,7 @@
                 return new Value(this.toInt() * op.toInt());
             }
 
+            // Performs a div-operation with another Value object.
             div(op) {
                 if( this.type() === "float" || op.type() === "float" ) {
                     return new Value(this.toFloat() / op.toFloat());
@@ -231,12 +247,36 @@
                 return new Value(this.toInt() / op.toInt());
             }
 
+            // Performs a mod-operation with another Value object.
             mod(op) {
                 if( this.type() === "float" || op.type() === "float" ) {
                     return new Value(this.toFloat() % op.toFloat());
                 }
 
                 return new Value(this.toInt() % op.toInt());
+            }
+
+            // Performs unary plus
+            pos() {
+               if (this.type() === "float") {
+                   return new Value(+this.toFloat());
+               }
+
+               return new Value(+this.toInt());
+            }
+
+            // Performs unary minus
+            neg() {
+               if (this.type() === "float") {
+                   return new Value(-this.toFloat());
+               }
+
+               return new Value(-this.toInt());
+            }
+
+            // Performs unary complement
+            compl() {
+               return new Value(~this.toInt());
             }
         }
 
@@ -246,7 +286,7 @@
             constructor(src) {
                 this.ast = parser.parse(src);
                 if (this.ast === false) {
-                    throw "Parse error";
+                    throw new Error("Parse error");
                 }
 
                 this.functions = {};
@@ -257,7 +297,6 @@
             run(values) {
                 let stack = [];
                 this.traverse(this.ast, stack, values || {});
-                console.log(stack);
                 return stack.pop();
             }
 
@@ -358,30 +397,27 @@
             }
 
             post_plus(node, stack) {
-                let val = stack.pop()
-                stack.push(+val || val);
+                stack.push(stack.pop().pos());
             }
 
             post_minus(node, stack) {
-                let val = stack.pop();
-                stack.push(-val || val);
+                stack.push(stack.pop().neg());
             }
 
             post_complement(node, stack) {
-                let val = stack.pop();
-                stack.push(~val || val);
+                stack.push(stack.pop().compl());
             }
 
             post_True(_, stack) {
-                stack.push(true);
+                stack.push(new Value(true));
             }
 
             post_False(_, stack) {
-                stack.push(true);
+                stack.push(new Value(false));
             }
 
             post_null(_, stack) {
-                stack.push(null);
+                stack.push(new Value(null));
             }
         }
 
@@ -396,7 +432,10 @@
 
                 try {
                     calc = new Logics(e.target.value);
-                    li.appendChild(document.createTextNode(calc.run().toString()));
+                    li.appendChild(document.createTextNode(calc.run({
+                        "name": "Doe",
+                        "firstname": "John",
+                    }).repr()));
                 }
                 catch (exception) {
                     console.log(exception);
