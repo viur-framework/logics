@@ -13,7 +13,7 @@ __status__ = "Production"
 
 import string
 from .logics import Interpreter
-from .parser import Node, ParseException
+from .parser import LogicsNode, LogicsParseException
 from .utility import parseInt, parseFloat
 
 def htmlInsertImage(info, size = None, fallback = None, flip = None):
@@ -112,7 +112,7 @@ class Template(Interpreter):
 
 		assert self.startBlock != self.endBlock and self.startBlock != self.altBlock
 
-		block = Node("tblock")
+		block = LogicsNode("tblock")
 		blocks = []
 
 		while s:
@@ -153,7 +153,7 @@ class Template(Interpreter):
 					prefix = prefix.rstrip(string.whitespace) #this should comply with the stripRight character set
 
 				row, col = updatePos(s[:start], row, col)
-				block.children.append(Node("tstring", prefix))
+				block.children.append(LogicsNode("tstring", prefix))
 
 			expr = s[estart:eend]
 
@@ -176,16 +176,16 @@ class Template(Interpreter):
 
 				try:
 					node = super(Template, self).parse(expr)
-				except ParseException as e:
-					raise ParseException(row + e.row - 1, col + e.col - 1, e.expecting)
+				except LogicsParseException as e:
+					raise LogicsParseException(row + e.row - 1, col + e.col - 1, e.expecting)
 
 				blocks.append((block, [node], []))
-				block = Node("tblock")
+				block = LogicsNode("tblock")
 
 			# {{|}} altBlock
 			elif expr.startswith(self.altBlock):
 				if not blocks:
-					raise ParseException(row, col, "Alternative block without opening block")
+					raise LogicsParseException(row, col, "Alternative block without opening block")
 
 				row, col = updatePos(self.altBlock, row, col)
 				expr = expr[len(self.altBlock):]
@@ -195,13 +195,13 @@ class Template(Interpreter):
 				if expr.strip(): # look for else-if block
 					try:
 						node = super(Template, self).parse(expr.strip())
-					except ParseException as e:
-						raise ParseException(row + e.row - 1, col + e.col - 1, e.expecting)
+					except LogicsParseException as e:
+						raise LogicsParseException(row + e.row - 1, col + e.col - 1, e.expecting)
 
 					cnodes.append(node)
 					
 				elif not cnodes[-1]: # disallow multiple else blocks
-					raise ParseException(row, col, "Multiple alternative blocks without condition are not allowed")
+					raise LogicsParseException(row, col, "Multiple alternative blocks without condition are not allowed")
 				else:
 					cnodes.append(None) # else-block
 
@@ -209,12 +209,12 @@ class Template(Interpreter):
 				blocks[-1] = (parent, cnodes, cblocks)
 
 				row, col = updatePos(expr, row, col)
-				block = Node("tblock")
+				block = LogicsNode("tblock")
 
 			# {{/#}} endBlock
 			elif expr.startswith(self.endBlock):
 				if not blocks:
-					raise ParseException(row, col, "Closing block without opening block")
+					raise LogicsParseException(row, col, "Closing block without opening block")
 
 				row, col = updatePos(self.startDelimiter + expr, row, col)
 
@@ -229,7 +229,7 @@ class Template(Interpreter):
 					if not condition: #else
 						node = cblocks.pop()
 					else:
-						node = Node("tloop", children=[condition, cblocks.pop(), node])
+						node = LogicsNode("tloop", children=[condition, cblocks.pop(), node])
 
 				parent.children.append(node)
 				block = parent
@@ -239,8 +239,8 @@ class Template(Interpreter):
 
 				try:
 					node = super(Template, self).parse(expr)
-				except ParseException as e:
-					raise ParseException(row + e.row - 1, col + e.col - 1, e.expecting)
+				except LogicsParseException as e:
+					raise LogicsParseException(row + e.row - 1, col + e.col - 1, e.expecting)
 
 				row, col = updatePos(expr, row, col)
 				block.children.append(node)
@@ -250,10 +250,10 @@ class Template(Interpreter):
 			s = s[end:]
 
 		if blocks:
-			raise ParseException(row, col, "%d blocks are still open, expecting %s" % (len(blocks), "".join([("%s%s%s" % (self.startDelimiter, self.endBlock, self.endDelimiter)) for b in blocks])))
+			raise LogicsParseException(row, col, "%d blocks are still open, expecting %s" % (len(blocks), "".join([("%s%s%s" % (self.startDelimiter, self.endBlock, self.endDelimiter)) for b in blocks])))
 
 		if s:
-			block.children.append(Node("tstring", s))
+			block.children.append(LogicsNode("tstring", s))
 
 		self.ast = block
 

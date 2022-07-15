@@ -1,11 +1,10 @@
-#-*- coding: utf-8 -*-
 """
-logics is a domain-specific expressional language with a Python-styled syntax,
+logics is a domain-specific expression language with a Python-style syntax,
 that can be compiled and executed in any of ViUR's runtime contexts.
 """
 
 __author__ = "Jan Max Meyer"
-__copyright__ = "Copyright 2015-2021 by Mausbrand Informationssysteme GmbH"
+__copyright__ = "Copyright 2015-2022 by Mausbrand Informationssysteme GmbH"
 __version__ = "3.0.2"
 __license__ = "LGPLv3"
 __status__ = "Production"
@@ -13,96 +12,14 @@ __status__ = "Production"
 from . import parser
 from .utility import parseInt, parseFloat, optimizeValue, strType
 
-class Parser(parser.Parser):
 
-	def __init__(self):
-		super(Parser, self).__init__()
-
-	def parse(self, src):
-		"""
-		Parses a logics expression into an abstract syntax tree.
-
-		:param src: The logics source to be compiled.
-
-		:return: Either returns the AST or throws a ParseException with useful information.
-		"""
-		if not src.endswith("\n"):
-			src += "\n"
-
-		return super(Parser, self).parse(src)
-
-	compile = parse
-
-	def traverse(self, node, obj = None, prePrefix = "pre_", passPrefix = "pass_",
-					postPrefix = "post_", loopPrefix = "loop_",
-						*args, **kwargs):
-		"""
-		Generic AST traversal function.
-
-		This function allows to walk over the generated abstract syntax tree created by
-		:meth:`parser.Parser.parse()` and calls functions before, to loop, by iterating over
-		and after the node are walked.
-
-		:param node: The tree node to traverse.
-		:param obj: Object to traverse functions from, defaults to self.
-		:param prePrefix: Prefix for pre-processed functions, named prePrefix + emit.
-		:param passPrefix: Prefix for functions processed by passing though children, named passPrefix + emit.
-		:param postPrefix: Prefix for post-processed functions, named postPrefix + emit.
-		:param loopPrefix: Prefix for loop-processing functions, named loopPrefix + emit.
-
-		:param args: Arguments passed to these functions as *args.
-		:param kwargs: Keyword arguments passed to these functions as **kwargs.
-		"""
-		if obj is None:
-			obj = self
-
-		def perform(prefix, loop = None, *args, **kwargs):
-			if not node.emit:
-				return False
-
-			if loop is not None:
-				kwargs["_loopIndex"] = loop
-
-			fname = "%s%s" % (prefix, node.emit or node.symbol)
-
-			if fname and fname in dir(obj) and callable(getattr(obj, fname)):
-				getattr(obj, fname)(node, *args, **kwargs)
-				return True
-
-			elif loop is not None:
-				fname += "_%d" % loop
-
-				if fname and fname in dir(obj) and callable(getattr(obj, fname)):
-					getattr(obj, fname)(node, *args, **kwargs)
-					return True
-
-			return False
-
-		# Pre-processing function
-		perform(prePrefix, *args, **kwargs)
-
-		# Loop-over function
-		if not perform(loopPrefix, *args, **kwargs):
-
-			# Run through the children.
-			for count, child in enumerate(node.children):
-				self.traverse(child, obj, prePrefix, passPrefix, postPrefix,
-								loopPrefix, *args, **kwargs)
-
-				# Pass-processing function
-				perform(passPrefix, loop=count, *args, **kwargs)
-
-		# Post-processing function
-		perform(postPrefix, *args, **kwargs)
-
-
-class Interpreter(Parser):
+class Interpreter(parser.LogicsParser):
 	"""
 	Interpreter class for the viurLogics.
 	"""
 
 	def __init__(self):
-		super(Interpreter, self).__init__()
+		super().__init__()
 		self.stack = []
 		self.fields = {}
 		self.prefix = ""
@@ -237,6 +154,83 @@ class Interpreter(Parser):
 			r = optimizeValue(r, allow=[bool, int, float], default=0)
 
 		return l, r
+
+	def parse(self, src):
+		"""
+		Parses a logics expression into an abstract syntax tree.
+
+		:param src: The logics source to be compiled.
+
+		:return: Either returns the AST or throws a ParseException with useful information.
+		"""
+		if not src.endswith("\n"):
+			src += "\n"
+
+		return super().parse(src)
+
+	compile = parse
+
+	def traverse(self, node, obj = None, prePrefix = "pre_", passPrefix = "pass_",
+					postPrefix = "post_", loopPrefix = "loop_",
+						*args, **kwargs):
+		"""
+		Generic AST traversal function.
+
+		This function allows to walk over the generated abstract syntax tree created by
+		:meth:`parser.Parser.parse()` and calls functions before, to loop, by iterating over
+		and after the node are walked.
+
+		:param node: The tree node to traverse.
+		:param obj: Object to traverse functions from, defaults to self.
+		:param prePrefix: Prefix for pre-processed functions, named prePrefix + emit.
+		:param passPrefix: Prefix for functions processed by passing though children, named passPrefix + emit.
+		:param postPrefix: Prefix for post-processed functions, named postPrefix + emit.
+		:param loopPrefix: Prefix for loop-processing functions, named loopPrefix + emit.
+
+		:param args: Arguments passed to these functions as *args.
+		:param kwargs: Keyword arguments passed to these functions as **kwargs.
+		"""
+		if obj is None:
+			obj = self
+
+		def perform(prefix, loop = None, *args, **kwargs):
+			if not node.emit:
+				return False
+
+			if loop is not None:
+				kwargs["_loopIndex"] = loop
+
+			fname = "%s%s" % (prefix, node.emit or node.symbol)
+
+			if fname and fname in dir(obj) and callable(getattr(obj, fname)):
+				getattr(obj, fname)(node, *args, **kwargs)
+				return True
+
+			elif loop is not None:
+				fname += "_%d" % loop
+
+				if fname and fname in dir(obj) and callable(getattr(obj, fname)):
+					getattr(obj, fname)(node, *args, **kwargs)
+					return True
+
+			return False
+
+		# Pre-processing function
+		perform(prePrefix, *args, **kwargs)
+
+		# Loop-over function
+		if not perform(loopPrefix, *args, **kwargs):
+
+			# Run through the children.
+			for count, child in enumerate(node.children):
+				self.traverse(child, obj, prePrefix, passPrefix, postPrefix,
+								loopPrefix, *args, **kwargs)
+
+				# Pass-processing function
+				perform(passPrefix, loop=count, *args, **kwargs)
+
+		# Post-processing function
+		perform(postPrefix, *args, **kwargs)
 
 	def execute(self, src, fields = None, dump = False, prefix = None):
 		self.fields = fields or {}
@@ -608,7 +602,7 @@ def main():
 		done = True
 
 	if not done:
-		vil = Parser()
+		vil = Interpreter()
 		ast = vil.parse(expr)
 		if ast:
 			ast.dump()
