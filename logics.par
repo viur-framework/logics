@@ -1,7 +1,7 @@
 // Grammar for ViUR logics
-// Compile with UniCC (https://github.com/phorward/unicc) using `unicc -swo parser -l python logics.par`
 
 #!mode          insensitive;
+#prefix         "Logics";
 #whitespaces    @whitespace ;
 
 @whitespace     ' \r\n\t'+
@@ -60,7 +60,7 @@ comparison_op   : "=="
                 | not_in
                 ;
 
-comparison      : expr (comparison_op expr )+                       = comparison
+comparison      : expr (comparison_op expr)+                        = comparison
                 | expr
                 ;
 

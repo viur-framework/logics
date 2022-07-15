@@ -7,7 +7,7 @@ logics/parser.py: logics.par
 	unicc -swo logics/parser -l python $?
 
 logics-js/parser.js: logics.par
-	unicc -swo logics-js/parser -l javascript $?
+	UNICC_TPLDIR=. unicc -swo logics-js/parser -l javascript $?
 
 
 clean:
