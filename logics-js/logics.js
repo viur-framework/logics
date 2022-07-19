@@ -13,7 +13,7 @@ export class Value {
         }
         else {
             this.#value = value;
-            this.#type = this.type();
+            this.#type = this.constructor.type(value);
         }
     }
 
@@ -24,11 +24,12 @@ export class Value {
 
     /// Returns the Logics value type; The type is cached in this.#type, for further usage.
     type() {
-        if (this.#type !== undefined) {
-            return this.#type;
-        }
+        return this.#type || (this.#type = this.constructor.type(this.#value))
+    }
 
-        switch (typeof this.#value) {
+    /// Determine Logics value type from a JavaScript native value
+    static type(value) {
+        switch (typeof value) {
             case "undefined":
                 return "NoneType";
 
@@ -36,7 +37,7 @@ export class Value {
                 return "bool";
 
             case "number":
-                if (this.#value % 1 === 0) {
+                if (value % 1 === 0) {
                     return "int";
                 }
 
@@ -47,22 +48,22 @@ export class Value {
 
             case "object":
                 // Check if every item of the array has a valid Logics type.
-                if (this.#value instanceof Array) {
-                    for (let item of this.#value) {
-                        if (!Value.prototype.type.call(item)) {
+                if (value instanceof Array) {
+                    for (let item of value) {
+                        if (!this.type(item)) {
                             throw new Error("Cannot fully convert Array into a valid Logics type");
                         }
                     }
 
                     return "list";
                 }
-                else if (this.#value === null) {
+                else if (value === null) {
                     return "NoneType";
                 }
 
                 // Check if every property of the object has a valid Logics type.
                 for (let key of Object.keys(value)) {
-                    if (!Value.prototype.type.call(value[key])) {
+                    if (!this.type(value[key])) {
                         throw new Error("Cannot fully convert Object into a valid Logics type");
                     }
                 }
@@ -91,7 +92,7 @@ export class Value {
                return "[" +
                     this.#value.map(
                         item => {
-                            if (!item instanceof Value) {
+                            if (!( item instanceof Value )) {
                                 item = new Value(item);
                             }
 
@@ -103,12 +104,12 @@ export class Value {
                 return "{" +
                     Object.keys(this.#value).map(
                         key => {
-                            if (!key instanceof Value) {
+                            if (!( key instanceof Value)) {
                                 key = new Value(key);
                             }
 
                             let value = this.#value[key];
-                            if (!value instanceof Value) {
+                            if (!(value instanceof Value)) {
                                 value = new Value(value);
                             }
 
@@ -190,7 +191,7 @@ export class Value {
     }
 
     // Get index
-    getIndex(index) {
+    __getitem__(index) {
         if( this.type() === "dict" ) {
             return new Value(this.#value[index.toString()]);
         }
@@ -199,6 +200,27 @@ export class Value {
         }
 
         return new Value(null);
+    }
+
+    // Checks if a given value is part of another value
+    __in__(value) {
+        if (value.type() === "dict") {
+            return new Value(value.valueOf()[this.toString()] !== undefined);
+        }
+        else if (value.type() === "list") {
+            // We need to compare every item using compareTo()
+            for(let item of value.valueOf()) {
+                item = new Value(item);
+                if(item.compareTo(this) === "eq") {
+                    return new Value(true);
+                }
+            }
+
+            return new Value(false);
+            //return new Value(value.valueOf().indexOf(this.valueOf()) >= 0);
+        }
+
+        return new Value(value.toString().indexOf(this.toString()) >= 0);
     }
 
     // Compare
@@ -229,7 +251,7 @@ export class Value {
                 let bv = new Value(b[k]);
 
                 let res;
-                if ((res = av.compare(bv)) !== "eq") {
+                if ((res = av.compareTo(bv)) !== "eq") {
                     return res;
                 }
             }
@@ -253,7 +275,7 @@ export class Value {
                 let bv = new Value(b[i]);
 
                 let res;
-                if ((res = av.compare(bv)) !== "eq") {
+                if ((res = av.compareTo(bv)) !== "eq") {
                     return res;
                 }
             }
@@ -363,6 +385,7 @@ export class Value {
     compl() {
        return new Value(~this.toInt());
     }
+
 }
 
 /** The Logics VM in JavaScript */
@@ -402,7 +425,7 @@ export default class Logics {
         if ((fn = this["loop_" + node.emit]) !== undefined) {
             fn.call(this, node, stack, values);
         }
-        else if (node.children !== undefined) {
+        else if (node.children) {
             let fn = this["pass_" + node.emit];
 
             for (let child of node.children) {
@@ -431,7 +454,7 @@ export default class Logics {
     }
 
     post_list(node, stack) {
-        stack.push(new Value(stack.splice(-node.children.length)));
+        stack.push(new Value(stack.splice(-node.children.length).map(item => item.valueOf())));
     }
 
     post_NUMBER(node, stack) {
@@ -512,33 +535,52 @@ export default class Logics {
             let right = stack.pop();
             let left = stack.pop();
 
-            let res = left.compareTo(right);
-
-            console.log("-->", node.children[i], left, right, res);
+            let res;
 
             switch (op) {
-                case "<":
-                    res = res === "lt";
+                case "in":
+                    res = left.__in__(right);
+                    console.log("-->", op, left, right, res);
                     break;
-                case ">":
-                    res = res === "gt";
-                    break;
-                case "<=":
-                    res = res === "lt" || res === "eq";
-                    break;
-                case ">=":
-                    res = res === "gt" || res === "eq";
-                    break;
-                case "==":
-                    res = res === "eq";
-                    break;
-                case "!=":
-                case "<>":
-                    res = res !== "eq";
+
+                case "not_in":
+                    res = !left.__in__(right);
+                    console.log("-->", op, left, right, res);
                     break;
 
                 default:
-                    throw SyntaxError("Unhandled operator: " + op)
+                    res = left.compareTo(right);
+                    console.log("-->", op, left, right, res);
+
+                    switch (op) {
+                        case "<":
+                            res = res === "lt";
+                            break;
+
+                        case ">":
+                            res = res === "gt";
+                            break;
+
+                        case "<=":
+                            res = res === "lt" || res === "eq";
+                            break;
+
+                        case ">=":
+                            res = res === "gt" || res === "eq";
+                            break;
+
+                        case "==":
+                            res = res === "eq";
+                            break;
+
+                        case "!=":
+                        case "<>":
+                            res = res !== "eq";
+                            break;
+
+                        default:
+                            throw SyntaxError("Unhandled operator: " + op)
+                    }
             }
 
             stack.push(new Value(res));
