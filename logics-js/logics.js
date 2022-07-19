@@ -205,26 +205,26 @@ export class Value {
     // Checks if a given value is part of another value
     __in__(value) {
         if (value.type() === "dict") {
-            return new Value(value.valueOf()[this.toString()] !== undefined);
+            return value.valueOf()[this.toString()] !== undefined;
         }
         else if (value.type() === "list") {
-            // We need to compare every item using compareTo()
+            // We need to compare every item using __cmp__()
             for(let item of value.valueOf()) {
                 item = new Value(item);
-                if(item.compareTo(this) === "eq") {
-                    return new Value(true);
+                if(item.__cmp__(this) === "eq") {
+                    return true;
                 }
             }
 
-            return new Value(false);
+            return false;
             //return new Value(value.valueOf().indexOf(this.valueOf()) >= 0);
         }
 
-        return new Value(value.toString().indexOf(this.toString()) >= 0);
+        return value.toString().indexOf(this.toString()) >= 0;
     }
 
     // Compare
-    compareTo(other) {
+    __cmp__(other) {
         let a, b;
 
         // Dict types
@@ -236,27 +236,27 @@ export class Value {
             let bk = Object.keys(b);
 
             if (ak.length < bk.length) {
-                return "lt";
+                return -1;
             }
             else if (ak.length > bk.length) {
-                return "gt";
+                return 1;
             }
 
             for( let k of ak ) {
                 if( typeof b[k] === "undefined" ) {
-                    return "gt";
+                    return 1;
                 }
 
                 let av = new Value(a[k]);
                 let bv = new Value(b[k]);
 
                 let res;
-                if ((res = av.compareTo(bv)) !== "eq") {
+                if ((res = av.__cmp__(bv)) !== 0) {
                     return res;
                 }
             }
 
-            return "eq";
+            return 0;
         }
         // List types
         else if (this.type() === "list" || other.type() === "list") {
@@ -264,10 +264,10 @@ export class Value {
             b = other.toList();
 
             if (a.length < b.length) {
-                return "lt";
+                return -1;
             }
             else if (a.length > b.length) {
-                return "gt";
+                return 1;
             }
 
             for(let i = 0; i < a.length; i++) {
@@ -275,12 +275,12 @@ export class Value {
                 let bv = new Value(b[i]);
 
                 let res;
-                if ((res = av.compareTo(bv)) !== "eq") {
+                if ((res = av.__cmp__(bv)) !== 0) {
                     return res;
                 }
             }
 
-            return "eq";
+            return 0;
         }
         // Other types
         else if (this.type() === "str" || other.type() === "str") {
@@ -298,17 +298,17 @@ export class Value {
 
         // Perform final comparison
         if (a < b) {
-            return "lt";
+            return -1;
         }
         else if (a > b) {
-            return "gt";
+            return 1;
         }
 
-        return "eq";
+        return 0;
     }
 
     // Performs an add-operation with another Value object.
-    add(op) {
+    __add__(op) {
         if( this.type() === "str" || op.type() === "str" ) {
             return new Value(this.toString() + op.toString());
         }
@@ -321,7 +321,7 @@ export class Value {
     }
 
     // Performs a sub-operation with another Value object.
-    sub(op) {
+    __sub__(op) {
         if( this.type() === "float" || op.type() === "float" ) {
             return new Value(this.toFloat() - op.toFloat());
         }
@@ -330,7 +330,7 @@ export class Value {
     }
 
     // Performs a mul-operation with another Value object.
-    mul(op) {
+    __mul__(op) {
         if (this.type() === "str") {
             return new Value(this.toString().repeat(op.toInt()));
         }
@@ -346,7 +346,7 @@ export class Value {
     }
 
     // Performs a div-operation with another Value object.
-    div(op) {
+    __div__(op) {
         if( this.type() === "float" || op.type() === "float" ) {
             return new Value(this.toFloat() / op.toFloat());
         }
@@ -355,7 +355,7 @@ export class Value {
     }
 
     // Performs a mod-operation with another Value object.
-    mod(op) {
+    __mod__(op) {
         if( this.type() === "float" || op.type() === "float" ) {
             return new Value(this.toFloat() % op.toFloat());
         }
@@ -363,8 +363,17 @@ export class Value {
         return new Value(this.toInt() % op.toInt());
     }
 
+    // Performs a mod-operation with another Value object.
+    __pow__(op) {
+        if( this.type() === "float" || op.type() === "float" ) {
+            return new Value(this.toFloat() ** op.toFloat());
+        }
+
+        return new Value(this.toInt() ** op.toInt());
+    }
+
     // Performs unary plus
-    pos() {
+    __pos__() {
        if (this.type() === "float") {
            return new Value(+this.toFloat());
        }
@@ -373,7 +382,7 @@ export class Value {
     }
 
     // Performs unary minus
-    neg() {
+    __neg__() {
        if (this.type() === "float") {
            return new Value(-this.toFloat());
        }
@@ -382,10 +391,9 @@ export class Value {
     }
 
     // Performs unary complement
-    compl() {
+    __invert__() {
        return new Value(~this.toInt());
     }
-
 }
 
 /** The Logics VM in JavaScript */
@@ -478,43 +486,49 @@ export default class Logics {
     post_add(node, stack) {
         let b = stack.pop();
         let a = stack.pop();
-        stack.push(a.add(b));
+        stack.push(a.__add__(b));
     }
 
     post_mul(node, stack) {
         let b = stack.pop();
         let a = stack.pop();
-        stack.push(a.mul(b));
+        stack.push(a.__mul__(b));
     }
 
     post_sub(node, stack) {
         let b = stack.pop();
         let a = stack.pop();
-        stack.push(a.sub(b));
+        stack.push(a.__sub__(b));
     }
 
     post_div(node, stack) {
         let b = stack.pop();
         let a = stack.pop();
-        stack.push(a.div(b));
+        stack.push(a.__div__(b));
     }
 
     post_mod(node, stack) {
         let b = stack.pop();
         let a = stack.pop();
-        stack.push(a.mod(b));
+        stack.push(a.__mod__(b));
+    }
+
+    post_power(node, stack) {
+        let b = stack.pop();
+        let a = stack.pop();
+        stack.push(a.__pow__(b));
     }
 
     post_plus(node, stack) {
-        stack.push(stack.pop().pos());
+        stack.push(stack.pop().__pos__());
     }
 
     post_minus(node, stack) {
-        stack.push(stack.pop().neg());
+        stack.push(stack.pop().__neg__());
     }
 
     post_complement(node, stack) {
-        stack.push(stack.pop().compl());
+        stack.push(stack.pop().__invert__());
     }
 
     post_True(_, stack) {
@@ -549,33 +563,33 @@ export default class Logics {
                     break;
 
                 default:
-                    res = left.compareTo(right);
+                    res = left.__cmp__(right);
                     console.log("-->", op, left, right, res);
 
                     switch (op) {
                         case "<":
-                            res = res === "lt";
+                            res = res < 0;
                             break;
 
                         case ">":
-                            res = res === "gt";
+                            res = res > 0;
                             break;
 
                         case "<=":
-                            res = res === "lt" || res === "eq";
+                            res = res <= 0;
                             break;
 
                         case ">=":
-                            res = res === "gt" || res === "eq";
+                            res = res >= 0;
                             break;
 
                         case "==":
-                            res = res === "eq";
+                            res = res === 0;
                             break;
 
                         case "!=":
                         case "<>":
-                            res = res !== "eq";
+                            res = res !== 0;
                             break;
 
                         default:
