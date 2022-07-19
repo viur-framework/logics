@@ -189,6 +189,102 @@ export class Value {
         return null;
     }
 
+    // Get index
+    getIndex(index) {
+        if( this.type() === "dict" ) {
+            return new Value(this.#value[index.toString()]);
+        }
+        else if( this.type() === "list" || this.type() === "str" ) {
+            return new Value(this.#value[index.toInt()]);
+        }
+
+        return new Value(null);
+    }
+
+    // Compare
+    compareTo(other) {
+        let a, b;
+
+        // Dict types
+        if (this.type() === "dict" || other.type() === "dict") {
+            a = this.toDict();
+            b = other.toDict();
+
+            let ak = Object.keys(a);
+            let bk = Object.keys(b);
+
+            if (ak.length < bk.length) {
+                return "lt";
+            }
+            else if (ak.length > bk.length) {
+                return "gt";
+            }
+
+            for( let k of ak ) {
+                if( typeof b[k] === "undefined" ) {
+                    return "gt";
+                }
+
+                let av = new Value(a[k]);
+                let bv = new Value(b[k]);
+
+                let res;
+                if ((res = av.compare(bv)) !== "eq") {
+                    return res;
+                }
+            }
+
+            return "eq";
+        }
+        // List types
+        else if (this.type() === "list" || other.type() === "list") {
+            a = this.toList();
+            b = other.toList();
+
+            if (a.length < b.length) {
+                return "lt";
+            }
+            else if (a.length > b.length) {
+                return "gt";
+            }
+
+            for(let i = 0; i < a.length; i++) {
+                let av = new Value(a[i]);
+                let bv = new Value(b[i]);
+
+                let res;
+                if ((res = av.compare(bv)) !== "eq") {
+                    return res;
+                }
+            }
+
+            return "eq";
+        }
+        // Other types
+        else if (this.type() === "str" || other.type() === "str") {
+            a = this.toString();
+            b = other.toString();
+        }
+        else if (this.type() === "float" || other.type() === "float") {
+            a = this.toFloat();
+            b = other.toFloat();
+        }
+        else {
+            a = this.toInt();
+            b = other.toInt();
+        }
+
+        // Perform final comparison
+        if (a < b) {
+            return "lt";
+        }
+        else if (a > b) {
+            return "gt";
+        }
+
+        return "eq";
+    }
+
     // Performs an add-operation with another Value object.
     add(op) {
         if( this.type() === "str" || op.type() === "str" ) {
@@ -276,6 +372,7 @@ export default class Logics {
     /** Create a new VM with a given piece of code. */
     constructor(src) {
         this.ast = this.constructor.#parser.parse(src);
+        this.ast.dump();
         this.functions = {};
     }
 
@@ -321,6 +418,8 @@ export default class Logics {
             fn.call(this, node, stack, values);
         }
     }
+
+    // AST traversal functions
 
     post_STRING(node, stack) {
         // Cut "..." from string.
@@ -405,6 +504,45 @@ export default class Logics {
 
     post_null(_, stack) {
         stack.push(new Value(null));
+    }
+
+    post_comparison(node, stack) {
+        for(let i = 1; i < node.children.length; i += 2) {
+            let op = node.children[i].emit;
+            let right = stack.pop();
+            let left = stack.pop();
+
+            let res = left.compareTo(right);
+
+            console.log("-->", node.children[i], left, right, res);
+
+            switch (op) {
+                case "<":
+                    res = res === "lt";
+                    break;
+                case ">":
+                    res = res === "gt";
+                    break;
+                case "<=":
+                    res = res === "lt" || res === "eq";
+                    break;
+                case ">=":
+                    res = res === "gt" || res === "eq";
+                    break;
+                case "==":
+                    res = res === "eq";
+                    break;
+                case "!=":
+                case "<>":
+                    res = res !== "eq";
+                    break;
+
+                default:
+                    throw SyntaxError("Unhandled operator: " + op)
+            }
+
+            stack.push(new Value(res));
+        }
     }
 }
 
