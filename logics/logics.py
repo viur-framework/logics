@@ -375,7 +375,7 @@ class Interpreter(parser.LogicsParser):
 	def post_not_test(self, node):
 		self.stack.append(not self.stack.pop())
 
-	def post_comparison(self, node):
+	def post_cmp(self, node):
 		for i in range(1, len(node.children), 2):
 			op = node.children[i].emit or node.children[i].symbol
 
@@ -459,7 +459,11 @@ class Interpreter(parser.LogicsParser):
 
 		self.stack.append(res)
 
-	def post_plus(self, node):
+	def post_pow(self, node):
+		l, r = self.getOperands()
+		self.stack.append(l ** r)
+
+	def post_pos(self, node):
 		op = self.stack.pop()
 
 		try:
@@ -467,7 +471,7 @@ class Interpreter(parser.LogicsParser):
 		except TypeError:
 			self.stack.append(op)
 
-	def post_minus(self, node):
+	def post_neg(self, node):
 		op = self.stack.pop()
 
 		try:
@@ -475,7 +479,7 @@ class Interpreter(parser.LogicsParser):
 		except TypeError:
 			self.stack.append(op)
 
-	def post_complement(self, node):
+	def post_invert(self, node):
 		op = self.stack.pop()
 
 		try:

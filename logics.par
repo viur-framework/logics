@@ -60,7 +60,7 @@ comparison_op   : "=="
                 | not_in
                 ;
 
-comparison      : expr (comparison_op expr)+                        = comparison
+comparison      : expr (comparison_op expr)+                        = cmp
                 | expr
                 ;
 
@@ -74,13 +74,13 @@ term            : term '*' factor                                   = mul
                 | term '%' factor                                   = mod
                 | factor;
 
-factor          : '+' factor                                        = plus
-                | '-' factor                                        = minus
-                | '~' factor                                        = complement
+factor          : '+' factor                                        = pos
+                | '-' factor                                        = neg
+                | '~' factor                                        = invert
                 | power
                 ;
 
-power           : entity "**" factor                                = power
+power           : entity "**" factor                                = pow
                 | entity
                 ;
 

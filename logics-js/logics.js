@@ -513,21 +513,21 @@ export default class Logics {
         stack.push(a.__mod__(b));
     }
 
-    post_power(node, stack) {
+    post_pow(node, stack) {
         let b = stack.pop();
         let a = stack.pop();
         stack.push(a.__pow__(b));
     }
 
-    post_plus(node, stack) {
+    post_pos(node, stack) {
         stack.push(stack.pop().__pos__());
     }
 
-    post_minus(node, stack) {
+    post_neg(node, stack) {
         stack.push(stack.pop().__neg__());
     }
 
-    post_complement(node, stack) {
+    post_invert(node, stack) {
         stack.push(stack.pop().__invert__());
     }
 
@@ -543,7 +543,7 @@ export default class Logics {
         stack.push(new Value(null));
     }
 
-    post_comparison(node, stack) {
+    post_cmp(node, stack) {
         for(let i = 1; i < node.children.length; i += 2) {
             let op = node.children[i].emit;
             let right = stack.pop();
