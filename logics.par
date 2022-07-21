@@ -1,6 +1,7 @@
-// Grammar for ViUR logics
+// Logics: A Python-like evaluation language
+// Grammar requires unicc >= 1.8, use Makefile for building.
 
-#!mode          insensitive;
+#!mode          scanner;
 #prefix         "Logics";
 #whitespaces    @whitespace ;
 
@@ -8,96 +9,86 @@
                 | "#" !'\n'* '\n'
                 ;
 
-@IDENT          'A-Za-z_' 'A-Za-z0-9_'*                             = IDENT;
-@STRING         '"' ( '\\' . | !'"' )* '"'
-                | '\'' ( '\\' . | !'\'' )* '\''                     = STRING;
-@NUMBER         '0-9'+ '.' '0-9'* | '0-9'* '.' '0-9'+ | '0-9'+      = NUMBER;
+@Identifier     'A-Za-z_' 'A-Za-z0-9_'*                             = Identifier;
+@Number         '0-9'+ '.' '0-9'* | '0-9'* '.' '0-9'+ | '0-9'+      = Number;
+@String         '"' ( '\\' . | !'"' )* '"'
+                | '\'' ( '\\' . | !'\'' )* '\''                     = String;
 
-logic$          : expression ;
 
-expression      : test ;
-
-test            : if_else
-                | or_test
+expression$     : or "if" expression "else" expression              = if
+                | or
                 ;
 
-if_else         := or_test "if" or_test "else" test
+or              : or "or" and                                       = or
+                | and
                 ;
 
-or_test         : and_test ( "or" and_test )+                       = or_test
-                | and_test
+and             : and "and" not                                     = and
+                | not
                 ;
 
-and_test        : not_test ( "and" not_test )+                      = and_test
-                | not_test
+not             : "not" not                                         = not
+                | cmp
                 ;
 
-not_test        : "not" not_test                                     = not_test
-                | comparison
+cmp             : cmp "==" add_sub                                  = eq
+                | cmp ">" add_sub                                   = gt
+                | cmp ">=" add_sub                                  = gteq
+                | cmp "<" add_sub                                   = lt
+                | cmp "<=" add_sub                                  = lteq
+                | cmp ("!=" | "<>") add_sub                         = neq
+                | add_sub
                 ;
 
-comparison_op   : ""==""
-                | "">=""
-                | ""<=""
-                | ""<""
-                | "">""
-                | ""<>""
-                | ""!=""
-                | "in"                                              = in
-                | "not" "in"                                        = not_in
+add_sub         : add_sub '+' mul_div                               = add
+                | add_sub '-' mul_div                               = sub
+                | mul_div
                 ;
 
-comparison      : expr (comparison_op expr)+                        = cmp
-                | expr
+mul_div         : mul_div '*' unary                                 = mul
+                | mul_div '/' unary                                 = div
+                | mul_div '%' unary                                 = mod
+                | unary;
+
+pow             : pow "**" unary                                    = pow
+                | unary
                 ;
 
-expr            : expr '+' term                                     = add
-                | expr '-' term                                     = sub
-                | term
+unary           : '+' unary                                         = pos
+                | '-' unary                                         = neg
+                | '~' unary                                         = invert
+                | factor
                 ;
 
-term            : term '*' factor                                   = mul
-                | term '/' factor                                   = div
-                | term '%' factor                                   = mod
-                | factor;
-
-factor          : '+' factor                                        = pos
-                | '-' factor                                        = neg
-                | '~' factor                                        = invert
-                | power
-                ;
-
-power           : entity "**" factor                                = pow
-                | entity
-                ;
-
-entity          : atom trailer+                                     = entity
+factor          : atom trailer+                                     = entity
                 | atom
                 ;
 
 opt_expression  : expression
-                |                                                   = null
+                |                                                   = None
                 ;
 
 trailer         : '(' list ')'
                 | '[' expression ']'
                 | '[' opt_expression ':' opt_expression ']'         = slice
-                | '.' @IDENT
+                | '.' @Identifier
                 ;
 
-atom            : ( ""True"" | ""False"" )
-                | @NUMBER
-                | @IDENT
-                | @STRING
-                | @STRING+                                          = concat
+atom            : ""True""
+                | ""False""
+                | ""None""
+                | @Number
+                | @Identifier
+                | @String
+                | @String+                                          = strings
                 | comprehension
                 | '[' list ']'
-                | '(' expression ')'                                = atom
+                | '(' expression ')'
                 ;
 
-comprehension   := '[' expression "for" @IDENT "in" or_test ( "if" expression )? ']'
+comprehension   := '[' expression "for" @Identifier "in" or ( "if" expression )? ']'
                 ;
 
-list            := expression (',' expression )*
-                |
+list            := expression (',' expression )+
+                |  expression
                 ;

@@ -493,7 +493,7 @@ class Interpreter(parser.LogicsParser):
 	def post_False(self, node):
 		self.stack.append(False)
 
-	def post_IDENT(self, node):
+	def post_Identifier(self, node):
 		var = self.prefix + node.match
 
 		if var in self.fields:
@@ -503,10 +503,10 @@ class Interpreter(parser.LogicsParser):
 		else:
 			self.stack.append(None)
 
-	def post_NUMBER(self, node):
+	def post_Number(self, node):
 		self.stack.append(optimizeValue(node.match, allow=[int, float], default=0))
 
-	def post_STRING(self, node):
+	def post_String(self, node):
 		def replaceEscapeStrings(s):
 			for seq, ch in {
 				"n": "\n",
@@ -523,7 +523,7 @@ class Interpreter(parser.LogicsParser):
 
 		self.stack.append(replaceEscapeStrings(strType(node.match[1:-1])))
 
-	def post_concat(self, node):
+	def post_strings(self, node):
 		s = ""
 		for _ in range(len(node.children)):
 			s = strType(self.stack.pop()) + s
@@ -539,7 +539,7 @@ class Interpreter(parser.LogicsParser):
 
 		self.stack.append(l)
 
-	def post_null(self, node):
+	def post_None(self, node):
 		self.stack.append(None)
 
 

@@ -411,6 +411,27 @@ export default class Logics {
      * Returns the topmost value of the stack, if any. */
     run(values) {
         let stack = [];
+
+        // Push a guaranteed Value
+        stack.op0 = function(value) {
+            if( !( value instanceof Value ) ){
+                value = new Value(value);
+            }
+
+            this.push(value);
+        }
+
+        // Perform stack operation with one operand
+        stack.op1 = function(fn) {
+            this.op0(fn(this.pop()));
+        }
+
+        // Perform stack operation with two operands
+        stack.op2 = function(fn) {
+            let b = this.pop();
+            this.op0(fn(this.pop(), b));
+        }
+
         this.traverse(this.ast, stack, values || {});
         return stack.pop();
     }
@@ -424,6 +445,13 @@ export default class Logics {
      * @param values
      */
     traverse(node, stack, values) {
+        // Helper function to call actions on a key
+        function action(key, object) {
+            if ((fn = object[key]) !== undefined) {
+                fn()
+            }
+        }
+
         let fn;
 
         if ((fn = this["pre_" + node.emit]) !== undefined) {
@@ -445,163 +473,53 @@ export default class Logics {
             }
         }
 
-        if ((fn = this["post_" + node.emit]) !== undefined) {
-            fn.call(this, node, stack, values);
-        }
-    }
+        action(node.emit, {
+            "False": () => stack.op0(false),
+            "Identifier": () => {
+                let name = node.match;
 
-    // AST traversal functions
+                if (name in values) {
+                    stack.push(new Value(values[name]));
+                }
+                else if (name in this.functions) {
+                    stack.push(new Value(this.functions[name]));
+                }
+                else {
+                    stack.push(new Value(null));
+                }
+            },
+            "None": () => stack.op0(null),
+            "Number": () => stack.op0(parseFloat(node.match)),
+            "String": () => stack.op0(node.match.substring(1, node.match.length - 1)), // cut "..." from string.
+            "True": () => stack.op0(true),
 
-    post_STRING(node, stack) {
-        // Cut "..." from string.
-        stack.push(new Value(node.match.substring(1, node.match.length - 1)));
-    }
-
-    post_concat(node, stack) {
-        stack.push(new Value(stack.splice(-node.children.length).join("")));
-    }
-
-    post_list(node, stack) {
-        stack.push(new Value(stack.splice(-node.children.length).map(item => item.valueOf())));
-    }
-
-    post_NUMBER(node, stack) {
-        stack.push(new Value(parseFloat(node.match)));
-    }
-
-    post_IDENT(node, stack, values) {
-        let name = node.match;
-
-        if (name in values) {
-            stack.push(new Value(values[name]));
-        }
-        else if (name in this.functions) {
-            stack.push(new Value(this.functions[name]));
-        }
-        else {
-            stack.push(new Value(null));
-        }
-    }
-
-    post_add(node, stack) {
-        let b = stack.pop();
-        let a = stack.pop();
-        stack.push(a.__add__(b));
-    }
-
-    post_mul(node, stack) {
-        let b = stack.pop();
-        let a = stack.pop();
-        stack.push(a.__mul__(b));
-    }
-
-    post_sub(node, stack) {
-        let b = stack.pop();
-        let a = stack.pop();
-        stack.push(a.__sub__(b));
-    }
-
-    post_div(node, stack) {
-        let b = stack.pop();
-        let a = stack.pop();
-        stack.push(a.__div__(b));
-    }
-
-    post_mod(node, stack) {
-        let b = stack.pop();
-        let a = stack.pop();
-        stack.push(a.__mod__(b));
-    }
-
-    post_pow(node, stack) {
-        let b = stack.pop();
-        let a = stack.pop();
-        stack.push(a.__pow__(b));
-    }
-
-    post_pos(node, stack) {
-        stack.push(stack.pop().__pos__());
-    }
-
-    post_neg(node, stack) {
-        stack.push(stack.pop().__neg__());
-    }
-
-    post_invert(node, stack) {
-        stack.push(stack.pop().__invert__());
-    }
-
-    post_True(_, stack) {
-        stack.push(new Value(true));
-    }
-
-    post_False(_, stack) {
-        stack.push(new Value(false));
-    }
-
-    post_null(_, stack) {
-        stack.push(new Value(null));
-    }
-
-    post_cmp(node, stack) {
-        for(let i = 1; i < node.children.length; i += 2) {
-            let op = node.children[i].emit;
-            let right = stack.pop();
-            let left = stack.pop();
-
-            let res;
-
-            switch (op) {
-                case "in":
-                    res = left.__in__(right);
-                    console.log("-->", op, left, right, res);
-                    break;
-
-                case "not_in":
-                    res = !left.__in__(right);
-                    console.log("-->", op, left, right, res);
-                    break;
-
-                default:
-                    res = left.__cmp__(right);
-                    console.log("-->", op, left, right, res);
-
-                    switch (op) {
-                        case "<":
-                            res = res < 0;
-                            break;
-
-                        case ">":
-                            res = res > 0;
-                            break;
-
-                        case "<=":
-                            res = res <= 0;
-                            break;
-
-                        case ">=":
-                            res = res >= 0;
-                            break;
-
-                        case "==":
-                            res = res === 0;
-                            break;
-
-                        case "!=":
-                        case "<>":
-                            res = res !== 0;
-                            break;
-
-                        default:
-                            throw SyntaxError("Unhandled operator: " + op)
-                    }
-            }
-
-            stack.push(new Value(res));
-        }
+            "add": () => stack.op2((a, b) => a.__add__(b)),
+            "and": () => stack.op2((a, b) => a.toBool() ? b : a),
+            "div": () => stack.op2((a, b) => a.__div__(b)),
+            "eq": () => stack.op2((a, b) => a.__cmp__(b) === 0),
+            "gteq": () => stack.op2((a, b) => a.__cmp__(b) >= 0),
+            "gt": () => stack.op2((a, b) => a.__cmp__(b) > 0),
+            "in": () => stack.op2((a, b) => a.__in__(b)),
+            "invert": () => stack.op1((a) => a.__invert__()),
+            "list": () => stack.push(stack.splice(-node.children.length).map(item => item.valueOf())),
+            "lteq": () => stack.op2((a, b) => a.__cmp__(b) <= 0),
+            "lt": () => stack.op2((a, b) => a.__cmp__(b) < 0),
+            "mod": () => stack.op2((a, b) => a.__mod__(b)),
+            "mul": () => stack.op2((a, b) => a.__mul__(b)),
+            "neg": () => stack.op1((a) => a.__neg__()),
+            "neq": () => stack.op2((a, b) => a.__cmp__(b) !== 0),
+            "not": () => stack.op1((a) => !a.toBool()),
+            "or": () => stack.op2((a, b) => a.toBool() ? a : b),
+            "outer": () => stack.op2((a, b) => !a.__in__(b)),
+            "pos": () => stack.op1((a) => a.__pos__()),
+            "pow": () => stack.op2((a, b) => a.__pow__(b)),
+            "strings": () => stack.op0(stack.splice(-node.children.length).join("")),
+            "sub": () => stack.op2((a, b) => a.__sub__(b)),
+        });
     }
 }
 
+// Register Logics in the browser
 if (window !== undefined) {
     window.Logics = Logics;
 }
