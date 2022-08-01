@@ -447,33 +447,40 @@ export default class Logics {
     traverse(node, stack, values) {
         // Helper function to call actions on a key
         function action(key, object) {
+            let fn;
             if ((fn = object[key]) !== undefined) {
-                fn()
+                fn();
+                return true;
             }
+
+            return false;
         }
 
-        let fn;
+        // Flow
+        if (!action(node.emit, {
+                "if": () => {
+                    console.assert(node.children.length === 3);
 
-        if ((fn = this["pre_" + node.emit]) !== undefined) {
-            fn.call(this, node, stack, values);
-        }
+                    this.traverse(node.children[1], stack, values);
 
-        if ((fn = this["loop_" + node.emit]) !== undefined) {
-            fn.call(this, node, stack, values);
-        }
-        else if (node.children) {
-            let fn = this["pass_" + node.emit];
+                    if (stack.pop().toBool()) {
+                        this.traverse(node.children[0], stack, values);
+                    } else {
+                        this.traverse(node.children[2], stack, values);
+                    }
+                }
+            })) {
 
-            for (let child of node.children) {
-                this.traverse(child, stack, values);
-
-                if (fn !== undefined) {
-                    fn.call(this, node, stack, values);
+            if (node.children !== undefined) {
+                // Iterate over children
+                for (let child of node.children) {
+                    this.traverse(child, stack, values);
                 }
             }
         }
 
-        action(node.emit, {
+        // Stack
+        return action(node.emit, {
             "False": () => stack.op0(false),
             "Identifier": () => {
                 let name = node.match;
