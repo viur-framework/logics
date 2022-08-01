@@ -458,6 +458,33 @@ export default class Logics {
 
         // Flow
         if (!action(node.emit, {
+                "comprehension": () => {
+                    console.assert(node.children.length === 3 || node.children.length === 4);
+                    this.traverse(node.children[2], stack, values);
+
+                    // obtain the list
+                    let list = stack.pop().toList().valueOf();
+
+                    let ret = [];
+
+                    // iterate over list
+                    for( let i of list ) {
+                        values[node.children[1].match] = i;
+                        this.traverse(node.children[0], stack, values);
+
+                        // optional if
+                        if (node.children.length === 4) {
+                            this.traverse(node.children[3], stack, values);
+                            if (!stack.pop().toBool()) {
+                                continue;
+                            }
+                        }
+                        ret.push(stack.pop());
+                    }
+
+                    // push result list
+                    stack.op0(ret);
+                },
                 "and": () => {
                     console.assert(node.children.length === 2);
                     this.traverse(node.children[0], stack, values);
@@ -533,7 +560,7 @@ export default class Logics {
             "gt": () => stack.op2((a, b) => a.__cmp__(b) > 0),
             "in": () => stack.op2((a, b) => a.__in__(b)),
             "invert": () => stack.op1((a) => a.__invert__()),
-            "list": () => stack.push(stack.splice(-node.children.length).map(item => item.valueOf())),
+            "list": () => stack.op0(stack.splice(-node.children.length).map(item => item.valueOf())),
             "lteq": () => stack.op2((a, b) => a.__cmp__(b) <= 0),
             "lt": () => stack.op2((a, b) => a.__cmp__(b) < 0),
             "mod": () => stack.op2((a, b) => a.__mod__(b)),
