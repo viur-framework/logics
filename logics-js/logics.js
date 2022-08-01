@@ -458,17 +458,43 @@ export default class Logics {
 
         // Flow
         if (!action(node.emit, {
+                "and": () => {
+                    console.assert(node.children.length === 2);
+                    this.traverse(node.children[0], stack, values);
+
+                    let check = stack.pop();
+                    if (check.toBool()) {
+                        this.traverse(node.children[1], stack, values);
+                    }
+                    else {
+                        stack.push(check);
+                    }
+                },
                 "if": () => {
                     console.assert(node.children.length === 3);
 
+                    // Evaluate condition
                     this.traverse(node.children[1], stack, values);
 
+                    // Evaluate specific branch
                     if (stack.pop().toBool()) {
                         this.traverse(node.children[0], stack, values);
                     } else {
                         this.traverse(node.children[2], stack, values);
                     }
-                }
+                },
+                "or": () => {
+                    console.assert(node.children.length === 2);
+                    this.traverse(node.children[0], stack, values);
+
+                    let check = stack.pop();
+                    if (!check.toBool()) {
+                        this.traverse(node.children[1], stack, values);
+                    }
+                    else {
+                        stack.push(check);
+                    }
+                },
             })) {
 
             if (node.children !== undefined) {
@@ -501,7 +527,6 @@ export default class Logics {
             "True": () => stack.op0(true),
 
             "add": () => stack.op2((a, b) => a.__add__(b)),
-            "and": () => stack.op2((a, b) => a.toBool() ? b : a),
             "div": () => stack.op2((a, b) => a.__div__(b)),
             "eq": () => stack.op2((a, b) => a.__cmp__(b) === 0),
             "gteq": () => stack.op2((a, b) => a.__cmp__(b) >= 0),
@@ -516,7 +541,6 @@ export default class Logics {
             "neg": () => stack.op1((a) => a.__neg__()),
             "neq": () => stack.op2((a, b) => a.__cmp__(b) !== 0),
             "not": () => stack.op1((a) => !a.toBool()),
-            "or": () => stack.op2((a, b) => a.toBool() ? a : b),
             "outer": () => stack.op2((a, b) => !a.__in__(b)),
             "pos": () => stack.op1((a) => a.__pos__()),
             "pow": () => stack.op2((a, b) => a.__pow__(b)),
