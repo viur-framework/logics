@@ -31,12 +31,14 @@ not             : "not" not                                         = not
                 | cmp
                 ;
 
-cmp             : cmp "==" add_sub                                  = eq
-                | cmp ">" add_sub                                   = gt
-                | cmp ">=" add_sub                                  = gteq
-                | cmp "<" add_sub                                   = lt
-                | cmp "<=" add_sub                                  = lteq
-                | cmp ("!=" | "<>") add_sub                         = neq
+cmp             : add_sub (
+                    "==" add_sub                                    = eq
+                    | ">" add_sub                                   = gt
+                    | ">=" add_sub                                  = gteq
+                    | "<" add_sub                                   = lt
+                    | "<=" add_sub                                  = lteq
+                    | ("!=" | "<>") add_sub                         = neq
+                    )+                                              = cmp
                 | add_sub
                 ;
 

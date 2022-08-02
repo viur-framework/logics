@@ -445,18 +445,23 @@ export default class Logics {
      * @param values
      */
     traverse(node, stack, values) {
-        // Helper function to call actions on a key
+        // This helper function simulates a match-statement like in Rust or Python...
         function action(key, object) {
             let fn;
+
             if ((fn = object[key]) !== undefined) {
-                fn();
-                return true;
+                return fn() ?? true;
+            }
+
+            // Rust-like '_' wildcard fallback
+            if ((fn = object["_"]) !== undefined) {
+                return fn();
             }
 
             return false;
         }
 
-        // Flow
+        // Flow operations
         if (!action(node.emit, {
                 "comprehension": () => {
                     console.assert(node.children.length === 3 || node.children.length === 4);
@@ -522,6 +527,35 @@ export default class Logics {
                         stack.push(check);
                     }
                 },
+                "cmp": () => {
+                    for (let i = 0; i < node.children.length; i++) {
+                        this.traverse(node.children[i], stack, values);
+
+                        if (i === 0) {
+                            continue;
+                        }
+
+                        let b = stack.pop();
+                        let a = stack.pop();
+
+                        let res = action(node.children[i].emit, {
+                            "eq": () => a.__cmp__(b) === 0,
+                            "gteq": () => a.__cmp__(b) >= 0,
+                            "gt": () => a.__cmp__(b) > 0,
+                            "lteq": () => a.__cmp__(b) <= 0,
+                            "lt": () => a.__cmp__(b) < 0,
+                            "neq": () => a.__cmp__(b) !== 0,
+                            "_": () => console.log("unreachable"),
+                        });
+
+                        // Either push false and break or push b
+                        stack.op0(res ? i === node.children.length - 1 ? true : b : false);
+
+                        if (!res) {
+                            break;
+                        }
+                    }
+                }
             })) {
 
             if (node.children !== undefined) {
@@ -532,7 +566,7 @@ export default class Logics {
             }
         }
 
-        // Stack
+        // Stack operations
         return action(node.emit, {
             "False": () => stack.op0(false),
             "Identifier": () => {
@@ -555,18 +589,12 @@ export default class Logics {
 
             "add": () => stack.op2((a, b) => a.__add__(b)),
             "div": () => stack.op2((a, b) => a.__div__(b)),
-            "eq": () => stack.op2((a, b) => a.__cmp__(b) === 0),
-            "gteq": () => stack.op2((a, b) => a.__cmp__(b) >= 0),
-            "gt": () => stack.op2((a, b) => a.__cmp__(b) > 0),
             "in": () => stack.op2((a, b) => a.__in__(b)),
             "invert": () => stack.op1((a) => a.__invert__()),
             "list": () => stack.op0(stack.splice(-node.children.length).map(item => item.valueOf())),
-            "lteq": () => stack.op2((a, b) => a.__cmp__(b) <= 0),
-            "lt": () => stack.op2((a, b) => a.__cmp__(b) < 0),
             "mod": () => stack.op2((a, b) => a.__mod__(b)),
             "mul": () => stack.op2((a, b) => a.__mul__(b)),
             "neg": () => stack.op1((a) => a.__neg__()),
-            "neq": () => stack.op2((a, b) => a.__cmp__(b) !== 0),
             "not": () => stack.op1((a) => !a.toBool()),
             "outer": () => stack.op2((a, b) => !a.__in__(b)),
             "pos": () => stack.op1((a) => a.__pos__()),
