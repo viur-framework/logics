@@ -163,7 +163,7 @@ export default class Logics {
                 }
             })) {
 
-            if (node.children !== undefined) {
+            if (node.children ?? false) {
                 // Iterate over children
                 for (let child of node.children) {
                     this.traverse(child, stack, values);
@@ -204,6 +204,32 @@ export default class Logics {
             "outer": () => stack.op2((a, b) => !a.__in__(b)),
             "pos": () => stack.op1((a) => a.__pos__()),
             "pow": () => stack.op2((a, b) => a.__pow__(b)),
+            "index": () => stack.op1( (idx) => {
+                let val = stack.pop();
+
+                if (val.type() === "dict") {
+                    return val.toDict()[idx.toString()];
+                }
+
+                idx = idx.toInt();
+                val = val.type() === "list" ? val.toList() : val.toString();
+                return val[idx];
+            }),
+            "slice": () => stack.op2( (from, to) => {
+                let val = stack.pop();
+                val = val.type() === "list" ? val.toList() : val.toString();
+
+                if ((from = from.valueOf() !== null ? from.toInt() : 0) < 0) {
+                    from = val.length + from;
+                }
+
+                if ((to = to.valueOf() !== null ? to.toInt() : val.length) < 0) {
+                    to =  val.length + to;
+                }
+
+                console.log(val, from, to);
+                return val.slice(from, to);
+            }),
             "strings": () => stack.op0(stack.splice(-node.children.length).join("")),
             "sub": () => stack.op2((a, b) => a.__sub__(b)),
         });

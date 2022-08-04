@@ -32,12 +32,12 @@ not             : "not" not                                         = not
                 ;
 
 cmp             : add_sub (
-                    "==" add_sub                                    = eq
-                    | ">" add_sub                                   = gt
-                    | ">=" add_sub                                  = gteq
-                    | "<" add_sub                                   = lt
-                    | "<=" add_sub                                  = lteq
-                    | ("!=" | "<>") add_sub                         = neq
+                    "==" add_sub                                        = eq
+                    | ">" add_sub                                       = gt
+                    | ">=" add_sub                                      = gteq
+                    | "<" add_sub                                       = lt
+                    | "<=" add_sub                                      = lteq
+                    | ("!=" | "<>") add_sub                             = neq
                     )+                                              = cmp
                 | add_sub
                 ;
@@ -71,7 +71,7 @@ opt_expression  : expression
                 ;
 
 trailer         : '(' list ')'
-                | '[' expression ']'
+                | '[' expression ']'                                = index
                 | '[' opt_expression ':' opt_expression ']'         = slice
                 | '.' @Identifier
                 ;

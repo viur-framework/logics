@@ -219,7 +219,7 @@ export default class LogicsParser {
 				{ "production": "opt_expression : expression", "emit": "", "length": 1, "left-hand-side": 44 },
 				{ "production": "opt_expression : ", "emit": "None", "length": 0, "left-hand-side": 44 },
 				{ "production": "trailer : '(' list ')'", "emit": "", "length": 3, "left-hand-side": 46 },
-				{ "production": "trailer : '[' expression ']'", "emit": "", "length": 3, "left-hand-side": 46 },
+				{ "production": "trailer : '[' expression ']'", "emit": "index", "length": 3, "left-hand-side": 46 },
 				{ "production": "trailer : '[' opt_expression ':' opt_expression ']'", "emit": "slice", "length": 5, "left-hand-side": 46 },
 				{ "production": "trailer : '.' @Identifier", "emit": "", "length": 2, "left-hand-side": 46 },
 				{ "production": "atom : \"True\"", "emit": "", "length": 1, "left-hand-side": 47 },
