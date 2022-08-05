@@ -211,8 +211,12 @@ export default class Logics {
                     return val.toDict()[idx.toString()];
                 }
 
-                idx = idx.toInt();
                 val = val.type() === "list" ? val.toList() : val.toString();
+
+                if ((idx = idx.toInt()) < 0) {
+                    idx = val.length + idx;
+                }
+
                 return val[idx];
             }),
             "slice": () => stack.op2( (from, to) => {
