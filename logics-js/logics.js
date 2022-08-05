@@ -9,7 +9,15 @@ export default class Logics {
     constructor(src) {
         this.ast = this.constructor.#parser.parse(src);
         this.ast.dump();
-        this.functions = {};
+        this.functions = {
+            "bool": (v) => v.toBool(),
+            "str": (v) => v.toString(),
+            "int": (v) => v.toInt(),
+            "float": (v) => v.toFloat(),
+            "len": (v) => v.__len__(),
+            "upper": (s) => s.toString().toUpperCase(),
+            "lower": (s) => s.toString().toLowerCase(),
+        };
     }
 
     /** Run the VM with a given set of values.
@@ -68,6 +76,40 @@ export default class Logics {
 
         // Flow operations
         if (!action(node.emit, {
+                "and": () => {
+                    console.assert(node.children.length === 2);
+                    this.traverse(node.children[0], stack, values);
+
+                    let check = stack.pop();
+                    if (check.toBool()) {
+                        this.traverse(node.children[1], stack, values);
+                    }
+                    else {
+                        stack.push(check);
+                    }
+                },
+                "call": () => {
+                    let args = [];
+
+                    if (node.children.length === 2) {
+                        this.traverse(node.children[1], stack, values);
+                        args = stack.pop().toList();
+                    }
+
+                    let fn = this.functions[node.children[0].match];
+
+                    if (fn !== undefined) {
+                        // Convert all args to Logics values
+                        for (let i in args) {
+                            args[i] = new Value(args[i]);
+                        }
+
+                        stack.op0(fn(...args));
+                    }
+                    else {
+                        throw new Error(`Call to unknown function: ${node.children[0].match}`);
+                    }
+                },
                 "comprehension": () => {
                     console.assert(node.children.length === 3 || node.children.length === 4);
                     this.traverse(node.children[2], stack, values);
@@ -94,18 +136,6 @@ export default class Logics {
 
                     // push result list
                     stack.op0(ret);
-                },
-                "and": () => {
-                    console.assert(node.children.length === 2);
-                    this.traverse(node.children[0], stack, values);
-
-                    let check = stack.pop();
-                    if (check.toBool()) {
-                        this.traverse(node.children[1], stack, values);
-                    }
-                    else {
-                        stack.push(check);
-                    }
                 },
                 "if": () => {
                     console.assert(node.children.length === 3);
@@ -174,25 +204,14 @@ export default class Logics {
         // Stack operations
         return action(node.emit, {
             "False": () => stack.op0(false),
-            "Identifier": () => {
-                let name = node.match;
-
-                if (name in values) {
-                    stack.push(new Value(values[name]));
-                }
-                else if (name in this.functions) {
-                    stack.push(new Value(this.functions[name]));
-                }
-                else {
-                    stack.push(new Value(null));
-                }
-            },
+            "Identifier": () => stack.op0(node.match),
             "None": () => stack.op0(null),
             "Number": () => stack.op0(parseFloat(node.match)),
             "String": () => stack.op0(node.match.substring(1, node.match.length - 1)), // cut "..." from string.
             "True": () => stack.op0(true),
 
             "add": () => stack.op2((a, b) => a.__add__(b)),
+            "attr": () => stack.op2((name, attr) => name.toDict()[attr]),
             "div": () => stack.op2((a, b) => a.__div__(b)),
             "in": () => stack.op2((a, b) => a.__in__(b)),
             "invert": () => stack.op1((a) => a.__invert__()),
@@ -219,6 +238,7 @@ export default class Logics {
 
                 return val[idx];
             }),
+            "load": () => stack.op1((name) => values[name.toString()]),
             "slice": () => stack.op2( (from, to) => {
                 let val = stack.pop();
                 val = val.type() === "list" ? val.toList() : val.toString();

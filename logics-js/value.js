@@ -201,6 +201,18 @@ export default class Value {
         return new Value(null);
     }
 
+    // Retrieve length of object
+    __len__() {
+        switch (this.type()) {
+            case "dict":
+                return Object.keys(this.#value).length;
+            case "list":
+                return this.#value.length;
+            default:
+                return this.toString().length;
+        }
+    }
+
     // Checks if a given value is part of another value
     __in__(value) {
         if (value.type() === "dict") {

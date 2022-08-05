@@ -62,25 +62,24 @@ unary           : '+' unary                                         = pos
                 | factor
                 ;
 
-factor          : atom trailer+                                     = entity
-                | atom
+factor          : atom trailer*
+                | @Identifier '(' list? ')'                          = call
                 ;
 
 opt_expression  : expression
                 |                                                   = None
                 ;
 
-trailer         : '(' list ')'
-                | '[' expression ']'                                = index
+trailer         : '[' expression ']'                                = index
                 | '[' opt_expression ':' opt_expression ']'         = slice
-                | '.' @Identifier
+                | '.' @Identifier                                   = attr
                 ;
 
 atom            : ""True""
                 | ""False""
                 | ""None""
                 | @Number
-                | @Identifier
+                | @Identifier                                       = load
                 | @String
                 | @String+                                          = strings
                 | comprehension
