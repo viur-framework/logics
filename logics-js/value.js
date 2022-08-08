@@ -234,6 +234,38 @@ export default class Value {
         return value.toString().indexOf(this.toString()) >= 0;
     }
 
+    // Index into value
+    __getitem__(key, until) {
+        if (this.type() === "dict") {
+            console.assert(until === undefined, "Cannot slice into a dict");
+            return this.toDict()[key.toString()];
+        }
+
+        let val = this.type() === "list" ? this.toList() : this.toString();
+
+        // Slice-mode
+        let from = key.valueOf() === null ? 0 : key.toInt();
+
+        // if from is lower 0, calculate from end.
+        if (from < 0) {
+            from = val.length + from;
+        }
+
+        // Direct index
+        if (until === undefined) {
+            return val[from];
+        }
+
+        // if to is lower 0, calculate from end.
+        let to = until.valueOf() === null ? val.length : until.toInt();
+
+        if (to < 0) {
+            to = val.length + to;
+        }
+
+        return val.slice(from, to);
+    }
+
     // Compare
     __cmp__(other) {
         let a, b;

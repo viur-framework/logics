@@ -45,6 +45,13 @@ export default class Logics {
             this.op0(fn(this.pop(), b));
         }
 
+        // Perform stack operation with three operands
+        stack.op3 = function(fn) {
+            let c = this.pop();
+            let b = this.pop();
+            this.op0(fn(this.pop(), b, c));
+        }
+
         this.traverse(this.ast, stack, values || {});
         return stack.pop();
     }
@@ -223,37 +230,9 @@ export default class Logics {
             "outer": () => stack.op2((a, b) => !a.__in__(b)),
             "pos": () => stack.op1((a) => a.__pos__()),
             "pow": () => stack.op2((a, b) => a.__pow__(b)),
-            "index": () => stack.op1( (idx) => {
-                let val = stack.pop();
-
-                if (val.type() === "dict") {
-                    return val.toDict()[idx.toString()];
-                }
-
-                val = val.type() === "list" ? val.toList() : val.toString();
-
-                if ((idx = idx.toInt()) < 0) {
-                    idx = val.length + idx;
-                }
-
-                return val[idx];
-            }),
+            "index": () => stack.op2( (value, idx) => value.__getitem__(idx)),
             "load": () => stack.op1((name) => values[name.toString()]),
-            "slice": () => stack.op2( (from, to) => {
-                let val = stack.pop();
-                val = val.type() === "list" ? val.toList() : val.toString();
-
-                if ((from = from.valueOf() !== null ? from.toInt() : 0) < 0) {
-                    from = val.length + from;
-                }
-
-                if ((to = to.valueOf() !== null ? to.toInt() : val.length) < 0) {
-                    to =  val.length + to;
-                }
-
-                console.log(val, from, to);
-                return val.slice(from, to);
-            }),
+            "slice": () => stack.op3( (value, from, to) => value.__getitem__(from, to)),
             "strings": () => stack.op0(stack.splice(-node.children.length).join("")),
             "sub": () => stack.op2((a, b) => a.__sub__(b)),
         });
