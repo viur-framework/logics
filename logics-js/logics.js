@@ -10,13 +10,27 @@ export default class Logics {
         this.ast = this.constructor.#parser.parse(src);
         this.ast.dump();
         this.functions = {
-            "bool": (v) => v.toBool(),
-            "str": (v) => v.toString(),
-            "int": (v) => v.toInt(),
-            "float": (v) => v.toFloat(),
-            "len": (v) => v.__len__(),
-            "upper": (s) => s.toString().toUpperCase(),
-            "lower": (s) => s.toString().toLowerCase(),
+            "bool": (val) => val.toBool(),
+            "currency": (value, decimalDelimiter, thousandsDelimiter, currencySign) => "#todo",  // todo
+            "float": (val) => val.toFloat(),
+            "int": (val) => val.toInt(),
+            "join": (array, delimiter, lastDelimiter) => array.toList().join((delimiter && delimiter.toString()) || ", "),  // fixme: lastDelimiter?
+            "len": (val) => val.__len__(),
+            "lfill": (str, len, fill) => str.toString().padStart(len, fill),
+            "lower": (str) => str.toString().toLowerCase(),
+            "lstrip": (str) => str.toString().trimStart(),
+            "max": (array) => Math.max(...array.toList().valueOf().map((i) => parseFloat(i) || 0)),
+            "min": (array) => Math.min(...array.toList().valueOf().map((i) => parseFloat(i) || 0)),
+            "range": (start, end, step) => [],
+            "replace": (str, find, replace) => str.toString().replaceAll((find && find.toString()) || " ", (replace && replace.toString()) || ""),
+            "rfill": (str, len, fill) => str.toString().padEnd(len, fill),
+            "round": (float, precision) => parseFloat(float.toFloat().toFixed((precision && precision.toInt()) || 0)),
+            "rstrip": (str) => str.toString().trimEnd(),
+            "split": (str, delimiter) => str.toString().split((delimiter && delimiter.toString()) || " "),
+            "str": (val) => val.toString(),
+            "strip": (str) => str.toString().trim(),
+            "sum": (array) => array.toList().valueOf().map((i) => parseFloat(i) || 0).reduce((total, i) => total + i, 0),
+            "upper": (str) => str.toString().toUpperCase(),
         };
     }
 
@@ -210,6 +224,7 @@ export default class Logics {
 
         // Stack operations
         return action(node.emit, {
+            // Pushing values
             "False": () => stack.op0(false),
             "Identifier": () => stack.op0(node.match),
             "None": () => stack.op0(null),
@@ -217,6 +232,7 @@ export default class Logics {
             "String": () => stack.op0(node.match.substring(1, node.match.length - 1)), // cut "..." from string.
             "True": () => stack.op0(true),
 
+            // Operations
             "add": () => stack.op2((a, b) => a.__add__(b)),
             "attr": () => stack.op2((name, attr) => name.toDict()[attr]),
             "div": () => stack.op2((a, b) => a.__div__(b)),
