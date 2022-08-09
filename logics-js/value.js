@@ -189,18 +189,6 @@ export default class Value {
         return null;
     }
 
-    // Get index
-    __getitem__(index) {
-        if( this.type() === "dict" ) {
-            return new Value(this.#value[index.toString()]);
-        }
-        else if( this.type() === "list" || this.type() === "str" ) {
-            return new Value(this.#value[index.toInt()]);
-        }
-
-        return new Value(null);
-    }
-
     // Retrieve length of object
     __len__() {
         switch (this.type()) {
