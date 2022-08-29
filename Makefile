@@ -1,15 +1,16 @@
 
+LOGICS_PY=logics-py/logics/parser.py
+LOGICS_JS=logics-js/parser.js
+
 all: \
-	logics/parser.py \
-	logics-js/parser.js
+	$(LOGICS_PY) \
+	$(LOGICS_JS)
 
-logics/parser.py: logics.par
-	unicc -swo logics/parser -l python $?
+$(LOGICS_PY): logics.par
+	unicc -swo $(patsubst %.py,%,$@) -l python $?
 
-logics-js/parser.js: logics.par
-	UNICC_TPLDIR=. unicc -swo logics-js/parser -l javascript $?
-
+$(LOGICS_JS): logics.par
+	UNICC_TPLDIR=. unicc -swo $(patsubst %.js,%,$@) -l javascript $?
 
 clean:
-	rm logics/parser.py
-	rm logics-js/parser.js
+	rm $(LOGICS_JS) $(LOGICS_PY)
