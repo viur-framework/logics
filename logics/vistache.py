@@ -181,7 +181,7 @@ class Template(Interpreter):
             # {{|}} altBlock
             elif expr.startswith(self.altBlock):
                 if not blocks:
-                    raise ParseException(row, col, "Alternative block without opening block")
+                    raise ParseException(row, col, f"{row}:{col}: Alternative block without opening block")
 
                 row, col = updatePos(self.altBlock, row, col)
                 expr = expr[len(self.altBlock):]
@@ -197,7 +197,9 @@ class Template(Interpreter):
                     cnodes.append(node)
 
                 elif not cnodes[-1]: # disallow multiple else blocks
-                    raise ParseException(row, col, "Multiple alternative blocks without condition are not allowed")
+                    raise ParseException(
+                        row, col, f"{row}:{col}: Multiple alternative blocks without condition are not allowed"
+                    )
                 else:
                     cnodes.append(None) # else-block
 
@@ -210,7 +212,7 @@ class Template(Interpreter):
             # {{/#}} endBlock
             elif expr.startswith(self.endBlock):
                 if not blocks:
-                    raise ParseException(row, col, "Closing block without opening block")
+                    raise ParseException(row, col, "{row}:{col}: Closing block without opening block")
 
                 row, col = updatePos(self.startDelimiter + expr, row, col)
 
@@ -246,7 +248,8 @@ class Template(Interpreter):
             s = s[end:]
 
         if blocks:
-            raise ParseException(row, col, "%d blocks are still open, expecting %s" % (len(blocks), "".join([("%s%s%s" % (self.startDelimiter, self.endBlock, self.endDelimiter)) for b in blocks])))
+            expect = "".join([("%s%s%s" % (self.startDelimiter, self.endBlock, self.endDelimiter)) for _ in blocks])
+            raise ParseException(row, col, f"{row}:{col}: {len(blocks)} blocks still open, expecting '{expect}'")
 
         if s:
             block.children.append(Node("tstring", s))

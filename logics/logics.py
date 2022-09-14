@@ -4,8 +4,8 @@ that can be compiled and executed in any of ViUR's runtime contexts.
 """
 
 __author__ = "Jan Max Meyer"
-__copyright__ = "Copyright 2015-2021 by Mausbrand Informationssysteme GmbH"
-__version__ = "3.0.2"
+__copyright__ = "Copyright 2015-2022 by Mausbrand Informationssysteme GmbH"
+__version__ = "3.0.3"
 __license__ = "LGPLv3"
 __status__ = "Production"
 
