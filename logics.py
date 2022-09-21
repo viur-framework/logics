@@ -151,9 +151,6 @@ class Interpreter(Parser):
 		# --- join -------------------------------------------------------------------------------
 
 		def _join(entries, delim=", ", lastDelim=None):
-			if not _pyjsCompat and lastDelim is None:
-				return strType(delim).join(entries)
-
 			ret = ""
 			for entry in entries:
 				ret += strType(entry)
@@ -463,7 +460,7 @@ class Interpreter(Parser):
 		l, r = self.getOperands()
 
 		#print("div", type(l), l, type(r), r)
-		self.stack.append(l / r)
+		self.stack.append(float(l) / r)
 
 	def post_mod(self, node):
 		l, r = self.getOperands(onlyNumeric=False)
