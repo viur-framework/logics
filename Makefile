@@ -10,7 +10,7 @@ $(LOGICS_PY): logics.par
 	unicc -swo $(patsubst %.py,%,$@) -l python $?
 
 $(LOGICS_JS): logics.par
-	UNICC_TPLDIR=. unicc -swo $(patsubst %.js,%,$@) -l javascript $?
+	unicc -swo $(patsubst %.js,%,$@) -l javascript $?
 
 clean:
 	rm $(LOGICS_JS) $(LOGICS_PY)
