@@ -78,6 +78,7 @@ trailer         : '[' expression ']'                                = index
 atom            : ""True""
                 | ""False""
                 | ""None""
+                | "$"                                               = vars
                 | @Number
                 | @Identifier                                       = load
                 | @String

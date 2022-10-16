@@ -251,6 +251,7 @@ export default class Logics {
             "slice": () => stack.op3( (value, from, to) => value.__getitem__(from, to)),
             "strings": () => stack.op0(stack.splice(-node.children.length).join("")),
             "sub": () => stack.op2((a, b) => a.__sub__(b)),
+            "vars": () => stack.op0(values),
         });
     }
 }
