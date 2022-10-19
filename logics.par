@@ -62,7 +62,8 @@ unary           : '+' unary                                         = pos
                 | factor
                 ;
 
-factor          : atom trailer*
+factor          : atom
+                | atom trailer+                                      = entity
                 | @Identifier '(' list? ')'                          = call
                 ;
 

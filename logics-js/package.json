@@ -1,6 +1,6 @@
 {
   "name": "logics-js",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Logics is a user-friendly formula language with a subset of Python's expression syntax",
   "main": "logics.js",
   "scripts": {

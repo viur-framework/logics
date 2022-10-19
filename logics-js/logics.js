@@ -15,6 +15,7 @@ export default class Logics {
             "float": (val) => val.toFloat(),
             "int": (val) => val.toInt(),
             "join": (array, delimiter, lastDelimiter) => array.toList().join((delimiter && delimiter.toString()) || ", "),  // fixme: lastDelimiter?
+            "keys": (val) => Object.keys(val.toDict().valueOf()),
             "len": (val) => val.__len__(),
             "lfill": (str, len, fill) => str.toString().padStart(len, fill),
             "lower": (str) => str.toString().toLowerCase(),
@@ -31,6 +32,7 @@ export default class Logics {
             "strip": (str) => str.toString().trim(),
             "sum": (array) => array.toList().valueOf().map((i) => parseFloat(i) || 0).reduce((total, i) => total + i, 0),
             "upper": (str) => str.toString().toUpperCase(),
+            "values": (val) => Object.values(val.toDict().valueOf()),
         };
     }
 
@@ -132,6 +134,12 @@ export default class Logics {
                     }
                 },
                 "comprehension": () => {
+                    /*
+                    for (let i = 0; i < node.children.length; i++) {
+                        console.log(i, node.children[i]);
+                    }
+                    */
+
                     console.assert(node.children.length === 3 || node.children.length === 4);
                     this.traverse(node.children[2], stack, values);
 
