@@ -1,7 +1,3 @@
-#-*- coding: utf-8 -*-
-
-strType = str #fixme: This is now a relict!
-
 
 def parseInt(value, ret=0):
 	"""
@@ -19,7 +15,7 @@ def parseInt(value, ret=0):
 		return ret
 
 	if not isinstance(value, str):
-		value = strType(value)
+		value = str(value)
 
 	conv = ""
 	value = value.strip()
@@ -52,7 +48,7 @@ def parseFloat(value, ret=0.0):
 		return ret
 
 	if not isinstance(value, str):
-		value = strType(value)
+		value = str(value)
 
 	conv = ""
 	value = value.strip()
@@ -75,7 +71,7 @@ def parseFloat(value, ret=0.0):
 	except ValueError:
 		return ret
 
-def optimizeValue(val, allow=[int, bool, float, list, dict, str], default=strType):
+def optimizeValue(val, allow=[int, bool, float, list, dict, str], default=str):
 	"""
 	Evaluates the best matching value.
 	"""

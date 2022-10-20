@@ -4,18 +4,14 @@ from logics.version import __version__
 
 
 def main():
-    ap = argparse.ArgumentParser(description="ViUR Logics Expressional Language")
+    ap = argparse.ArgumentParser(description="Logics")
 
-    ap.add_argument("expression", type=str, help="The expression to be processed")
+    ap.add_argument("expression", type=str, help="Expression to be parsed and executed")
 
-    ap.add_argument("-D", "--debug", help="Print debug output", action="store_true")
-    ap.add_argument("-e", "--environment", help="Import environment as variables", action="store_true")
     ap.add_argument("-v", "--var", help="Assign variables", action="append", nargs=2, metavar=("var", "value"))
-    ap.add_argument("-r", "--run", help="Run expression using interpreter", action="store_true")
-    ap.add_argument("-V", "--version", action="version", version="ViUR logics %s" % __version__)
+    ap.add_argument("-V", "--version", action="version", version="Logics %s" % __version__)
 
     args = ap.parse_args()
-    done = False
 
     # Try to read input from a file.
     try:
@@ -26,13 +22,7 @@ def main():
     except IOError:
         expr = args.expression
 
-    vars = {}
-
-    if args.debug:
-        print("expr", expr)
-
-    if args.environment:
-        vars.update(os.environ)
+    vars = dict(os.environ)
 
     # Read variables
     if args.var:
@@ -48,20 +38,8 @@ def main():
             except IOError:
                 vars[var[0]] = var[1]
 
-    if args.debug:
-        print("vars", vars)
-
-    if args.run:
-        vili = Logics()
-        print(vili.execute(expr, vars, args.debug))
-
-        done = True
-
-    if not done:
-        vil = Logics()
-        ast = vil.parse(expr)
-        if ast:
-            ast.dump()
+    logics = Logics(expr)
+    print(logics.run(vars))
 
 
 if __name__ == "__main__":
