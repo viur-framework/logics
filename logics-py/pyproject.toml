@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "logics-py"
+version = "0.0.1"
+authors = [
+  { name="Jan Max Meyer", email="jmm@phorward.de" },
+]
+description = "Logics is a user-friendly formula language with a subset of Python's expression syntax"
+readme = "../README.md"
+license = "MIT"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/viur-framework/logics"
+"Bug Tracker" = "https://github.com/viur-framework/logics/issues"
