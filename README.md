@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="https://github.com/viur-framework/viur-artwork/raw/main/icons/icon-logics.svg" height="196" alt="A hexagonal logo of Logics" title="viur-core">
+    <img src="https://github.com/viur-framework/viur-artwork/raw/main/icons/icon-logics.svg" height="196" alt="A hexagonal logo of Logics" title="Logics logo">
     <h1>Logics</h1>
     A tiny, sandboxed, secure and extendable formula language with a flavor of Python.
 </div>
