@@ -134,7 +134,6 @@ class _Stack(list):
 class Logics:
     def __init__(self, src):
         super().__init__()
-
         self.ast = _parser.parse(src)
 
     def run(self, vars={}):

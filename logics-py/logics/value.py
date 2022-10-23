@@ -18,7 +18,7 @@ def parse_int(value, ret=0):
 		value = str(value)
 
 	conv = ""
-	value = value.strip()
+	value = value.lstrip()
 
 	for ch in value:
 		if ch not in "+-0123456789":
@@ -51,7 +51,7 @@ def parse_float(value, ret=0.0):
 		value = str(value)
 
 	conv = ""
-	value = value.strip()
+	value = value.lstrip()
 	dot = False
 
 	for ch in value:
@@ -133,40 +133,139 @@ class Value:
 	def __float__(self):
 		return parse_float(self.value)
 
-	def __add__(self, op):
-		match self.type(), op.type():
+	def __len__(self):
+		if self.type() in ("dict", "list", "str"):
+			return len(self.value)
+
+		return len(str(self))
+
+	def __contains__(self, item):
+		if self.type() in ("dict", "list"):
+			value = Value(item)
+			return value.value in self
+
+		return str(item) in str(self)
+
+	def __getitem__(self, item):
+		if self.type() == "dict":
+			if isinstance(item, slice):
+				return Value(None)
+
+			return self.value.get(item)
+
+		value = self.value if self.type() == "list" else str(self)
+		return value[item]
+
+	def __eq__(self, other):
+		return self.value == Value(other).value
+
+	def __ne__(self, other):
+		return self.value != Value(other).value
+
+	def __compare(self, op, other):
+		value = self.value
+		other = Value(other).value
+
+		try:
+			match op:
+				case "lt":
+					return value < other
+				case "gt":
+					return value > other
+				case "le":
+					return value <= other
+				case "ge":
+					return value >= other
+				case _:
+					raise NotImplemented(f"Operator {op!r} not implemented")
+
+		except TypeError:
+			return False
+
+	def __lt__(self, other):
+		return self.__compare("lt", other)
+
+	def __gt__(self, other):
+		return self.__compare("gt", other)
+
+	def __le__(self, other):
+		return self.__compare("le", other)
+
+	def __ge__(self, other):
+		return self.__compare("ge", other)
+
+	def __add__(self, other):
+		other = Value(other)
+		match self.type(), other.type():
 			case ("str", _) | (_, "str"):
-				return Value(str(self) + str(op))
+				return Value(str(self) + str(other))
 			case ("float", _) | (_, "float"):
-				return Value(float(self) + float(op))
+				return Value(float(self) + float(other))
 			case _:
-				return Value(int(self) + int(op))
+				return Value(int(self) + int(other))
 
-	def __sub__(self, op):
-		match self.type(), op.type():
+	def __sub__(self, other):
+		other = Value(other)
+		match self.type(), other.type():
 			case ("float", _) | (_, "float"):
-				return Value(float(self) - float(op))
+				return Value(float(self) - float(other))
 			case _:
-				return Value(int(self) - int(op))
+				return Value(int(self) - int(other))
 
-	def __mul__(self, op):
-		match self.type(), op.type():
+	def __mul__(self, other):
+		other = Value(other)
+		match self.type(), other.type():
 			case ("str", _):
-				return Value(str(self) * int(op))
+				return Value(str(self) * int(other))
 			case (_, "str"):
-				return Value(int(self) * str(op))
+				return Value(int(self) * str(other))
 			case ("float", _) | (_, "float"):
-				return Value(float(self) * float(op))
+				return Value(float(self) * float(other))
 			case _:
-				return Value(int(self) * int(op))
+				return Value(int(self) * int(other))
 
-	def __truediv__(self, op):
-		match self.type(), op.type():
+	def __truediv__(self, other):
+		other = Value(other)
+		match self.type(), other.type():
 			case ("float", _) | (_, "float"):
-				return Value(float(self) / float(op))
+				return Value(float(self) / float(other))
 			case _:
-				return Value(int(self) / int(op))
+				return Value(int(self) / int(other))
+
+	def __mod__(self, other):
+		other = Value(other)
+		match self.type(), other.type():
+			case ("float", _) | (_, "float"):
+				return Value(float(self) % float(other))
+			case _:
+				return Value(int(self) % int(other))
+
+	def __pow__(self, other):
+		other = Value(other)
+		match self.type(), other.type():
+			case ("float", _) | (_, "float"):
+				return Value(float(self) ** float(other))
+			case _:
+				return Value(int(self) ** int(other))
+
+	def __pos__(self):
+		if self.type() == "float":
+			return Value(+float(self))
+
+		return Value(+int(self))
+
+	def __neg__(self):
+		if self.type() == "float":
+			return Value(-float(self))
+
+		return Value(-int(self))
+
+	def __invert__(self):
+		return Value(~int(self))
 
 
-print(repr(Value("4112")))
-print(repr(Value("4112", optimize=True)))
+# print(Value({"a": 1} != Value({"a": 1})))
+# print(Value(4) == Value(4))
+# print(Value(4) == 2)
+# print(Value(4) + 4)
+# print(repr(Value("4112", optimize=True)))

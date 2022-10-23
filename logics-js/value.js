@@ -202,9 +202,9 @@ export default class Value {
     }
 
     // Checks if a given value is part of another value
-    __in__(value) {
+    __contains__(value) {
         if (value.type() === "dict") {
-            return value.valueOf()[this.toString()] !== undefined;
+            return value.valueOf()[this.toString()] !== undefined;  // fixme: toString() conversion falsifies data
         }
         else if (value.type() === "list") {
             // We need to compare every item using __cmp__()
@@ -223,7 +223,7 @@ export default class Value {
     }
 
     // Index into value
-    __getitem__(key, until) {
+    __getitem__(key, until) {  // todo: provide and use a Slice() class similar to Python (not an until value)
         if (this.type() === "dict") {
             console.assert(until === undefined, "Cannot slice into a dict");
             return this.toDict()[key.toString()];
@@ -260,6 +260,7 @@ export default class Value {
 
         // Dict types
         if (this.type() === "dict" || other.type() === "dict") {
+            // fixme: Python cannot compare < and > on dict, only ==. Change this here, too?
             a = this.toDict();
             b = other.toDict();
 
