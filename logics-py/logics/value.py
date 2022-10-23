@@ -125,7 +125,7 @@ class Value:
 		return str(self.value)
 
 	def __bool__(self):
-		return self.value
+		return bool(self.value)
 
 	def __int__(self):
 		return parse_int(self.value)
