@@ -9,6 +9,18 @@
     <ul id="result"></ul>
 
     <script>
+        let values = {
+            "name": "Doe",
+            "firstname": "John",
+            "person": {
+                "firstname": "Bernd",
+                "name": "Bommelunder"
+            },
+            "t1_pilot": "Daniel",
+            "t1_glider": "Libelle",
+            "t1_regno": "2342",
+        };
+
         document.querySelector("#prompt").addEventListener(
             "change",
             (e) => {
@@ -18,20 +30,12 @@
                 document.querySelector("#result").appendChild(li);
                 li.appendChild(document.createTextNode(e.target.value + " = "));
 
+                console.debug("values = ", values);
+
                 try {
                     calc = new Logics(e.target.value);
 
-                    let result = calc.run({
-                        "name": "Doe",
-                        "firstname": "John",
-                        "person": {
-                            "firstname": "Bernd",
-                            "name": "Bommelunder"
-                        },
-                        "t1_pilot": "Daniel",
-                        "t1_glider": "Libelle",
-                        "t1_regno": "2342",
-                    });
+                    let result = calc.run(values);
                     console.log(result);
 
                     li.appendChild(document.createTextNode(result.repr()));

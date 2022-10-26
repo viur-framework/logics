@@ -68,7 +68,7 @@ export default class Logics {
             this.op0(fn(this.pop(), b, c));
         }
 
-        this.traverse(this.ast, stack, values || {});
+        this.traverse(this.ast, stack, Object.assign({}, values || {}));
         return stack.pop();
     }
 
