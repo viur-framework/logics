@@ -1,6 +1,16 @@
 <div align="center">
     <img src="https://github.com/viur-framework/viur-artwork/raw/main/icons/icon-logics.svg" height="196" alt="A hexagonal logo of Logics" title="Logics logo">
     <h1>Logics</h1>
+    <a href="https://pypi.org/project/logics-py">
+        <img alt="Badge showing current PyPI version if logics-py" title="logics-py" src="https://img.shields.io/pypi/v/logics-py?label=logics-py">
+    </a>
+    <a href="https://www.npmjs.com/package/logics-js">
+        <img alt="Badge showing current npm version if logics-js" title="logics-js" src="https://img.shields.io/npm/v/logics-js?label=logics-js">
+    </a>
+    <a href="LICENSE">
+        <img src="https://img.shields.io/github/license/viur-framework/logics" alt="Badge displaying the license" title="License badge">
+    </a>
+    <br>
     A tiny, sandboxed, secure and extendable formula language with a flavor of Python.
 </div>
 
