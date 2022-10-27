@@ -6,9 +6,14 @@ export default class Logics {
     static #parser = new LogicsParser();
 
     /** Create a new VM with a given piece of code. */
-    constructor(src) {
+    constructor(src, debug) {
         this.ast = this.constructor.#parser.parse(src);
-        this.ast.dump();
+        this.debug = Boolean(debug);
+
+        if (this.debug) {
+            this.ast.dump();
+        }
+
         this.functions = {
             "bool": (val) => val.toBool(),
             "currency": (value, decimalDelimiter, thousandsDelimiter, currencySign) => "#todo",  // todo
