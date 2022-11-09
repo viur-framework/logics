@@ -38,6 +38,8 @@ cmp             : add_sub (
                     | "<" add_sub                                       = lt
                     | "<=" add_sub                                      = lteq
                     | ("!=" | "<>") add_sub                             = neq
+                    | "in" add_sub                                      = in
+                    | "not" "in" add_sub                                = outer
                     )+                                              = cmp
                 | add_sub
                 ;
