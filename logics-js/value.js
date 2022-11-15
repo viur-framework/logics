@@ -210,7 +210,7 @@ export default class Value {
             // We need to compare every item using __cmp__()
             for(let item of value.valueOf()) {
                 item = new Value(item);
-                if(item.__cmp__(this) === "eq") {
+                if(item.__cmp__(this) === 0) {
                     return true;
                 }
             }
