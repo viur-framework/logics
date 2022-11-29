@@ -19,7 +19,10 @@ export default class Logics {
             "currency": (value, decimalDelimiter, thousandsDelimiter, currencySign) => "#todo",  // todo
             "float": (val) => val.toFloat(),
             "int": (val) => val.toInt(),
-            "join": (array, delimiter, lastDelimiter) => array.toList().join((delimiter && delimiter.toString()) || ", "),  // fixme: lastDelimiter?
+            "join": (array, delimiter, lastDelimiter) => {
+                // fixme: Missing lastDelimiter implementation?
+                return array.toList().join((delimiter && delimiter.toString()) || ", ")
+            },
             "keys": (val) => Object.keys(val.toDict().valueOf()),
             "len": (val) => val.__len__(),
             "lfill": (str, len, fill) => str.toString().padStart(len, fill),
@@ -27,15 +30,38 @@ export default class Logics {
             "lstrip": (str) => str.toString().trimStart(),
             "max": (array) => Math.max(...array.toList().valueOf().map((i) => parseFloat(i) || 0)),
             "min": (array) => Math.min(...array.toList().valueOf().map((i) => parseFloat(i) || 0)),
-            "range": (start, end, step) => [],
-            "replace": (str, find, replace) => str.toString().replaceAll((find && find.toString()) || " ", (replace && replace.toString()) || ""),
+            "range": (start, end, step) => {
+                // start becomes end when not provided
+                if (end === undefined) {
+                    end = start || 0;
+                    start = 0;
+                }
+
+                // Don't allow invalid range
+                if (end < start) {
+                    start = end;
+                }
+
+                // step defaults to 1
+                step = step || 1;
+
+                return [...Array(Math.ceil((end - start) / step)).keys()].map(i => start + i * step);
+            },
+            "replace": (str, find, replace) => {
+                return str.toString().replaceAll(
+                    (find && find.toString()) || " ", (replace && replace.toString()) || "");
+            },
             "rfill": (str, len, fill) => str.toString().padEnd(len, fill),
-            "round": (float, precision) => parseFloat(float.toFloat().toFixed((precision && precision.toInt()) || 0)),
+            "round": (float, precision) => {
+                return parseFloat(float.toFloat().toFixed((precision && precision.toInt()) || 0));
+            },
             "rstrip": (str) => str.toString().trimEnd(),
             "split": (str, delimiter) => str.toString().split((delimiter && delimiter.toString()) || " "),
             "str": (val) => val.toString(),
             "strip": (str) => str.toString().trim(),
-            "sum": (array) => array.toList().valueOf().map((i) => parseFloat(i) || 0).reduce((total, i) => total + i, 0),
+            "sum": (array) => {
+                return array.toList().valueOf().map((i) => parseFloat(i) || 0).reduce((total, i) => total + i, 0);
+            },
             "upper": (str) => str.toString().toUpperCase(),
             "values": (val) => Object.values(val.toDict().valueOf()),
         };
