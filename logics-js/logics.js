@@ -31,10 +31,16 @@ export default class Logics {
             "max": (array) => Math.max(...array.toList().valueOf().map((i) => parseFloat(i) || 0)),
             "min": (array) => Math.min(...array.toList().valueOf().map((i) => parseFloat(i) || 0)),
             "range": (start, end, step) => {
+                // Only allow for numeric parameters
+                start = start.toInt() || 0;
+
                 // start becomes end when not provided
                 if (end === undefined) {
                     end = start || 0;
                     start = 0;
+                }
+                else {
+                    end = end.toInt() || 0;
                 }
 
                 // Don't allow invalid range
@@ -43,7 +49,10 @@ export default class Logics {
                 }
 
                 // step defaults to 1
-                step = step || 1;
+                step = step && step.toInt() || 1;
+                if (step <= 0) {
+                    return [];
+                }
 
                 return [...Array(Math.ceil((end - start) / step)).keys()].map(i => start + i * step);
             },
