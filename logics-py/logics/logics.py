@@ -2,7 +2,6 @@
 logics is a domain-specific expression language with a Python-style syntax,
 that can be compiled and executed in any of ViUR's runtime contexts.
 """
-
 from .parser import LogicsParser
 from .value import Value
 
@@ -135,20 +134,47 @@ class Logics:
     def __init__(self, src):
         super().__init__()
         self.ast = _parser.parse(src)
+        self.ast.dump()
 
-    def run(self, vars={}):
+    def run(self, values={}):
         stack = _Stack()
-        self.__traverse(self.ast, stack, vars)
+        self.__traverse(self.ast, stack, values)
 
         try:
             return stack.pop()
         except IndexError:
             pass
 
-    def __traverse(self, node, stack, vars):
+    def __traverse(self, node, stack, values):
+        # Flow operations
+        match node.emit:
+            case "and" | "or":
+                assert len(node.children) == 2
+                self.__traverse(node.children[0], stack, values)
+
+                check = stack.pop()
+                test = bool(check)
+                if node.emit == "or":
+                    test = not test
+
+                if test:
+                    self.__traverse(node.children[1], stack, values)
+                else:
+                    stack.append(check)
+
+                return
+
+            case "if":
+                assert len(node.children) == 3
+                # Evaluate condition
+                self.__traverse(node.children[1], stack, values)
+                # Evaluate specific branch
+                self.__traverse(node.children[0 if bool(stack.pop()) else 2], stack, values)
+                return
+
         if node.children:
             for child in node.children:
-                self.__traverse(child, stack, vars)
+                self.__traverse(child, stack, values)
 
         # Stack operations
         match node.emit:
@@ -211,7 +237,7 @@ class Logics:
             case "index":
                 stack.op2(lambda value, idx: value[idx])
             case "load":
-                stack.op1(lambda name: vars.get(str(name)))
+                stack.op1(lambda name: values.get(str(name)))
             case "slice":
                 # TODO
                 #stack.op3(lambda value, from, to: value.__getitem__(from, to))
@@ -222,4 +248,7 @@ class Logics:
             case "sub":
                 stack.op2(lambda a, b: a - b)
             case "vars":
-                stack.op0(vars)
+                stack.op0(values)
+
+            case other:
+                raise NotImplementedError(f"Logics VM execution of node {other!r} is not implemented")
