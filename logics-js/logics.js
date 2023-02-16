@@ -174,32 +174,31 @@ export default class Logics {
                     }
                 },
                 "comprehension": () => {
-                    /*
-                    for (let i = 0; i < node.children.length; i++) {
-                        console.log(i, node.children[i]);
-                    }
-                    */
-
                     console.assert(node.children.length === 3 || node.children.length === 4);
+
+                    // Obtain iterable
                     this.traverse(node.children[2], stack, values);
+                    let items = stack.pop().toList().valueOf();
 
-                    // obtain the list
-                    let list = stack.pop().toList().valueOf();
+                    // Extract AST components for faster access
+                    let each = node.children[0];
+                    let name = node.children[1].match;
+                    let test = node.children[3];
 
+                    // Loop over the iterator
                     let ret = [];
-
-                    // iterate over list
-                    for( let i of list ) {
-                        values[node.children[1].match] = i;
-                        this.traverse(node.children[0], stack, values);
+                    for (let item of items) {
+                        values[name] = item;
 
                         // optional if
-                        if (node.children.length === 4) {
-                            this.traverse(node.children[3], stack, values);
+                        if (test !== undefined) {
+                            this.traverse(test, stack, values);
                             if (!stack.pop().toBool()) {
                                 continue;
                             }
                         }
+
+                        this.traverse(each, stack, values);
                         ret.push(stack.pop());
                     }
 
@@ -213,11 +212,7 @@ export default class Logics {
                     this.traverse(node.children[1], stack, values);
 
                     // Evaluate specific branch
-                    if (stack.pop().toBool()) {
-                        this.traverse(node.children[0], stack, values);
-                    } else {
-                        this.traverse(node.children[2], stack, values);
-                    }
+                    this.traverse(node.children[stack.pop().toBool() ? 0 : 2], stack, values);
                 },
                 "or": () => {
                     console.assert(node.children.length === 2);
