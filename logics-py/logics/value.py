@@ -156,6 +156,10 @@ class Value:
 		value = self.value if self.type() == "list" else str(self)
 		return value[item]
 
+	def __iter__(self):
+		value = self.value if self.type() in ("dict", "list") else [self]
+		return iter(value)
+
 	def __eq__(self, other):
 		return self.value == Value(other).value
 

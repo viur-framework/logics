@@ -164,6 +164,35 @@ class Logics:
 
                 return
 
+            case "comprehension":
+                assert len(node.children) in (3, 4)
+
+                # Obtain iterable
+                self.__traverse(node.children[2], stack, values)
+                items = stack.pop()
+
+                # Extract AST components for faster access
+                each = node.children[0]
+                name = node.children[1].match
+                test =  node.children[3] if len(node.children) > 3 else None
+
+                # Loop over the iterator
+                ret = []
+                for item in items:
+                    values[name] = item
+
+                    # optional if
+                    if test:
+                        self.__traverse(test, stack, values)
+                        if not bool(stack.pop()):
+                            continue
+
+                    self.__traverse(each, stack, values)
+                    ret.append(stack.pop())
+
+                stack.op0(ret)
+                return
+
             case "if":
                 assert len(node.children) == 3
                 # Evaluate condition
@@ -172,6 +201,7 @@ class Logics:
                 self.__traverse(node.children[0 if bool(stack.pop()) else 2], stack, values)
                 return
 
+        # Traverse children first (default behavior, except state otherwise above)
         if node.children:
             for child in node.children:
                 self.__traverse(child, stack, values)
@@ -219,7 +249,7 @@ class Logics:
             case "invert":
                 stack.op1(lambda a: ~a),
             case "list":
-                stack.op0(lambda: [stack.pop() for _ in range(node.children.length)])
+                stack.op0(list(reversed([stack.pop() for _ in range(len(node.children))])))
             case "mod":
                 stack.op2(lambda a, b: a % b)
             case "mul":
