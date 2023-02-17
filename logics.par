@@ -87,12 +87,12 @@ atom            : ""True""
                 | @Identifier                                       = load
                 | @String
                 | @String+                                          = strings
-                | comprehension
+                | '[' expression "for" @Identifier "in"
+                    or ( "if" expression )? ']'                     = comprehension
                 | '[' list ']'
+                | '(' expression ',' ')'                            = list
+                | '(' expression ',' internal_list ','? ')'         = list
                 | '(' expression ')'
-                ;
-
-comprehension   := '[' expression "for" @Identifier "in" or ( "if" expression )? ']'
                 ;
 
 internal_list   : expression
