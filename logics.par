@@ -65,8 +65,8 @@ unary           : '+' unary                                         = pos
                 ;
 
 factor          : atom
-                | atom trailer+                                      = entity
-                | @Identifier '(' list? ')'                          = call
+                | atom trailer+                                     = entity
+                | @Identifier '(' list? ')'                         = call
                 ;
 
 opt_expression  : expression
@@ -94,6 +94,9 @@ atom            : ""True""
 comprehension   := '[' expression "for" @Identifier "in" or ( "if" expression )? ']'
                 ;
 
-list            := expression (',' expression )+
-                |  expression
+internal_list   : expression
+                | internal_list ',' expression
+                ;
+
+list            := internal_list ','?
                 ;
