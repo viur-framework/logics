@@ -1,3 +1,5 @@
+MAX_STRING_LENGTH: int = 32 * 1024
+
 
 def parse_int(value, ret=0):
 	"""
@@ -219,12 +221,23 @@ class Value:
 	def __mul__(self, other):
 		other = Value(other)
 		match self.type(), other.type():
-			case ("str", _):
-				return Value(str(self) * int(other))
-			case (_, "str"):
-				return Value(int(self) * str(other))
+			case ("str", _) | (_, "str"):
+				if self.type() == "str":
+					repeat = str(self)
+					count = int(other)
+				else:
+					repeat = str(other)
+					count = int(self)
+
+				# Limit to maximum length of generated string (#18)
+				if count * len(repeat) > MAX_STRING_LENGTH:
+					return Value(f"#ERR limit of {MAX_STRING_LENGTH} reached")
+
+				return Value(count * repeat)
+
 			case ("float", _) | (_, "float"):
 				return Value(float(self) * float(other))
+
 			case _:
 				return Value(int(self) * int(other))
 

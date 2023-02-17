@@ -4,9 +4,12 @@ import Value from "./value.js";
 /** The Logics VM in JavaScript */
 export default class Logics {
     static #parser = new LogicsParser();
+    static maxForIterations = 4 * 1024;
 
     /** Create a new VM with a given piece of code. */
-    constructor(src, debug) {
+    constructor(src, {
+        debug = false,
+    }={}) {
         this.ast = this.constructor.#parser.parse(src);
         this.debug = Boolean(debug);
 
@@ -187,7 +190,13 @@ export default class Logics {
 
                     // Loop over the iterator
                     let ret = [];
+                    let iter = 0;
                     for (let item of items) {
+                        // Limit loop to maximum of iterations (#17)
+                        if (++iter > Logics.maxForIterations) {
+                            break;
+                        }
+
                         values[name] = item;
 
                         // optional if

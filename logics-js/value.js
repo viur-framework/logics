@@ -1,5 +1,7 @@
 /** Wrapper for JavaScript values in the Logics VM, emulating Python-style values and JSON-serializable objects. */
 export default class Value {
+    static maxStringLength = 32 * 1024;
+
     #value;  // private property: The native value in JavaScript
     #type;  // private property: Logics type name
 
@@ -363,11 +365,25 @@ export default class Value {
 
     // Performs a mul-operation with another Value object.
     __mul__(op) {
-        if (this.type() === "str") {
-            return new Value(this.toString().repeat(op.toInt()));
-        }
-        else if (op.type() === "str") {
-            return new Value(op.toString().repeat(this.toInt()));
+        if (this.type() === "str" || op.type() === "str") {
+            let repeat;
+            let count;
+
+            if (this.type() === "str") {
+                repeat = this.toString();
+                count = op.toInt();
+            }
+            else {
+                repeat = op.toString();
+                count = this.toInt();
+            }
+
+            // Limit to maximum length of generated string (#18)
+            if (count * repeat.length > Value.maxStringLength) {
+                return new Value(`#ERR limit of ${Value.maxStringLength} reached`);
+            }
+
+            return new Value(repeat.repeat(count));
         }
 
         if( this.type() === "float" || op.type() === "float" ) {

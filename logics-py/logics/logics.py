@@ -131,10 +131,15 @@ class _Stack(list):
 
 
 class Logics:
-    def __init__(self, src):
+    MAX_FOR_ITERATIONS: int = 4 * 1024
+
+    def __init__(self, src: str, debug: bool = False):
         super().__init__()
         self.ast = _parser.parse(src)
-        self.ast.dump()
+        self.debug = debug
+
+        if self.debug:
+            self.ast.dump()
 
     def run(self, values={}):
         stack = _Stack()
@@ -178,7 +183,11 @@ class Logics:
 
                 # Loop over the iterator
                 ret = []
-                for item in items:
+                for i, item in enumerate(items):
+                    # Limit loop to maximum of iterations (#17)
+                    if i >= Logics.MAX_FOR_ITERATIONS:
+                        break
+
                     values[name] = item
 
                     # optional if
