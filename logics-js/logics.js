@@ -281,7 +281,8 @@ export default class Logics {
             // Operations
             "add": () => stack.op2((a, b) => a.__add__(b)),
             "attr": () => stack.op2((name, attr) => name.toDict()[attr]),
-            "div": () => stack.op2((a, b) => a.__div__(b)),
+            "div": () => stack.op2((a, b) => a.__truediv__(b)),
+            "idiv": () => stack.op2((a, b) => a.__floordiv__(b)),
             "invert": () => stack.op1((a) => a.__invert__()),
             "list": () => stack.op0(stack.splice(-node.children.length).map(item => item.valueOf())),
             "mod": () => stack.op2((a, b) => a.__mod__(b)),

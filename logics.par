@@ -51,6 +51,7 @@ add_sub         : add_sub '+' mul_div                               = add
 
 mul_div         : mul_div '*' unary                                 = mul
                 | mul_div '/' unary                                 = div
+                | mul_div "//" unary                                = idiv
                 | mul_div '%' unary                                 = mod
                 | unary;
 

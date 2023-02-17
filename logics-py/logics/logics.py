@@ -241,13 +241,15 @@ class Logics:
             case "add":
                 stack.op2(lambda a, b: a + b)
             case "attr":
-                stack.op2(lambda name, attr: name.dict().get(attr)),
+                stack.op2(lambda name, attr: name.dict().get(attr))
             case "div":
-                stack.op2(lambda a, b: a / b),
+                stack.op2(lambda a, b: a / b)
+            case "idiv":
+                stack.op2(lambda a, b: a // b)
             case "in":
-                stack.op2(lambda a, b: a in b),
+                stack.op2(lambda a, b: a in b)
             case "invert":
-                stack.op1(lambda a: ~a),
+                stack.op1(lambda a: ~a)
             case "list":
                 stack.op0(list(reversed([stack.pop() for _ in range(len(node.children))])))
             case "mod":

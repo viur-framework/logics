@@ -378,12 +378,16 @@ export default class Value {
     }
 
     // Performs a div-operation with another Value object.
-    __div__(op) {
+    __truediv__(op) {
         if( this.type() === "float" || op.type() === "float" ) {
             return new Value(this.toFloat() / op.toFloat());
         }
 
         return new Value(this.toInt() / op.toInt());
+    }
+
+    __floordiv__(op) {
+        return new Value(Math.floor(this.toInt() / op.toInt()));
     }
 
     // Performs a mod-operation with another Value object.

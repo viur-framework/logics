@@ -16,7 +16,7 @@
 
 ## About
 
-Logics is a tiny formula language, with the goal to provide equal syntax and semantics for different runtime contexts.
+Logics is a simple expression language with the goal to provide equal syntax and semantics for different runtime contexts and host languages.
 
 - [logics-js](https://www.npmjs.com/package/logics-js) is a pure JavaScript implementation of Logics provided as npm-package.
 - [logics-py](https://pypi.org/project/logics-py/) is a pure Python implementation of Logics provided as PyPI-package.
@@ -25,17 +25,43 @@ Both packages are under recent development and not stable right now. They are ma
 
 ## Features
 
-- Python-like expression syntax, including list comprehensions
-- Python-inspired type system for all JSON-serializable types
-- Some Logics-specific specialities
-- Separate implementations in JavaScript and Python with equal syntax and similar semantics
-- Secure, running in a sandboxed environment apart from the host language
-- Provides a set of functions to be used in expressions
+- Secure, native, running in a sandboxed environment apart from the host language
+  - Disallows variable assignment, except in comprehensions
+  - *logics-js*: Implementation in JavaScript
+  - *logics-py*: Implementation in Python
+- Python-inspired syntax and semantics
+  - Make use of all standard operators
+    - Unary `+`, `-`, `~`, `not`
+    - Binary `+`, `*`, `-`, `/`, `//`, `**`
+    - Comparison `==`, `!=`, `<>`, `<`, `<=`, `>`, `>=`, `in`, `not in`
+    - Logical `and`, `or`
+    - Conditions `y if x else z`
+    - Comprehensions `[x for x in y if z]`
+  - Slices `x[:]`
+  - Attribute access `x[y]`
+  - `# comments` in separate lines
+  - Dedicated Value object abstraction of native types for
+    - `True`, `False`, `None`
+    - `int`, `float`, `str`
+    - `list` for arrays
+    - `dict` for structured objects
+- Provides a set of functions that can be used in expressions
 - Extendable to custom functions
+
+## `Logics` vs. `Python`
+
+Logics does look like Python, but it isn't Python!
+
+- Expressions can be used with arbitrary whitespace and line-breaks
+- There are no methods on objects, but functions that work on objects
+  - e.g. `dict.keys()` becomes `keys(dict)`
+  - `";".join(["a", "b", "c"])` becomes `join(["a", "b", "c"], ";")`
+- No exceptions, access to e.g. invalid index or key just returns `None`
+- Dynamic and automatic value conversion
 
 ## License
 
-Copyright © 2022 by Jan Max Meyer, Mausbrand Informationssysteme GmbH.<br>
+Copyright © 2023 by Mausbrand Informationssysteme GmbH.<br>
 Mausbrand and ViUR are registered trademarks of Mausbrand Informationssysteme GmbH.
 
 Logics is free software under the MIT license.<br>

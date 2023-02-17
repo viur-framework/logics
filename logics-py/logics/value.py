@@ -236,6 +236,10 @@ class Value:
 			case _:
 				return Value(int(self) / int(other))
 
+	def __floordiv__(self, other):
+		other = Value(other)
+		return Value(int(self) // int(other))
+
 	def __mod__(self, other):
 		other = Value(other)
 		match self.type(), other.type():
