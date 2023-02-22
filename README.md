@@ -58,6 +58,8 @@ Logics does look like Python, but it isn't Python!
   - `";".join(["a", "b", "c"])` becomes `join(["a", "b", "c"], ";")`
 - No exceptions, access to e.g. invalid index or key just returns `None`
 - Dynamic and automatic value conversion
+  - e.g. the content of strings is automatically converted when used in calculations,
+    so `"42" ** 3` produces 74088, and not a TypeError.
 
 ## License
 
