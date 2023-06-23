@@ -53,7 +53,7 @@ Both packages are under recent development and not stable right now. They are ma
 Logics does look like Python, but it isn't Python!
 
 - Expressions can be used with arbitrary whitespace and line-breaks
-- There are no methods on objects, but functions that work on objects
+- There are no methods on objects, but functions that work on values
   - e.g. `dict.keys()` becomes `keys(dict)`
   - `";".join(["a", "b", "c"])` becomes `join(["a", "b", "c"], ";")`
 - No exceptions, access to e.g. invalid index or key just returns `None`

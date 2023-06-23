@@ -295,8 +295,3 @@ class Value:
 		return Value(~int(self))
 
 
-# print(Value({"a": 1} != Value({"a": 1})))
-# print(Value(4) == Value(4))
-# print(Value(4) == 2)
-# print(Value(4) + 4)
-# print(repr(Value("4112", optimize=True)))
