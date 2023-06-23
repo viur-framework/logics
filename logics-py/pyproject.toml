@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "logics-py"
-version = "0.0.3"
+version = "0.0.4"
 authors = [
   { name="Jan Max Meyer", email="jmm@phorward.de" },
 ]
