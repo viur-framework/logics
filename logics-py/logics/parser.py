@@ -6,718 +6,718 @@
 
 
 class LogicsNode(object):
-	"""
-	This is an AST node.
-	"""
+    """
+    This is an AST node.
+    """
 
-	def __init__(self, emit = None, match = None, children = None):
-		self.emit = emit
-		self.match = match
-		self.children = children or []
+    def __init__(self, emit = None, match = None, children = None):
+        self.emit = emit
+        self.match = match
+        self.children = children or []
 
-	def dump(self, level=0):
-		if self.emit:
-			txt = "%s%s" % (level * " ", self.emit)
-			if self.match and self.match != self.emit:
-				txt += " (%s)" % self.match
+    def dump(self, level=0):
+        if self.emit:
+            txt = "%s%s" % (level * " ", self.emit)
+            if self.match and self.match != self.emit:
+                txt += " (%s)" % self.match
 
-			print(txt)
-			level += 1
+            print(txt)
+            level += 1
 
-		for child in self.children:
-			if child:
-				child.dump(level)
+        for child in self.children:
+            if child:
+                child.dump(level)
 
 
 class LogicsParseException(Exception):
-	"""
-	Exception to be raised on a parse error.
-	"""
+    """
+    Exception to be raised on a parse error.
+    """
 
-	def __init__(self, row, col, txt = None):
-		if isinstance(txt, list):
-			expecting = txt
-			txt = ("Line %d, column %d: Parse error, expecting %s" %
-					(row, col, ", ".join([("%r" % symbol[0])
-						for symbol in txt])))
-		else:
-			expecting = None
+    def __init__(self, row, col, txt = None):
+        if isinstance(txt, list):
+            expecting = txt
+            txt = ("Line %d, column %d: Parse error, expecting %s" %
+                    (row, col, ", ".join([("%r" % symbol[0])
+                        for symbol in txt])))
+        else:
+            expecting = None
 
-		super(LogicsParseException, self).__init__(txt)
+        super(LogicsParseException, self).__init__(txt)
 
-		self.row = row
-		self.col = col
-		self.expecting = expecting
+        self.row = row
+        self.col = col
+        self.expecting = expecting
 
 
 class LogicsParserToken(object):
-	state = 0
-	line = 0
-	column = 0
+    state = 0
+    line = 0
+    column = 0
 
-	node = None
+    node = None
 
-	value = None
+    value = None
 
 
 class LogicsParserControlBlock(object):
-	def __init__(self, input):
+    def __init__(self, input):
 
-		# Stack
-		self.stack = []
-		self.tos = None
+        # Stack
+        self.stack = []
+        self.tos = None
 
-		# Values
-		self.ret = None
+        # Values
+        self.ret = None
 
-		# State
-		self.act = 0
-		self.idx = None
-		self.lhs = None
+        # State
+        self.act = 0
+        self.idx = None
+        self.lhs = None
 
-		# Lookahead
-		self.sym = -1
-		self.old_sym = -1
-		self.len = 0
+        # Lookahead
+        self.sym = -1
+        self.old_sym = -1
+        self.len = 0
 
-		# Lexical analysis
-		self.lexem = None
-		self.next = None
-		self.eof = None
-		self.is_eof = None
+        # Lexical analysis
+        self.lexem = None
+        self.next = None
+        self.eof = None
+        self.is_eof = None
 
-		# Input buffering
-		self.input = input
-		self.buf = ""
+        # Input buffering
+        self.input = input
+        self.buf = ""
 
-		# Error handling
-		self.error_delay = 3
-		self.error_count = 0
+        # Error handling
+        self.error_delay = 3
+        self.error_count = 0
 
-		self.line = 1
-		self.column = 1
+        self.line = 1
+        self.column = 1
 
-		
+        
 
 
 class LogicsParser(object):
 
-	# Actions
-	_ERROR = 0
-	_REDUCE = 1
-	_SHIFT = 2
-	_SUCCESS = 4
-
-	# Parse tables
-	_symbols = (
-		("&eof", "", 3, 0, 0, 1),
-		("for", "", 2, 0, 0, 1),
-		("$", "", 2, 0, 0, 1),
-		("None", "None", 2, 0, 0, 1),
-		("False", "False", 2, 0, 0, 1),
-		("True", "True", 2, 0, 0, 1),
-		("**", "", 2, 0, 0, 1),
-		("//", "", 2, 0, 0, 1),
-		("in", "", 2, 0, 0, 1),
-		("<>", "", 2, 0, 0, 1),
-		("!=", "", 2, 0, 0, 1),
-		("<=", "", 2, 0, 0, 1),
-		("<", "", 2, 0, 0, 1),
-		(">=", "", 2, 0, 0, 1),
-		(">", "", 2, 0, 0, 1),
-		("==", "", 2, 0, 0, 1),
-		("not", "", 2, 0, 0, 1),
-		("and", "", 2, 0, 0, 1),
-		("or", "", 2, 0, 0, 1),
-		("else", "", 2, 0, 0, 1),
-		("if", "", 2, 0, 0, 1),
-		("String", "String", 2, 0, 0, 0),
-		("Number", "Number", 2, 0, 0, 1),
-		("Identifier", "Identifier", 2, 0, 0, 1),
-		("whitespace", "", 2, 0, 1, 1),
-		(",", "", 1, 0, 0, 1),
-		(".", "", 1, 0, 0, 1),
-		(":", "", 1, 0, 0, 1),
-		("]", "", 1, 0, 0, 1),
-		("[", "", 1, 0, 0, 1),
-		(")", "", 1, 0, 0, 1),
-		("(", "", 1, 0, 0, 1),
-		("~", "", 1, 0, 0, 1),
-		("%", "", 1, 0, 0, 1),
-		("/", "", 1, 0, 0, 1),
-		("*", "", 1, 0, 0, 1),
-		("-", "", 1, 0, 0, 1),
-		("+", "", 1, 0, 0, 1),
-		("expression'", "", 0, 0, 0, 1),
-		(",?", "", 0, 0, 0, 1),
-		("internal_list", "", 0, 0, 0, 1),
-		("&embedded_2?", "", 0, 0, 0, 1),
-		("&embedded_2", "", 0, 0, 0, 1),
-		("String+", "", 0, 0, 0, 1),
-		("opt_expression", "", 0, 0, 0, 1),
-		("list?", "", 0, 0, 0, 1),
-		("list", "", 0, 0, 0, 1),
-		("trailer+", "", 0, 0, 0, 1),
-		("trailer", "", 0, 0, 0, 1),
-		("atom", "", 0, 0, 0, 1),
-		("factor", "", 0, 0, 0, 1),
-		("pow", "", 0, 0, 0, 1),
-		("unary", "", 0, 0, 0, 1),
-		("mul_div", "", 0, 0, 0, 1),
-		("&embedded_1+", "", 0, 0, 0, 1),
-		("&embedded_1", "", 0, 0, 0, 1),
-		("&embedded_0", "", 0, 0, 0, 1),
-		("add_sub", "", 0, 0, 0, 1),
-		("cmp", "", 0, 0, 0, 1),
-		("not", "", 0, 0, 0, 1),
-		("and", "", 0, 0, 0, 1),
-		("or", "", 0, 0, 0, 1),
-		("expression", "", 0, 0, 0, 1)
-	)
-	_productions = (
-		("expression : or \"if\" expression \"else\" expression", "if", 5, 62),
-		("expression : or", "", 1, 62),
-		("or : or \"or\" and", "or", 3, 61),
-		("or : and", "", 1, 61),
-		("and : and \"and\" not", "and", 3, 60),
-		("and : not", "", 1, 60),
-		("not : \"not\" not", "not", 2, 59),
-		("not : cmp", "", 1, 59),
-		("cmp : add_sub &embedded_1+", "cmp", 2, 58),
-		("&embedded_1 : \"==\" add_sub", "eq", 2, 55),
-		("&embedded_1 : \">\" add_sub", "gt", 2, 55),
-		("&embedded_1 : \">=\" add_sub", "gteq", 2, 55),
-		("&embedded_1 : \"<\" add_sub", "lt", 2, 55),
-		("&embedded_1 : \"<=\" add_sub", "lteq", 2, 55),
-		("&embedded_0 : \"!=\"", "", 1, 56),
-		("&embedded_0 : \"<>\"", "", 1, 56),
-		("&embedded_1 : &embedded_0 add_sub", "neq", 2, 55),
-		("&embedded_1 : \"in\" add_sub", "in", 2, 55),
-		("&embedded_1 : \"not\" \"in\" add_sub", "outer", 3, 55),
-		("&embedded_1+ : &embedded_1+ &embedded_1", "", 2, 54),
-		("&embedded_1+ : &embedded_1", "", 1, 54),
-		("cmp : add_sub", "", 1, 58),
-		("add_sub : add_sub '+' mul_div", "add", 3, 57),
-		("add_sub : add_sub '-' mul_div", "sub", 3, 57),
-		("add_sub : mul_div", "", 1, 57),
-		("mul_div : mul_div '*' unary", "mul", 3, 53),
-		("mul_div : mul_div '/' unary", "div", 3, 53),
-		("mul_div : mul_div \"//\" unary", "idiv", 3, 53),
-		("mul_div : mul_div '%' unary", "mod", 3, 53),
-		("mul_div : pow", "", 1, 53),
-		("pow : pow \"**\" unary", "pow", 3, 51),
-		("pow : unary", "", 1, 51),
-		("unary : '+' unary", "pos", 2, 52),
-		("unary : '-' unary", "neg", 2, 52),
-		("unary : '~' unary", "invert", 2, 52),
-		("unary : factor", "", 1, 52),
-		("factor : atom", "", 1, 50),
-		("factor : atom trailer+", "entity", 2, 50),
-		("trailer+ : trailer+ trailer", "", 2, 47),
-		("trailer+ : trailer", "", 1, 47),
-		("factor : @Identifier '(' list? ')'", "call", 4, 50),
-		("list? : list", "", 1, 45),
-		("list? : ", "", 0, 45),
-		("opt_expression : expression", "", 1, 44),
-		("opt_expression : ", "None", 0, 44),
-		("trailer : '[' expression ']'", "index", 3, 48),
-		("trailer : '[' opt_expression ':' opt_expression ']'", "slice", 5, 48),
-		("trailer : '.' @Identifier", "attr", 2, 48),
-		("atom : \"True\"", "", 1, 49),
-		("atom : \"False\"", "", 1, 49),
-		("atom : \"None\"", "", 1, 49),
-		("atom : \"$\"", "vars", 1, 49),
-		("atom : @Number", "", 1, 49),
-		("atom : @Identifier", "load", 1, 49),
-		("atom : @String", "", 1, 49),
-		("String+ : String+ @String", "", 2, 43),
-		("String+ : @String", "", 1, 43),
-		("atom : String+", "strings", 1, 49),
-		("atom : '[' expression \"for\" @Identifier \"in\" or &embedded_2? ']'", "comprehension", 8, 49),
-		("&embedded_2 : \"if\" expression", "", 2, 42),
-		("&embedded_2? : &embedded_2", "", 1, 41),
-		("&embedded_2? : ", "", 0, 41),
-		("atom : '[' list ']'", "", 3, 49),
-		("atom : '(' expression ',' ')'", "list", 4, 49),
-		("atom : '(' expression ',' internal_list ,? ')'", "list", 6, 49),
-		(",? : ','", "", 1, 39),
-		(",? : ", "", 0, 39),
-		("atom : '(' expression ')'", "", 3, 49),
-		("internal_list : expression", "", 1, 40),
-		("internal_list : internal_list ',' expression", "", 3, 40),
-		("list : internal_list ,?", "list", 2, 46),
-		("expression' : expression ~&eof", "", 2, 38)
-	)
-	_act = (
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((31, 2, 17), ),
-		((21, 1, 56), ),
-		((0, 3, 71), ),
-		((20, 2, 18), (18, 2, 19), ),
-		((17, 2, 20), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((16, 2, 21), (15, 2, 22), (14, 2, 23), (13, 2, 24), (12, 2, 25), (11, 2, 26), (10, 3, 14), (9, 3, 15), (8, 2, 28), (37, 2, 30), (36, 2, 31), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((35, 2, 32), (34, 2, 33), (7, 2, 34), (33, 2, 35), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((6, 2, 36), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((29, 2, 38), (26, 2, 39), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((21, 3, 55), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((8, 2, 47), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((16, 2, 21), (15, 2, 22), (14, 2, 23), (13, 2, 24), (12, 2, 25), (11, 2, 26), (10, 3, 14), (9, 3, 15), (8, 2, 28), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((29, 2, 38), (26, 2, 39), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 3, 47), ),
-		((30, 3, 67), (25, 2, 59), ),
-		((1, 2, 60), ),
-		((28, 3, 62), ),
-		((25, 2, 61), ),
-		((30, 3, 40), ),
-		((19, 2, 62), ),
-		((17, 2, 20), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((37, 2, 30), (36, 2, 31), ),
-		((37, 2, 30), (36, 2, 31), ),
-		((37, 2, 30), (36, 2, 31), ),
-		((37, 2, 30), (36, 2, 31), ),
-		((37, 2, 30), (36, 2, 31), ),
-		((37, 2, 30), (36, 2, 31), ),
-		((37, 2, 30), (36, 2, 31), ),
-		((35, 2, 32), (34, 2, 33), (7, 2, 34), (33, 2, 35), ),
-		((35, 2, 32), (34, 2, 33), (7, 2, 34), (33, 2, 35), ),
-		((28, 3, 45), ),
-		((27, 2, 64), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (30, 3, 63), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 66), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((37, 2, 30), (36, 2, 31), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((25, 2, 61), ),
-		((8, 2, 69), ),
-		((28, 3, 46), ),
-		((30, 3, 64), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((20, 2, 71), (18, 2, 19), ),
-		((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
-		((28, 3, 58), )
-	)
-	_go = (
-		((62, 2, 3), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		(),
-		(),
-		(),
-		(),
-		(),
-		((59, 3, 6), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((56, 2, 27), (55, 3, 20), (54, 2, 29), ),
-		((52, 3, 32), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		(),
-		((52, 3, 33), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		(),
-		((52, 3, 34), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((48, 3, 39), (47, 2, 37), ),
-		((62, 2, 40), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((62, 2, 41), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (46, 2, 42), (43, 2, 16), (40, 2, 43), ),
-		(),
-		((62, 3, 68), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (46, 3, 41), (45, 2, 44), (43, 2, 16), (40, 2, 43), ),
-		((62, 2, 45), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((60, 2, 46), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((59, 3, 4), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		(),
-		((57, 2, 48), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((57, 2, 49), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((57, 2, 50), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((57, 2, 51), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((57, 2, 52), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((57, 2, 53), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((57, 2, 54), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((56, 2, 27), (55, 3, 19), ),
-		((53, 2, 55), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((53, 2, 56), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((52, 3, 25), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((52, 3, 26), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((52, 3, 27), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((52, 3, 28), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((52, 3, 30), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((48, 3, 38), ),
-		((62, 2, 57), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (44, 2, 58), (43, 2, 16), ),
-		(),
-		(),
-		(),
-		(),
-		((39, 3, 70), ),
-		(),
-		(),
-		(),
-		((57, 2, 63), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		(),
-		(),
-		(),
-		(),
-		(),
-		(),
-		(),
-		(),
-		(),
-		(),
-		(),
-		((62, 3, 68), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), (40, 2, 65), ),
-		(),
-		((62, 3, 69), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((62, 3, 0), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		(),
-		((62, 3, 43), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (44, 2, 67), (43, 2, 16), ),
-		((39, 2, 68), ),
-		(),
-		(),
-		(),
-		((61, 2, 70), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		((42, 3, 60), (41, 2, 72), ),
-		((62, 3, 59), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
-		()
-	)
-
-	_def_prod = (-1, 53, 54, -1, 1, 3, -1, 21, -1, 24, -1, 29, -1, 36, -1, -1, 57, 42, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 8, -1, -1, -1, -1, -1, -1, -1, 37, 44, -1, -1, 68, -1, 66, -1, -1, 2, -1, 9, 10, 11, 12, 13, 16, 17, 22, 23, 43, -1, -1, -1, 65, -1, 18, 44, 66, -1, -1, -1, -1, 61, -1, -1)
-
-	# Lexical analysis
-	_dfa_select = ()
-	_dfa_index = (
-		(0, 44, 53, 54, 58, 59, 60, 62, 65, 66, 69, 71, 73, 74, 75, 76, 78, 79, 80, 81, 82, 87, 92, 97, 98, 99, 100, 101, 102, 103, 104, 105, 110, 115, 120, 125, 130, 135, 140, 142, 149, 150, 152, 158, 164, 171, 177, 181, 186, 192, 199, 201, 208, 214, 221, 225, 231, 237, 244, 251, 258, 265, 272, 279, 286, 293, 300, 307, 314, 321, 328),
-	)
-	_dfa_chars = ((111, 111), (126, 126), (9, 10), (13, 13), (32, 32), (65, 69), (71, 77), (79, 83), (85, 90), (95, 95), (98, 100), (103, 104), (106, 109), (112, 122), (110, 110), (105, 105), (102, 102), (101, 101), (97, 97), (93, 93), (91, 91), (84, 84), (78, 78), (70, 70), (62, 62), (61, 61), (60, 60), (58, 58), (48, 57), (47, 47), (46, 46), (45, 45), (44, 44), (43, 43), (42, 42), (41, 41), (40, 40), (39, 39), (37, 37), (36, 36), (35, 35), (34, 34), (33, 33), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 101), (103, 109), (111, 122), (110, 110), (102, 102), (-1, -1), (-1, -1), (9, 10), (13, 13), (32, 32), (-1, -1), (-1, -1), (-1, -1), (61, 61), (-1, -1), (62, 62), (61, 61), (-1, -1), (-1, -1), (48, 57), (46, 46), (-1, -1), (47, 47), (-1, -1), (48, 57), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (42, 42), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (61, 61), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 110), (112, 122), (111, 111), (-1, -1), (-1, -1), (48, 57), (-1, -1), (92, 92), (39, 39), (0, 38), (40, 91), (93, 65535), (-1, -1), (92, 92), (39, 39), (0, 38), (40, 91), (93, 65535), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 113), (115, 122), (114, 114), (-1, -1), (92, 92), (34, 34), (0, 33), (35, 91), (93, 65535), (-1, -1), (10, 10), (0, 9), (11, 65535), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (92, 92), (34, 34), (0, 33), (35, 91), (93, 65535), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 107), (109, 122), (108, 108), (-1, -1), (61, 61), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 109), (111, 122), (110, 110), (-1, -1), (0, 38), (40, 91), (93, 65535), (92, 92), (39, 39), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 113), (115, 122), (114, 114), (-1, -1), (0, 9), (11, 65535), (10, 10), (-1, -1), (48, 57), (65, 90), (95, 95), (98, 122), (97, 97), (-1, -1), (0, 33), (35, 91), (93, 65535), (92, 92), (34, 34), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 115), (117, 122), (116, 116), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 113), (115, 122), (114, 114), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 114), (116, 122), (115, 115), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 99), (101, 122), (100, 100), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 116), (118, 122), (117, 117), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 100), (102, 122), (101, 101), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 100), (102, 122), (101, 101), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 100), (102, 122), (101, 101), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 100), (102, 122), (101, 101), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 110), (112, 122), (111, 111), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 109), (111, 122), (110, 110), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 114), (116, 122), (115, 115), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 110), (112, 122), (111, 111), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 107), (109, 122), (108, 108), (-1, -1))
-	_dfa_trans = (44, 2, 3, 3, 3, 47, 47, 47, 47, 47, 47, 47, 47, 47, 39, 1, 66, 49, 51, 4, 5, 53, 69, 55, 6, 38, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 43, 18, 19, 46, 48, 50, -1, 47, 47, 47, 47, 47, 47, 20, 21, -1, -1, 3, 3, 3, -1, -1, -1, 23, -1, 25, 26, -1, -1, 9, 41, -1, 27, -1, 41, -1, -1, -1, -1, 28, -1, -1, -1, -1, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, -1, -1, -1, -1, -1, -1, -1, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, 24, -1, 47, 47, 47, 47, 47, 57, -1, -1, 41, -1, 52, 29, 43, 43, 43, -1, 52, 29, 43, 43, 43, -1, 47, 47, 47, 47, 47, 22, -1, 56, 29, 48, 48, 48, -1, 40, 54, 54, -1, 47, 47, 47, 47, -1, 56, 29, 48, 48, 48, -1, 47, 47, 47, 47, 47, 59, -1, 30, -1, 47, 47, 47, 47, 47, 60, -1, 43, 43, 43, 52, 42, -1, 47, 47, 47, 47, 47, 61, -1, 54, 54, 40, -1, 47, 47, 47, 47, 70, -1, 48, 48, 48, 56, 45, -1, 47, 47, 47, 47, 47, 31, -1, 47, 47, 47, 47, 47, 32, -1, 47, 47, 47, 47, 47, 62, -1, 47, 47, 47, 47, 47, 33, -1, 47, 47, 47, 47, 47, 63, -1, 47, 47, 47, 47, 47, 34, -1, 47, 47, 47, 47, 47, 35, -1, 47, 47, 47, 47, 47, 36, -1, 47, 47, 47, 47, 47, 37, -1, 47, 47, 47, 47, 47, 58, -1, 47, 47, 47, 47, 47, 64, -1, 47, 47, 47, 47, 47, 65, -1, 47, 47, 47, 47, 47, 67, -1, 47, 47, 47, 47, 47, 68, -1)
-	_dfa_accept = (
-		(0, 24, 33, 25, 29, 30, 15, 13, 28, 23, 35, 27, 37, 26, 38, 36, 31, 32, 34, 3, 9, 21, 19, 14, 16, 10, 12, 8, 7, 22, 11, 17, 2, 18, 20, 6, 4, 5, 0, 24, 25, 23, 22, 0, 24, 22, 0, 24, 0, 24, 0, 24, 0, 24, 0, 24, 0, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24),
-	)
-
-	# Parsing actions
-
-
-
-	# Parsing algorithm
-
-	def _get_act(self, pcb):
-		# Get action table entry
-
-		# Check action table first
-		for (sym, pcb.act, pcb.idx) in self._act[pcb.tos.state]:
-			if sym == pcb.sym:
-				return True if pcb.act else False #enforced parse error
-
-		# Otherwise, apply default production
-		pcb.idx = self._def_prod[pcb.tos.state]
-		if pcb.idx > -1:
-			pcb.act = self._REDUCE
-			return True
-
-		return False
-
-	def _get_go(self, pcb):
-		# Get goto table entry
-
-		for (sym, pcb.act, pcb.idx) in self._go[pcb.tos.state]:
-			if sym == pcb.lhs:
-				return True
-
-		return False
-
-	def _get_char(self, pcb):
-		# Get next character from input stream
-
-		if callable(pcb.input):
-			return pcb.input()
-
-		if pcb.input:
-			ch = pcb.input[0]
-			pcb.input = pcb.input[1:]
-		else:
-			ch = pcb.eof
-
-		return ch
-
-	def _get_input(self, pcb, offset):
-		# Performs input buffering
-
-		while offset >= len(pcb.buf):
-			if pcb.is_eof:
-				return pcb.eof
-
-			ch = self._get_char(pcb)
-			if ch == pcb.eof:
-				pcb.is_eof = True
-				return pcb.eof
-
-			pcb.buf += ch
-
-		#print("_get_input", pcb.buf, offset, pcb.buf[offset], ord(pcb.buf[offset]))
-
-		return ord(pcb.buf[offset])
-
-	def _clear_input(self, pcb):
-		# Purge input from buffer that is not necessary anymore
-
-		if pcb.buf:
-
-			# Perform position counting.
-			for ch in pcb.buf[0: pcb.len]:
-				if ch == '\n':
-					pcb.line += 1
-					pcb.column = 0
-				else:
-					pcb.column += 1
-
-			pcb.buf = pcb.buf[pcb.len:]
-
-		pcb.len = 0
-		pcb.sym = -1
-
-	def _lex(self, pcb):
-		# Lexical analysis
-
-		state = length = 0
-		machine = self._dfa_select[pcb.tos.state] if not 1 else 0
-		next = self._get_input(pcb, length)
-
-		if next == pcb.eof:
-			pcb.sym = 0
-			return
-
-		while state > -1 and next != pcb.eof:
-			idx = self._dfa_index[machine][state]
-			state = -1
-
-			while self._dfa_chars[idx][0] > -1:
-				if (next >= self._dfa_chars[idx][0]
-					and next <= self._dfa_chars[idx][1]):
-
-					length += 1
-					state = self._dfa_trans[idx]
-
-					if self._dfa_accept[machine][state] > 0:
-						pcb.sym = self._dfa_accept[machine][state] - 1
-						pcb.len = length
-
-						# Test! (??)
-						if pcb.sym == 0:
-							state = -1
-							break
-
-						# Stop if matched symbol should be parsed nongreedy
-						if not self._symbols[pcb.sym][5]:
-							state = -1
-							break
-
-					next = self._get_input(pcb, length)
-					break
-
-				idx += 1
-
-			# TODO: Semantic Terminal Selection?
-
-		#print("_lex", pcb.sym, pcb.len)
-
-	def _get_sym(self, pcb):
-		# Get lookahead symbol
-
-		pcb.sym = -1
-		pcb.len = 0
-
-		# insensitive mode
-		if 1:
-			while True:
-				self._lex(pcb)
-
-				# check for whitespace
-				if pcb.sym > -1 and self._symbols[pcb.sym][4]:
-					self._clear_input(pcb)
-					continue
-
-				break
-
-		# sensitive mode
-		else:
-			if self._dfa_select[pcb.tos.state] > -1:
-				self._lex(pcb)
-
-			# If there is no matching DFA state machine, try to identify the
-			# end-of-file symbol. If this also fails, a parse error will raise.
-			elif self._get_input(pcb, 0) == pcb.eof:
-				pcb.sym = 0
-
-		return pcb.sym > -1
-
-	def parse(self, s = None):
-		if s is None:
-			try:
-				s = raw_input(">")
-			except NameError:
-				s = input(">")
-
-		pcb = LogicsParserControlBlock(s)
-		pcb.act = self._SHIFT
-
-		pcb.tos = LogicsParserToken()
-		pcb.stack.append(pcb.tos)
-
-		while True:
-			#print("state = %d" % pcb.tos.state)
-
-			# Reduce
-			while pcb.act & self._REDUCE:
-
-				# Set default left-hand side
-				pcb.lhs = self._productions[pcb.idx][3]
-
-				#print("REDUCE", pcb.idx, self._productions[pcb.idx][0])
-				#print("state", pcb.tos.state)
-
-				# Call reduce function
-				#print("CALL", "_reduce_action_%d" % pcb.idx)
-				reduce_fn = getattr(self, "_reduce_action_%d" % pcb.idx, None)
-				if reduce_fn:
-					reduce_fn(pcb)
-
-				# Drop right-hand side
-				cnodes = None
-				for _ in range(0, self._productions[pcb.idx][2]):
-					item = pcb.stack.pop()
-
-					if item.node:
-						if cnodes is None:
-							cnodes = []
-
-						if isinstance(item.node, list):
-							cnodes = item.node + cnodes
-						else:
-							cnodes.insert(0, item.node)
-
-				pcb.tos = pcb.stack[-1]
-				pcb.tos.value = pcb.ret
-
-				# Handle AST nodes
-				if self._productions[pcb.idx][1]:
-					#print("%s = %s" % (self._productions[pcb.idx][0], self._productions[pcb.idx][1]))
-					node = LogicsNode(self._productions[pcb.idx][1],
-											children=cnodes)
-
-				else:
-					node = None
-
-				# Error enforced by semantics?
-				if pcb.act == self._ERROR:
-					break
-
-				# Goal symbol reduced, and stack is empty?
-				if pcb.lhs == 38 and len(pcb.stack) == 1:
-					pcb.tos.node = node or cnodes
-					self._clear_input(pcb)
-					pcb.act = self._SUCCESS;
-					break
-
-				self._get_go(pcb)
-
-				pcb.tos = LogicsParserToken()
-				pcb.stack.append(pcb.tos)
-
-				pcb.tos.symbol = self._symbols[pcb.lhs]
-				pcb.tos.state = -1 if pcb.act & self._REDUCE else pcb.idx
-				pcb.tos.value = pcb.ret
-				pcb.tos.node = node or cnodes
-				pcb.tos.line = pcb.line
-				pcb.tos.column = pcb.column
-
-			if pcb.act == self._SUCCESS or pcb.act == self._ERROR:
-				break
-
-			# Get next input symbol
-			self._get_sym(pcb)
-
-			#print("pcb.sym = %d (%s)" % (pcb.sym, self._symbols[pcb.sym][0]))
-			#print("pcb.len = %d" % pcb.len)
-
-			# Get action table entry
-			if not self._get_act(pcb):
-				# TODO: Error Recovery
-				raise LogicsParseException(pcb.line, pcb.column,
-					[self._symbols[sym]
-						for (sym, pcb.act, pcb.idx)
-							in self._act[pcb.tos.state]])
-
-			#print("pcb.act = %d" % pcb.act)
-
-			# Shift
-			if pcb.act & self._SHIFT:
-				#print("SHIFT", pcb.sym, self._symbols[pcb.sym])
-
-				pcb.tos = LogicsParserToken()
-				pcb.stack.append(pcb.tos)
-
-				# Execute scanner actions, if existing.
-				scan_fn = getattr(self, "_scan_action_%d" % pcb.sym, None)
-				if scan_fn:
-					scan_fn(pcb)
-
-				pcb.tos.state = -1 if pcb.act & self._REDUCE else pcb.idx
-				pcb.tos.symbol = self._symbols[pcb.sym]
-
-				pcb.tos.line = pcb.line
-				pcb.tos.column = pcb.column
-
-				if pcb.stack[-1 - 0].value is None:
-					pcb.stack[-1 - 0].value = pcb.buf[:pcb.len]
-
-				if pcb.tos.symbol[1]:
-					pcb.tos.node = LogicsNode(pcb.tos.symbol[1], pcb.stack[-1 - 0].value)
-
-				if pcb.sym != 0 and pcb.sym != -1:
-					self._clear_input(pcb)
-					pcb.old_sym = -1
-
-		if pcb.ret is None and pcb.tos.node:
-			if isinstance(pcb.tos.node, list):
-				if len(pcb.tos.node) > 1:
-					node = LogicsNode(children=pcb.tos.node)
-				else:
-					node = pcb.tos.node[0]
-			else:
-				node = pcb.tos.node
-		else:
-			node = None
-
-		return pcb.ret or node
+    # Actions
+    _ERROR = 0
+    _REDUCE = 1
+    _SHIFT = 2
+    _SUCCESS = 4
+
+    # Parse tables
+    _symbols = (
+        ("&eof", "", 3, False, False, True),
+        ("for", "", 2, False, False, True),
+        ("$", "", 2, False, False, True),
+        ("None", "None", 2, False, False, True),
+        ("False", "False", 2, False, False, True),
+        ("True", "True", 2, False, False, True),
+        ("**", "", 2, False, False, True),
+        ("//", "", 2, False, False, True),
+        ("in", "", 2, False, False, True),
+        ("<>", "", 2, False, False, True),
+        ("!=", "", 2, False, False, True),
+        ("<=", "", 2, False, False, True),
+        ("<", "", 2, False, False, True),
+        (">=", "", 2, False, False, True),
+        (">", "", 2, False, False, True),
+        ("==", "", 2, False, False, True),
+        ("not", "", 2, False, False, True),
+        ("and", "", 2, False, False, True),
+        ("or", "", 2, False, False, True),
+        ("else", "", 2, False, False, True),
+        ("if", "", 2, False, False, True),
+        ("String", "String", 2, False, False, False),
+        ("Number", "Number", 2, False, False, True),
+        ("Identifier", "Identifier", 2, False, False, True),
+        ("whitespace", "", 2, False, True, True),
+        (",", "", 1, False, False, True),
+        (".", "", 1, False, False, True),
+        (":", "", 1, False, False, True),
+        ("]", "", 1, False, False, True),
+        ("[", "", 1, False, False, True),
+        (")", "", 1, False, False, True),
+        ("(", "", 1, False, False, True),
+        ("~", "", 1, False, False, True),
+        ("%", "", 1, False, False, True),
+        ("/", "", 1, False, False, True),
+        ("*", "", 1, False, False, True),
+        ("-", "", 1, False, False, True),
+        ("+", "", 1, False, False, True),
+        ("expression'", "", 0, False, False, True),
+        (",?", "", 0, False, False, True),
+        ("internal_list", "", 0, False, False, True),
+        ("&embedded_2?", "", 0, False, False, True),
+        ("&embedded_2", "", 0, False, False, True),
+        ("String+", "", 0, False, False, True),
+        ("opt_expression", "", 0, False, False, True),
+        ("list?", "", 0, False, False, True),
+        ("list", "", 0, False, False, True),
+        ("trailer+", "", 0, False, False, True),
+        ("trailer", "", 0, False, False, True),
+        ("atom", "", 0, False, False, True),
+        ("factor", "", 0, False, False, True),
+        ("pow", "", 0, False, False, True),
+        ("unary", "", 0, False, False, True),
+        ("mul_div", "", 0, False, False, True),
+        ("&embedded_1+", "", 0, False, False, True),
+        ("&embedded_1", "", 0, False, False, True),
+        ("&embedded_0", "", 0, False, False, True),
+        ("add_sub", "", 0, False, False, True),
+        ("cmp", "", 0, False, False, True),
+        ("not", "", 0, False, False, True),
+        ("and", "", 0, False, False, True),
+        ("or", "", 0, False, False, True),
+        ("expression", "", 0, False, False, True)
+    )
+    _productions = (
+        ("expression : or \"if\" expression \"else\" expression", "if", 5, 62),
+        ("expression : or", "", 1, 62),
+        ("or : or \"or\" and", "or", 3, 61),
+        ("or : and", "", 1, 61),
+        ("and : and \"and\" not", "and", 3, 60),
+        ("and : not", "", 1, 60),
+        ("not : \"not\" not", "not", 2, 59),
+        ("not : cmp", "", 1, 59),
+        ("cmp : add_sub &embedded_1+", "cmp", 2, 58),
+        ("&embedded_1 : \"==\" add_sub", "eq", 2, 55),
+        ("&embedded_1 : \">\" add_sub", "gt", 2, 55),
+        ("&embedded_1 : \">=\" add_sub", "gteq", 2, 55),
+        ("&embedded_1 : \"<\" add_sub", "lt", 2, 55),
+        ("&embedded_1 : \"<=\" add_sub", "lteq", 2, 55),
+        ("&embedded_0 : \"!=\"", "", 1, 56),
+        ("&embedded_0 : \"<>\"", "", 1, 56),
+        ("&embedded_1 : &embedded_0 add_sub", "neq", 2, 55),
+        ("&embedded_1 : \"in\" add_sub", "in", 2, 55),
+        ("&embedded_1 : \"not\" \"in\" add_sub", "outer", 3, 55),
+        ("&embedded_1+ : &embedded_1+ &embedded_1", "", 2, 54),
+        ("&embedded_1+ : &embedded_1", "", 1, 54),
+        ("cmp : add_sub", "", 1, 58),
+        ("add_sub : add_sub '+' mul_div", "add", 3, 57),
+        ("add_sub : add_sub '-' mul_div", "sub", 3, 57),
+        ("add_sub : mul_div", "", 1, 57),
+        ("mul_div : mul_div '*' unary", "mul", 3, 53),
+        ("mul_div : mul_div '/' unary", "div", 3, 53),
+        ("mul_div : mul_div \"//\" unary", "idiv", 3, 53),
+        ("mul_div : mul_div '%' unary", "mod", 3, 53),
+        ("mul_div : pow", "", 1, 53),
+        ("pow : pow \"**\" unary", "pow", 3, 51),
+        ("pow : unary", "", 1, 51),
+        ("unary : '+' unary", "pos", 2, 52),
+        ("unary : '-' unary", "neg", 2, 52),
+        ("unary : '~' unary", "invert", 2, 52),
+        ("unary : factor", "", 1, 52),
+        ("factor : atom", "", 1, 50),
+        ("factor : atom trailer+", "entity", 2, 50),
+        ("trailer+ : trailer+ trailer", "", 2, 47),
+        ("trailer+ : trailer", "", 1, 47),
+        ("factor : @Identifier '(' list? ')'", "call", 4, 50),
+        ("list? : list", "", 1, 45),
+        ("list? : ", "", 0, 45),
+        ("opt_expression : expression", "", 1, 44),
+        ("opt_expression : ", "None", 0, 44),
+        ("trailer : '[' expression ']'", "index", 3, 48),
+        ("trailer : '[' opt_expression ':' opt_expression ']'", "slice", 5, 48),
+        ("trailer : '.' @Identifier", "attr", 2, 48),
+        ("atom : \"True\"", "", 1, 49),
+        ("atom : \"False\"", "", 1, 49),
+        ("atom : \"None\"", "", 1, 49),
+        ("atom : \"$\"", "vars", 1, 49),
+        ("atom : @Number", "", 1, 49),
+        ("atom : @Identifier", "load", 1, 49),
+        ("atom : @String", "", 1, 49),
+        ("String+ : String+ @String", "", 2, 43),
+        ("String+ : @String", "", 1, 43),
+        ("atom : String+", "strings", 1, 49),
+        ("atom : '[' expression \"for\" @Identifier \"in\" or &embedded_2? ']'", "comprehension", 8, 49),
+        ("&embedded_2 : \"if\" expression", "", 2, 42),
+        ("&embedded_2? : &embedded_2", "", 1, 41),
+        ("&embedded_2? : ", "", 0, 41),
+        ("atom : '[' list ']'", "", 3, 49),
+        ("atom : '(' expression ',' ')'", "list", 4, 49),
+        ("atom : '(' expression ',' internal_list ,? ')'", "list", 6, 49),
+        (",? : ','", "", 1, 39),
+        (",? : ", "", 0, 39),
+        ("atom : '(' expression ')'", "", 3, 49),
+        ("internal_list : expression", "", 1, 40),
+        ("internal_list : internal_list ',' expression", "", 3, 40),
+        ("list : internal_list ,?", "list", 2, 46),
+        ("expression' : expression ~&eof", "", 2, 38)
+    )
+    _act = (
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((31, 2, 17), ),
+        ((21, 1, 56), ),
+        ((0, 3, 71), ),
+        ((20, 2, 18), (18, 2, 19), ),
+        ((17, 2, 20), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((16, 2, 21), (15, 2, 22), (14, 2, 23), (13, 2, 24), (12, 2, 25), (11, 2, 26), (10, 3, 14), (9, 3, 15), (8, 2, 28), (37, 2, 30), (36, 2, 31), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((35, 2, 32), (34, 2, 33), (7, 2, 34), (33, 2, 35), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((6, 2, 36), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((29, 2, 38), (26, 2, 39), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((21, 3, 55), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((8, 2, 47), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((16, 2, 21), (15, 2, 22), (14, 2, 23), (13, 2, 24), (12, 2, 25), (11, 2, 26), (10, 3, 14), (9, 3, 15), (8, 2, 28), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((29, 2, 38), (26, 2, 39), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 3, 47), ),
+        ((30, 3, 67), (25, 2, 59), ),
+        ((1, 2, 60), ),
+        ((28, 3, 62), ),
+        ((25, 2, 61), ),
+        ((30, 3, 40), ),
+        ((19, 2, 62), ),
+        ((17, 2, 20), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((37, 2, 30), (36, 2, 31), ),
+        ((37, 2, 30), (36, 2, 31), ),
+        ((37, 2, 30), (36, 2, 31), ),
+        ((37, 2, 30), (36, 2, 31), ),
+        ((37, 2, 30), (36, 2, 31), ),
+        ((37, 2, 30), (36, 2, 31), ),
+        ((37, 2, 30), (36, 2, 31), ),
+        ((35, 2, 32), (34, 2, 33), (7, 2, 34), (33, 2, 35), ),
+        ((35, 2, 32), (34, 2, 33), (7, 2, 34), (33, 2, 35), ),
+        ((28, 3, 45), ),
+        ((27, 2, 64), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (30, 3, 63), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 66), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((37, 2, 30), (36, 2, 31), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((25, 2, 61), ),
+        ((8, 2, 69), ),
+        ((28, 3, 46), ),
+        ((30, 3, 64), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((20, 2, 71), (18, 2, 19), ),
+        ((23, 2, 1), (22, 3, 52), (21, 2, 2), (16, 2, 6), (37, 2, 8), (36, 2, 10), (32, 2, 12), (31, 2, 14), (29, 2, 15), (5, 3, 48), (4, 3, 49), (3, 3, 50), (2, 3, 51), ),
+        ((28, 3, 58), )
+    )
+    _go = (
+        ((62, 2, 3), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        (),
+        (),
+        (),
+        (),
+        (),
+        ((59, 3, 6), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((56, 2, 27), (55, 3, 20), (54, 2, 29), ),
+        ((52, 3, 32), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        (),
+        ((52, 3, 33), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        (),
+        ((52, 3, 34), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((48, 3, 39), (47, 2, 37), ),
+        ((62, 2, 40), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((62, 2, 41), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (46, 2, 42), (43, 2, 16), (40, 2, 43), ),
+        (),
+        ((62, 3, 68), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (46, 3, 41), (45, 2, 44), (43, 2, 16), (40, 2, 43), ),
+        ((62, 2, 45), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((60, 2, 46), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((59, 3, 4), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        (),
+        ((57, 2, 48), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((57, 2, 49), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((57, 2, 50), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((57, 2, 51), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((57, 2, 52), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((57, 2, 53), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((57, 2, 54), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((56, 2, 27), (55, 3, 19), ),
+        ((53, 2, 55), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((53, 2, 56), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((52, 3, 25), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((52, 3, 26), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((52, 3, 27), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((52, 3, 28), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((52, 3, 30), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((48, 3, 38), ),
+        ((62, 2, 57), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (44, 2, 58), (43, 2, 16), ),
+        (),
+        (),
+        (),
+        (),
+        ((39, 3, 70), ),
+        (),
+        (),
+        (),
+        ((57, 2, 63), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        (),
+        (),
+        (),
+        (),
+        (),
+        (),
+        (),
+        (),
+        (),
+        (),
+        (),
+        ((62, 3, 68), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), (40, 2, 65), ),
+        (),
+        ((62, 3, 69), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((62, 3, 0), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        (),
+        ((62, 3, 43), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (44, 2, 67), (43, 2, 16), ),
+        ((39, 2, 68), ),
+        (),
+        (),
+        (),
+        ((61, 2, 70), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ((42, 3, 60), (41, 2, 72), ),
+        ((62, 3, 59), (61, 2, 4), (60, 2, 5), (59, 3, 5), (58, 3, 7), (57, 2, 7), (53, 2, 9), (52, 3, 31), (51, 2, 11), (50, 3, 35), (49, 2, 13), (43, 2, 16), ),
+        ()
+    )
+
+    _def_prod = (-1, 53, 54, -1, 1, 3, -1, 21, -1, 24, -1, 29, -1, 36, -1, -1, 57, 42, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 8, -1, -1, -1, -1, -1, -1, -1, 37, 44, -1, -1, 68, -1, 66, -1, -1, 2, -1, 9, 10, 11, 12, 13, 16, 17, 22, 23, 43, -1, -1, -1, 65, -1, 18, 44, 66, -1, -1, -1, -1, 61, -1, -1)
+
+    # Lexical analysis
+    _dfa_select = ()
+    _dfa_index = (
+        (0, 44, 53, 54, 58, 59, 60, 62, 65, 66, 69, 71, 73, 74, 75, 76, 78, 79, 80, 81, 82, 87, 92, 97, 98, 99, 100, 101, 102, 103, 104, 105, 110, 115, 120, 125, 130, 135, 140, 142, 149, 150, 152, 158, 164, 171, 177, 181, 186, 192, 199, 201, 208, 214, 221, 225, 231, 237, 244, 251, 258, 265, 272, 279, 286, 293, 300, 307, 314, 321, 328),
+    )
+    _dfa_chars = ((111, 111), (126, 126), (9, 10), (13, 13), (32, 32), (65, 69), (71, 77), (79, 83), (85, 90), (95, 95), (98, 100), (103, 104), (106, 109), (112, 122), (110, 110), (105, 105), (102, 102), (101, 101), (97, 97), (93, 93), (91, 91), (84, 84), (78, 78), (70, 70), (62, 62), (61, 61), (60, 60), (58, 58), (48, 57), (47, 47), (46, 46), (45, 45), (44, 44), (43, 43), (42, 42), (41, 41), (40, 40), (39, 39), (37, 37), (36, 36), (35, 35), (34, 34), (33, 33), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 101), (103, 109), (111, 122), (110, 110), (102, 102), (-1, -1), (-1, -1), (9, 10), (13, 13), (32, 32), (-1, -1), (-1, -1), (-1, -1), (61, 61), (-1, -1), (62, 62), (61, 61), (-1, -1), (-1, -1), (48, 57), (46, 46), (-1, -1), (47, 47), (-1, -1), (48, 57), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (42, 42), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (61, 61), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 110), (112, 122), (111, 111), (-1, -1), (-1, -1), (48, 57), (-1, -1), (92, 92), (39, 39), (0, 38), (40, 91), (93, 65535), (-1, -1), (92, 92), (39, 39), (0, 38), (40, 91), (93, 65535), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 113), (115, 122), (114, 114), (-1, -1), (92, 92), (34, 34), (0, 33), (35, 91), (93, 65535), (-1, -1), (10, 10), (0, 9), (11, 65535), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 122), (-1, -1), (92, 92), (34, 34), (0, 33), (35, 91), (93, 65535), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 107), (109, 122), (108, 108), (-1, -1), (61, 61), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 109), (111, 122), (110, 110), (-1, -1), (0, 38), (40, 91), (93, 65535), (92, 92), (39, 39), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 113), (115, 122), (114, 114), (-1, -1), (0, 9), (11, 65535), (10, 10), (-1, -1), (48, 57), (65, 90), (95, 95), (98, 122), (97, 97), (-1, -1), (0, 33), (35, 91), (93, 65535), (92, 92), (34, 34), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 115), (117, 122), (116, 116), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 113), (115, 122), (114, 114), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 114), (116, 122), (115, 115), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 99), (101, 122), (100, 100), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 116), (118, 122), (117, 117), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 100), (102, 122), (101, 101), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 100), (102, 122), (101, 101), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 100), (102, 122), (101, 101), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 100), (102, 122), (101, 101), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 110), (112, 122), (111, 111), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 109), (111, 122), (110, 110), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 114), (116, 122), (115, 115), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 110), (112, 122), (111, 111), (-1, -1), (48, 57), (65, 90), (95, 95), (97, 107), (109, 122), (108, 108), (-1, -1))
+    _dfa_trans = (44, 2, 3, 3, 3, 47, 47, 47, 47, 47, 47, 47, 47, 47, 39, 1, 66, 49, 51, 4, 5, 53, 69, 55, 6, 38, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 43, 18, 19, 46, 48, 50, -1, 47, 47, 47, 47, 47, 47, 20, 21, -1, -1, 3, 3, 3, -1, -1, -1, 23, -1, 25, 26, -1, -1, 9, 41, -1, 27, -1, 41, -1, -1, -1, -1, 28, -1, -1, -1, -1, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, -1, -1, -1, -1, -1, -1, -1, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, 47, 47, 47, 47, -1, 24, -1, 47, 47, 47, 47, 47, 57, -1, -1, 41, -1, 52, 29, 43, 43, 43, -1, 52, 29, 43, 43, 43, -1, 47, 47, 47, 47, 47, 22, -1, 56, 29, 48, 48, 48, -1, 40, 54, 54, -1, 47, 47, 47, 47, -1, 56, 29, 48, 48, 48, -1, 47, 47, 47, 47, 47, 59, -1, 30, -1, 47, 47, 47, 47, 47, 60, -1, 43, 43, 43, 52, 42, -1, 47, 47, 47, 47, 47, 61, -1, 54, 54, 40, -1, 47, 47, 47, 47, 70, -1, 48, 48, 48, 56, 45, -1, 47, 47, 47, 47, 47, 31, -1, 47, 47, 47, 47, 47, 32, -1, 47, 47, 47, 47, 47, 62, -1, 47, 47, 47, 47, 47, 33, -1, 47, 47, 47, 47, 47, 63, -1, 47, 47, 47, 47, 47, 34, -1, 47, 47, 47, 47, 47, 35, -1, 47, 47, 47, 47, 47, 36, -1, 47, 47, 47, 47, 47, 37, -1, 47, 47, 47, 47, 47, 58, -1, 47, 47, 47, 47, 47, 64, -1, 47, 47, 47, 47, 47, 65, -1, 47, 47, 47, 47, 47, 67, -1, 47, 47, 47, 47, 47, 68, -1)
+    _dfa_accept = (
+        (0, 24, 33, 25, 29, 30, 15, 13, 28, 23, 35, 27, 37, 26, 38, 36, 31, 32, 34, 3, 9, 21, 19, 14, 16, 10, 12, 8, 7, 22, 11, 17, 2, 18, 20, 6, 4, 5, 0, 24, 25, 23, 22, 0, 24, 22, 0, 24, 0, 24, 0, 24, 0, 24, 0, 24, 0, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24),
+    )
+
+    # Parsing actions
+
+
+
+    # Parsing algorithm
+
+    def _get_act(self, pcb):
+        # Get action table entry
+
+        # Check action table first
+        for (sym, pcb.act, pcb.idx) in self._act[pcb.tos.state]:
+            if sym == pcb.sym:
+                return True if pcb.act else False #enforced parse error
+
+        # Otherwise, apply default production
+        pcb.idx = self._def_prod[pcb.tos.state]
+        if pcb.idx > -1:
+            pcb.act = self._REDUCE
+            return True
+
+        return False
+
+    def _get_go(self, pcb):
+        # Get goto table entry
+
+        for (sym, pcb.act, pcb.idx) in self._go[pcb.tos.state]:
+            if sym == pcb.lhs:
+                return True
+
+        return False
+
+    def _get_char(self, pcb):
+        # Get next character from input stream
+
+        if callable(pcb.input):
+            return pcb.input()
+
+        if pcb.input:
+            ch = pcb.input[0]
+            pcb.input = pcb.input[1:]
+        else:
+            ch = pcb.eof
+
+        return ch
+
+    def _get_input(self, pcb, offset):
+        # Performs input buffering
+
+        while offset >= len(pcb.buf):
+            if pcb.is_eof:
+                return pcb.eof
+
+            ch = self._get_char(pcb)
+            if ch == pcb.eof:
+                pcb.is_eof = True
+                return pcb.eof
+
+            pcb.buf += ch
+
+        #print("_get_input", pcb.buf, offset, pcb.buf[offset], ord(pcb.buf[offset]))
+
+        return ord(pcb.buf[offset])
+
+    def _clear_input(self, pcb):
+        # Purge input from buffer that is not necessary anymore
+
+        if pcb.buf:
+
+            # Perform position counting.
+            for ch in pcb.buf[0: pcb.len]:
+                if ch == '\n':
+                    pcb.line += 1
+                    pcb.column = 0
+                else:
+                    pcb.column += 1
+
+            pcb.buf = pcb.buf[pcb.len:]
+
+        pcb.len = 0
+        pcb.sym = -1
+
+    def _lex(self, pcb):
+        # Lexical analysis
+
+        state = length = 0
+        machine = self._dfa_select[pcb.tos.state] if not 1 else 0
+        next = self._get_input(pcb, length)
+
+        if next == pcb.eof:
+            pcb.sym = 0
+            return
+
+        while state > -1 and next != pcb.eof:
+            idx = self._dfa_index[machine][state]
+            state = -1
+
+            while self._dfa_chars[idx][0] > -1:
+                if (next >= self._dfa_chars[idx][0]
+                    and next <= self._dfa_chars[idx][1]):
+
+                    length += 1
+                    state = self._dfa_trans[idx]
+
+                    if self._dfa_accept[machine][state] > 0:
+                        pcb.sym = self._dfa_accept[machine][state] - 1
+                        pcb.len = length
+
+                        # Test! (??)
+                        if pcb.sym == 0:
+                            state = -1
+                            break
+
+                        # Stop if matched symbol should be parsed nongreedy
+                        if not self._symbols[pcb.sym][5]:
+                            state = -1
+                            break
+
+                    next = self._get_input(pcb, length)
+                    break
+
+                idx += 1
+
+            # TODO: Semantic Terminal Selection?
+
+        #print("_lex", pcb.sym, pcb.len)
+
+    def _get_sym(self, pcb):
+        # Get lookahead symbol
+
+        pcb.sym = -1
+        pcb.len = 0
+
+        # insensitive mode
+        if 1:
+            while True:
+                self._lex(pcb)
+
+                # check for whitespace
+                if pcb.sym > -1 and self._symbols[pcb.sym][4]:
+                    self._clear_input(pcb)
+                    continue
+
+                break
+
+        # sensitive mode
+        else:
+            if self._dfa_select[pcb.tos.state] > -1:
+                self._lex(pcb)
+
+            # If there is no matching DFA state machine, try to identify the
+            # end-of-file symbol. If this also fails, a parse error will raise.
+            elif self._get_input(pcb, 0) == pcb.eof:
+                pcb.sym = 0
+
+        return pcb.sym > -1
+
+    def parse(self, s = None):
+        if s is None:
+            try:
+                s = raw_input(">")
+            except NameError:
+                s = input(">")
+
+        pcb = LogicsParserControlBlock(s)
+        pcb.act = self._SHIFT
+
+        pcb.tos = LogicsParserToken()
+        pcb.stack.append(pcb.tos)
+
+        while True:
+            #print("state = %d" % pcb.tos.state)
+
+            # Reduce
+            while pcb.act & self._REDUCE:
+
+                # Set default left-hand side
+                pcb.lhs = self._productions[pcb.idx][3]
+
+                #print("REDUCE", pcb.idx, self._productions[pcb.idx][0])
+                #print("state", pcb.tos.state)
+
+                # Call reduce function
+                #print("CALL", "_reduce_action_%d" % pcb.idx)
+                reduce_fn = getattr(self, "_reduce_action_%d" % pcb.idx, None)
+                if reduce_fn:
+                    reduce_fn(pcb)
+
+                # Drop right-hand side
+                cnodes = None
+                for _ in range(0, self._productions[pcb.idx][2]):
+                    item = pcb.stack.pop()
+
+                    if item.node:
+                        if cnodes is None:
+                            cnodes = []
+
+                        if isinstance(item.node, list):
+                            cnodes = item.node + cnodes
+                        else:
+                            cnodes.insert(0, item.node)
+
+                pcb.tos = pcb.stack[-1]
+                pcb.tos.value = pcb.ret
+
+                # Handle AST nodes
+                if self._productions[pcb.idx][1]:
+                    #print("%s = %s" % (self._productions[pcb.idx][0], self._productions[pcb.idx][1]))
+                    node = LogicsNode(self._productions[pcb.idx][1],
+                                            children=cnodes)
+
+                else:
+                    node = None
+
+                # Error enforced by semantics?
+                if pcb.act == self._ERROR:
+                    break
+
+                # Goal symbol reduced, and stack is empty?
+                if pcb.lhs == 38 and len(pcb.stack) == 1:
+                    pcb.tos.node = node or cnodes
+                    self._clear_input(pcb)
+                    pcb.act = self._SUCCESS;
+                    break
+
+                self._get_go(pcb)
+
+                pcb.tos = LogicsParserToken()
+                pcb.stack.append(pcb.tos)
+
+                pcb.tos.symbol = self._symbols[pcb.lhs]
+                pcb.tos.state = -1 if pcb.act & self._REDUCE else pcb.idx
+                pcb.tos.value = pcb.ret
+                pcb.tos.node = node or cnodes
+                pcb.tos.line = pcb.line
+                pcb.tos.column = pcb.column
+
+            if pcb.act == self._SUCCESS or pcb.act == self._ERROR:
+                break
+
+            # Get next input symbol
+            self._get_sym(pcb)
+
+            #print("pcb.sym = %d (%s)" % (pcb.sym, self._symbols[pcb.sym][0]))
+            #print("pcb.len = %d" % pcb.len)
+
+            # Get action table entry
+            if not self._get_act(pcb):
+                # TODO: Error Recovery
+                raise LogicsParseException(pcb.line, pcb.column,
+                    [self._symbols[sym]
+                        for (sym, pcb.act, pcb.idx)
+                            in self._act[pcb.tos.state]])
+
+            #print("pcb.act = %d" % pcb.act)
+
+            # Shift
+            if pcb.act & self._SHIFT:
+                #print("SHIFT", pcb.sym, self._symbols[pcb.sym])
+
+                pcb.tos = LogicsParserToken()
+                pcb.stack.append(pcb.tos)
+
+                # Execute scanner actions, if existing.
+                scan_fn = getattr(self, "_scan_action_%d" % pcb.sym, None)
+                if scan_fn:
+                    scan_fn(pcb)
+
+                pcb.tos.state = -1 if pcb.act & self._REDUCE else pcb.idx
+                pcb.tos.symbol = self._symbols[pcb.sym]
+
+                pcb.tos.line = pcb.line
+                pcb.tos.column = pcb.column
+
+                if pcb.stack[-1 - 0].value is None:
+                    pcb.stack[-1 - 0].value = pcb.buf[:pcb.len]
+
+                if pcb.tos.symbol[1]:
+                    pcb.tos.node = LogicsNode(pcb.tos.symbol[1], pcb.stack[-1 - 0].value)
+
+                if pcb.sym != 0 and pcb.sym != -1:
+                    self._clear_input(pcb)
+                    pcb.old_sym = -1
+
+        if pcb.ret is None and pcb.tos.node:
+            if isinstance(pcb.tos.node, list):
+                if len(pcb.tos.node) > 1:
+                    node = LogicsNode(children=pcb.tos.node)
+                else:
+                    node = pcb.tos.node[0]
+            else:
+                node = pcb.tos.node
+        else:
+            node = None
+
+        return pcb.ret or node
 
 
 
 if __name__ == "__main__":
-	import sys
+    import sys
 
-	p = LogicsParser()
-	ret = p.parse(sys.argv[1] if len(sys.argv) > 1 else None)
+    p = LogicsParser()
+    ret = p.parse(sys.argv[1] if len(sys.argv) > 1 else None)
 
-	if isinstance(ret, LogicsNode):
-		ret.dump()
-	else:
-		print(ret)
+    if isinstance(ret, LogicsNode):
+        ret.dump()
+    else:
+        print(ret)
 
