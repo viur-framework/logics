@@ -130,10 +130,20 @@ class Value:
 		return bool(self.value)
 
 	def __int__(self):
-		return parse_int(self.value)
+		if self.type() == "str":
+			return parse_int(self.value)
+		elif self.value is None:
+			return 0
+
+		return int(self.value)
 
 	def __float__(self):
-		return parse_float(self.value)
+		if self.type() == "str":
+			return parse_float(self.value)
+		elif self.value is None:
+			return 0.0
+
+		return float(self.value)
 
 	def __len__(self):
 		if self.type() in ("dict", "list", "str"):
@@ -285,8 +295,3 @@ class Value:
 		return Value(~int(self))
 
 
-# print(Value({"a": 1} != Value({"a": 1})))
-# print(Value(4) == Value(4))
-# print(Value(4) == 2)
-# print(Value(4) + 4)
-# print(repr(Value("4112", optimize=True)))
