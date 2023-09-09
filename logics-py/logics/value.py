@@ -75,7 +75,7 @@ def parse_float(value, ret=0.0):
 
 
 class Value:
-	def __init__(self, value=None, allow=(int, bool, float, list, dict, str), default=None, optimize=False):
+	def __init__(self, value=None, allow=(int, bool, float, list, dict, str), default=None, optimize=True):
 		if value is None:
 			self.value = None
 			return
@@ -110,7 +110,7 @@ class Value:
 
 		assert default is not None
 
-		if any([isinstance(value, t) for t in allow]):
+		if any(isinstance(value, t) for t in allow):
 			self.value = value
 		elif callable(default):
 			self.value = default(value)
@@ -293,5 +293,3 @@ class Value:
 
 	def __invert__(self):
 		return Value(~int(self))
-
-
