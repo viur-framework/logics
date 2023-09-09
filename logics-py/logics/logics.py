@@ -179,7 +179,7 @@ class Logics:
                 # Extract AST components for faster access
                 each = node.children[0]
                 name = node.children[1].match
-                test =  node.children[3] if len(node.children) > 3 else None
+                test = node.children[3] if len(node.children) > 3 else None
 
                 # Loop over the iterator
                 ret = []
@@ -285,7 +285,7 @@ class Logics:
                 stack.op1(lambda name: values.get(str(name)))
             case "slice":
                 # TODO
-                #stack.op3(lambda value, from, to: value.__getitem__(from, to))
+                # stack.op3(lambda value, from, to: value.__getitem__(from, to))
                 pass
             case "strings":
                 stack.op0("".join([stack.pop() for _ in range(node.children.length)]))

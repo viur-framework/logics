@@ -1,4 +1,6 @@
-import os, argparse, json
+import os
+import argparse
+import json
 from logics import Logics
 from logics.version import __version__
 

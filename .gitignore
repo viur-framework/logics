@@ -1,4 +1,4 @@
 *.pyc
 .idea
 logics-py/dist
-
+logics-py/.venv
