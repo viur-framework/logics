@@ -255,21 +255,36 @@ class Value:
 		other = Value(other)
 		match self.type(), other.type():
 			case ("float", _) | (_, "float"):
-				return Value(float(self) / float(other))
+				if not (other := float(other)):
+					return Value("#ERR:division by zero")
+
+				return Value(float(self) / other)
 			case _:
-				return Value(int(self) / int(other))
+				if not (other := int(other)):
+					return Value("#ERR:division by zero")
+
+				return Value(int(self) / other)
 
 	def __floordiv__(self, other):
 		other = Value(other)
-		return Value(int(self) // int(other))
+		if not (other := int(other)):
+			return Value("#ERR:division by zero")
+
+		return Value(int(self) // other)
 
 	def __mod__(self, other):
 		other = Value(other)
 		match self.type(), other.type():
 			case ("float", _) | (_, "float"):
-				return Value(float(self) % float(other))
+				if not (other := float(other)):
+					return Value("#ERR:modulo by zero")
+
+				return Value(float(self) % other)
 			case _:
-				return Value(int(self) % int(other))
+				if not (other := int(other)):
+					return Value("#ERR:modulo by zero")
+
+				return Value(int(self) % other)
 
 	def __pow__(self, other):
 		other = Value(other)

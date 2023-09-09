@@ -396,23 +396,47 @@ export default class Value {
     // Performs a div-operation with another Value object.
     __truediv__(op) {
         if( this.type() === "float" || op.type() === "float" ) {
-            return new Value(this.toFloat() / op.toFloat());
+            let divisor = op.toFloat();
+            if (divisor === 0.0) {
+                return new Value("#ERR:division by zero")
+            }
+
+            return new Value(this.toFloat() / divisor);
         }
 
-        return new Value(this.toInt() / op.toInt());
+        let divisor = op.toInt();
+        if (divisor === 0) {
+            return new Value("#ERR:division by zero")
+        }
+
+        return new Value(this.toInt() / divisor);
     }
 
     __floordiv__(op) {
-        return new Value(Math.floor(this.toInt() / op.toInt()));
+        let divisor = op.toInt();
+        if (divisor === 0) {
+            return new Value("#ERR:division by zero")
+        }
+
+        return new Value(Math.floor(this.toInt() / divisor));
     }
 
     // Performs a mod-operation with another Value object.
     __mod__(op) {
         if( this.type() === "float" || op.type() === "float" ) {
-            return new Value(this.toFloat() % op.toFloat());
+            let divisor = op.toFloat();
+            if (divisor === 0.0) {
+                return new Value("#ERR:modulo by zero")
+            }
+            return new Value(this.toFloat() % divisor);
         }
 
-        return new Value(this.toInt() % op.toInt());
+        let divisor = op.toInt();
+        if (divisor === 0) {
+            return new Value("#ERR:modulo by zero")
+        }
+
+        return new Value(this.toInt() % divisor);
     }
 
     // Performs a mod-operation with another Value object.
