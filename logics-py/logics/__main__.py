@@ -42,7 +42,7 @@ def main():
                 vars[var[0]] = var[1]
 
     logics = Logics(expr, debug=args.debug > 0)
-    print(logics.run(vars))
+    print(repr(logics.run(vars)))
 
 
 if __name__ == "__main__":
