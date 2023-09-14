@@ -169,6 +169,42 @@ class Logics:
 
                 return
 
+            case "cmp":
+                assert len(node.children) > 1
+                self.__traverse(node.children[0], stack, values)
+
+                for node in node.children[1:]:
+                    self.__traverse(node.children[0], stack, values)
+
+                    b = stack.pop()
+                    a = stack.pop()
+
+                    match node.emit:
+                        case "eq":
+                            res = a == b
+                        case "neq":
+                            res = a != b
+                        case "lt":
+                            res = a < b
+                        case "lteq":
+                            res = a <= b
+                        case "gt":
+                            res = a > b
+                        case "gteq":
+                            res = a >= b
+
+                        case node:
+                            raise NotImplementedError(f"Logics VM: cmp {node=} is not implemented")
+
+                    if not res:
+                        stack.op0(False)
+                        return
+
+                    stack.op0(b)
+
+                stack.op0(True)
+                return
+
             case "comprehension":
                 assert len(node.children) in (3, 4)
 
@@ -295,5 +331,5 @@ class Logics:
             case "vars":
                 stack.op0(values)
 
-            case other:
-                raise NotImplementedError(f"Logics VM execution of node {other!r} is not implemented")
+            case node:
+                raise NotImplementedError(f"Logics VM: {node=} is not implemented")

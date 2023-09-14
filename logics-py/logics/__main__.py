@@ -10,6 +10,7 @@ def main():
 
     ap.add_argument("expression", type=str, help="Expression to be parsed and executed")
 
+    ap.add_argument("-d", "--debug", help="Debug level", action="count", default=0)
     ap.add_argument("-v", "--var", help="Assign variables", action="append", nargs=2, metavar=("var", "value"))
     ap.add_argument("-V", "--version", action="version", version="Logics %s" % __version__)
 
@@ -40,7 +41,7 @@ def main():
             except IOError:
                 vars[var[0]] = var[1]
 
-    logics = Logics(expr)
+    logics = Logics(expr, debug=args.debug > 0)
     print(logics.run(vars))
 
 
