@@ -76,6 +76,34 @@ def parse_float(value, ret=0.0):
         return ret
 
 
+def unescape(s: str) -> str:
+    """
+    Replaces escape-sequences in a string by their specific character.
+    """
+
+    def replace_escape(m):
+        seq = m.group(1)
+
+        if seq[0] in "xuU":
+            try:
+                character = chr(int(seq[1:], 16))
+                return character
+            except (ValueError, UnicodeEncodeError):
+                return escape_sequence
+
+        return {
+            "a": "\a",
+            "b": "\b",
+            "f": "\f",
+            "n": "\n",
+            "r": "\r",
+            "t": "\t",
+            "v": "\v",
+        }.get(seq, seq)
+
+    return re.sub(r"\\(\\|\'|\"|a|b|f|n|r|t|v|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})", replace_escape, s)
+
+
 class Value:
     def __init__(self, value=None, allow=(int, bool, float, list, dict, str), default=None, optimize=True):
         if value is None:

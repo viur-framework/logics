@@ -1,6 +1,36 @@
 import LogicsParser from "./parser.js";
 import Value from "./value.js";
 
+// Unescaping string values
+function unescape(s) {
+    function replaceEscape(match) {
+        const seq = match.slice(1);
+
+        if ("xuU".includes(seq[0])) {
+            try {
+                return String.fromCodePoint(parseInt(seq.slice(1), 16));
+            }
+            catch (error) {
+                return seq;
+            }
+        }
+
+        const mapping = {
+            "a": "\x07",
+            "b": "\x08",
+            "f": "\x0C",
+            "n": "\x0A",
+            "r": "\x0D",
+            "t": "\x09",
+            "v": "\x0B"
+        };
+
+        return mapping[seq] || seq;
+    }
+
+    return s.replace(/\\(?:\\|'|"|a|b|f|n|r|t|v|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/g, replaceEscape);
+}
+
 /** The Logics VM in JavaScript */
 export default class Logics {
     static #parser = new LogicsParser();
@@ -284,7 +314,7 @@ export default class Logics {
             "Identifier": () => stack.op0(node.match),
             "None": () => stack.op0(null),
             "Number": () => stack.op0(parseFloat(node.match)),
-            "String": () => stack.op0(node.match.substring(1, node.match.length - 1)), // cut "..." from string.
+            "String": () => stack.op0(unescape(node.match.substring(1, node.match.length - 1))), // cut "..." from string.
             "True": () => stack.op0(true),
 
             // Operations

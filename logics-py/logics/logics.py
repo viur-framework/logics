@@ -3,7 +3,7 @@ logics is a domain-specific expression language with a Python-style syntax,
 that can be compiled and executed in any of ViUR's runtime contexts.
 """
 from .parser import LogicsParser
-from .value import Value, parse_float, parse_int
+from .value import Value, parse_float, parse_int, unescape
 
 '''
 # ----------------------------------------------------------------------------------------
@@ -267,22 +267,7 @@ class Logics:
                     stack.op0(Value(parse_int(node.match)))
 
             case "String":
-                # todo: replaceEscapeStrings?
-                def replaceEscapeStrings(s):
-                    for seq, ch in {
-                        "n": "\n",
-                        "r": "\r",
-                        "t": "\t",
-                        "v": "\v",
-                        "\"": "\"",
-                        "\'": "\'",
-                        "\\": "\\"
-                    }.items():
-                        s = s.replace("\\%s" % seq, ch)
-
-                    return s
-
-                stack.op0(node.match[1:-1])  # cut "..." from string.
+                stack.op0(unescape(node.match[1:-1]))  # cut "..." from string.
             case "True":
                 stack.op0(True)
 
