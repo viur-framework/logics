@@ -87,7 +87,7 @@ export default class Value {
                 return this.#value.toString();
 
             case "str":
-                return "\"" + this.#value.toString().replace("\"", "\\\"") + "\"";
+                return "\"" + this.#value.toString().replace(/([\\"])/, "\\$1") + "\"";
 
             case "list":
                return "[" +

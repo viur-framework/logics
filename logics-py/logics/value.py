@@ -1,3 +1,5 @@
+import re
+
 MAX_STRING_LENGTH: int = 32 * 1024
 
 
@@ -121,6 +123,9 @@ class Value:
         return type(self.value).__name__
 
     def __repr__(self):
+        if self.type() == "str":
+            return '"' + re.sub(r"([\"\\])", r"\\\1", self.value) + '"'
+
         return repr(self.value)
 
     def __str__(self):
