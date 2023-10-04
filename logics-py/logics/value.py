@@ -1,6 +1,7 @@
 import re
 
 MAX_STRING_LENGTH: int = 32 * 1024
+_ERR_MAX_STRING_LENGTH: str = f"#ERR limit of {MAX_STRING_LENGTH} reached"
 
 
 def parse_int(value, ret=0):
@@ -117,10 +118,13 @@ class Value:
         elif isinstance(value, Value):
             self.value = value.value
         else:
-            self.value = Value.read(value, allow, default, optimize)
+            self.value = Value.align(value, allow, default, optimize)
+
+        if isinstance(self.value, str) and len(self.value) > MAX_STRING_LENGTH:
+            self.value = _ERR_MAX_STRING_LENGTH
 
     @staticmethod
-    def read(
+    def align(
         value,
         allow=(int, bool, float, list, tuple, dict, str),
         default=None,
@@ -307,7 +311,7 @@ class Value:
 
                 # Limit to maximum length of generated string (#18)
                 if count * len(repeat) > MAX_STRING_LENGTH:
-                    return Value(f"#ERR limit of {MAX_STRING_LENGTH} reached")
+                    return Value(_ERR_MAX_STRING_LENGTH)
 
                 return Value(count * repeat)
 
