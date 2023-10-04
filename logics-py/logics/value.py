@@ -178,6 +178,18 @@ class Value:
 
         return float(self.value)
 
+    def list(self) -> list:
+        if self.type() == "list":
+            return self.value
+
+        return [self.value]
+
+    def dict(self) -> dict:
+        if self.type() == "dict":
+            return self.value
+
+        return {self.value: self.value}
+
     def __len__(self):
         if self.type() in ("dict", "list", "str"):
             return len(self.value)
@@ -192,6 +204,9 @@ class Value:
         return str(item) in str(self)
 
     def __getitem__(self, item):
+        if isinstance(item, Value):
+            item = item.value
+
         if self.type() == "dict":
             if isinstance(item, slice):
                 return Value(None)
@@ -199,7 +214,11 @@ class Value:
             return self.value.get(item)
 
         value = self.value if self.type() == "list" else str(self)
-        return value[item]
+
+        try:
+            return value[item]
+        except TypeError:
+            return None
 
     def __iter__(self):
         value = self.value if self.type() in ("dict", "list") else [self]

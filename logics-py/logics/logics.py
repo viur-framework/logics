@@ -275,9 +275,11 @@ class Logics:
             case "add":
                 stack.op2(lambda a, b: a + b)
             case "attr":
-                stack.op2(lambda name, attr: name.dict().get(attr))
+                stack.op2(lambda value, attr: value[attr])
             case "div":
                 stack.op2(lambda a, b: a / b)
+            case "entity":
+                ...
             case "idiv":
                 stack.op2(lambda a, b: a // b)
             case "in":
