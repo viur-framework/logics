@@ -97,7 +97,7 @@ class LogicsParserControlBlock(object):
         self.line = 1
         self.column = 1
 
-        
+
 
 
 class LogicsParser(object):
@@ -720,4 +720,3 @@ if __name__ == "__main__":
         ret.dump()
     else:
         print(ret)
-

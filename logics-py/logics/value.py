@@ -105,50 +105,64 @@ def unescape(s: str) -> str:
 
 
 class Value:
-    def __init__(self, value=None, allow=(int, bool, float, list, dict, str), default=None, optimize=True):
+    def __init__(
+        self,
+        value=None,
+        allow=(int, bool, float, list, tuple, dict, str),
+        default=None,
+        optimize=True
+    ):
         if value is None:
             self.value = None
-            return
         elif isinstance(value, Value):
             self.value = value.value
-            return
+        else:
+            self.value = Value.read(value, allow, default, optimize)
 
+    @staticmethod
+    def read(
+        value,
+        allow=(int, bool, float, list, tuple, dict, str),
+        default=None,
+        optimize=True
+    ):
         assert allow  # allow must not be empty!
 
-        if not optimize and any([isinstance(value, t) for t in allow]):
-            self.value = value
-            return
+        if optimize:
+            # Perform string conversion into float or int, whatever fits best.
+            if isinstance(value, str):
+                ival = parse_int(value, None) if int in allow else None
+                fval = parse_float(value, None) if float in allow else None
 
-        # Perform string conversion into float or int, whatever fits best.
-        if isinstance(value, str):
-            ival = parse_int(value, None) if int in allow else None
-            fval = parse_float(value, None) if float in allow else None
+                if fval is not None and str(fval) == value:
+                    value = fval
+                elif ival is not None and str(ival) == value:
+                    value = ival
 
-            if fval is not None and str(fval) == value:
-                value = fval
-            elif ival is not None and str(ival) == value:
-                value = ival
-
-        # When a float fits into an int, store it as int
-        if isinstance(value, float) and float in allow and int in allow:
-            ival = int(value)
-            if float(ival) == value:
-                value = ival
+            # When a float fits into an int, store it as int
+            if isinstance(value, float) and float in allow and int in allow:
+                ival = int(value)
+                if float(ival) == value:
+                    value = ival
 
         if default is None:
             default = allow[-1]  # use last type of allow as default!
 
         assert default is not None
 
-        if any(isinstance(value, t) for t in allow):
-            self.value = value
+        if isinstance(value, allow):
+            return value
         elif callable(default):
-            self.value = default(value)
-        else:
-            self.value = default
+            return default(value)
+
+        return default
 
     def type(self):
-        return type(self.value).__name__
+        name = type(self.value).__name__
+        if name == "tuple":
+            name = "list"
+
+        return name
 
     def __repr__(self):
         if self.type() == "str":

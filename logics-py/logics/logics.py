@@ -2,98 +2,8 @@
 logics is a domain-specific expression language with a Python-style syntax,
 that can be compiled and executed in any of ViUR's runtime contexts.
 """
-from .parser import LogicsParser
+from .parser import LogicsParser, LogicsNode
 from .value import Value, parse_float, parse_int, unescape
-
-'''
-# --- replace ----------------------------------------------------------------------------
-
-def _replace(s, f = " ", r=""):
-    # handle a list when passed to replace multiple strings
-    if isinstance(f, list):
-        for i in f:
-            s = _replace(s, i, r)
-
-        return s
-
-    f = str(f)
-    if not f: #hack to 'find' the empty string, this causes endless-loop in PyJS
-        return "".join([(str(r) + x) for x in str(s)])
-
-    return str(s).replace(f, str(r))
-
-self.addFunction("replace", _replace)
-
-# --- strip, lstrip, rstrip --------------------------------------------------------------
-self.addFunction("lstrip", lambda s, c=" \t\r\n": str(s).lstrip(c))
-self.addFunction("rstrip", lambda s, c=" \t\r\n": str(s).rstrip(c))
-self.addFunction("strip", lambda s, c=" \t\r\n": str(s).strip(c))
-
-# --- join -------------------------------------------------------------------------------
-
-def _join(entries, delim=", ", lastDelim=None):
-    if lastDelim is None:
-        return str(delim).join(entries)
-
-    ret = ""
-    for entry in entries:
-        ret += str(entry)
-
-        if entry is not entries[-1]:
-            if lastDelim is not None and entry is entries[-2]:
-                ret += str(lastDelim)
-            else:
-                ret += str(delim)
-
-    return ret
-
-self.addFunction("join", _join)
-
-# --- split -------------------------------------------------------------------------------
-
-self.addFunction("split", lambda s, d=" ": s.split(d))
-
-# --- currency ----------------------------------------------------------------------------
-
-def currency(value, deciDelimiter=",", thousandDelimiter=".", currencySign=u"€"):
-    ret = "%.2f" % parseFloat(value)
-    before, behind = ret.split(".", 1)
-    before = reversed(before)
-
-    ret = ""
-    for i, ch in enumerate(before):
-        if i > 0 and i % 3 == 0:
-            ret = ch + thousandDelimiter + ret
-        else:
-            ret = ch + ret
-
-    ret = ret + deciDelimiter + behind
-
-    # append currency if defined
-    if currencySign:
-        ret += " " + currencySign
-
-    return ret.strip()
-
-self.addFunction(currency)
-
-# --- range -------------------------------------------------------------------------------
-
-def _range(start, end=None, step=None):
-    if step:
-        return range(parseInt(start), parseInt(end), parseInt(step))
-    if end:
-        return range(parseInt(start), parseInt(end))
-
-    return range(parseInt(start))
-
-self.addFunction("range", _range)
-
-# --- fill --------------------------------------------------------------------------------
-
-self.addFunction("lfill", lambda s, l, f=" ": "".join([str(f) for x in range(len(str(s)), parseInt(l))]) + str(s))
-self.addFunction("rfill", lambda s, l, f=" ": str(s) + "".join([str(f) for x in range(len(str(s)), parseInt(l))]))
-'''
 
 
 _parser = LogicsParser()
@@ -122,40 +32,111 @@ class Logics:
     def __init__(self, src: str, debug: bool = False):
         super().__init__()
         self.ast = _parser.parse(src)
+
         self.functions = {
             "bool": bool,
+            "currency": Logics.lgx_currency,
             "float": parse_float,
-            "len": len,
             "int": parse_int,
-            "lower": lambda val: str(val).lower(),
+            "join": lambda value, delimiter=", ": str(delimiter).join(str(item) for item in value.list()),  # todo: MAX_STRING_LENGTH
+            "len": len,
+            "lfill": lambda value, length, fill=" ": str(value).rjust(int(length), str(fill)),  # todo: MAX_STRING_LENGTH
+            "lower": lambda value: str(value).lower(),
+            "lstrip": lambda value, chars=" \t\r\n": str(value).lstrip(str(chars)),
             "max": max,
             "min": min,
-            "round": lambda f, deci=0: Value(round(parse_float(f), parse_int(deci))),
+            "range": Logics.lgx_range,
+            "replace": Logics.lgx_replace,
+            "rfill": lambda value, length, fill=" ": str(value).ljust(int(length), str(fill)),  # todo: MAX_STRING_LENGTH
+            "round": lambda value, digits=0: round(float(value), int(digits)),
+            "rstrip": lambda value, chars=" \t\r\n": str(value).rstrip(str(chars)),
+            "split": lambda value, delimiter=" ": str(value).split(str(delimiter)),
             "str": str,
-            "sum": lambda val: sum([Value(i, allow=[bool, int, float], default=0) for i in val]),
-            "upper": lambda val: str(val).upper(),
-            # todo: Port missing functions from above
+            "strip": lambda s, c=" \t\r\n": str(s).strip(str(c)),
+            "sum": lambda value: sum([Value.read(item, allow=(bool, int, float), default=0) for item in value]),
+            "upper": lambda value: str(value).upper(),
         }
 
         self.debug = debug
         if self.debug:
             self.ast.dump()
 
-    def run(self, values={}):
+    @staticmethod
+    def lgx_range(
+        start: int,
+        end: int | None = None,
+        step: int | None = None
+    ) -> range:
+        if step is not None:
+            return tuple(range(int(start), int(end), int(step)))
+        if end is not None:
+            return tuple(range(int(start), int(end)))
+
+        return tuple(range(int(start)))
+
+    @staticmethod
+    def lgx_currency(
+        value: float,
+        decimal_delimiter: str = ",",
+        thousands_delimiter: str = ".",
+        symbol: str = "€",
+    ) -> str:
+        ret = f"{value:.2f}"
+        before, behind = ret.split(".", 1)
+        before = reversed(before)
+
+        ret = ""
+        for i, ch in enumerate(before):
+            if i > 0 and i % 3 == 0:
+                ret = ch + thousands_delimiter + ret
+            else:
+                ret = ch + ret
+
+        ret = ret + decimal_delimiter + behind
+
+        # append symbol if defined
+        if symbol:
+            ret += " " + symbol
+
+        return ret.strip()
+
+    @staticmethod
+    def lgx_replace(
+        value: str,
+        find: str | list[str] = " ",
+        replace: str = ""
+    ) -> str:
+        # handle a list when passed to replace multiple strings
+        if isinstance(find, list):
+            for item in find:
+                value = lgx_replace(value, i, replace)
+
+            return value
+
+        return str(value).replace(str(find), str(replace))
+
+    def run(self, values: dict = {}) -> Value | None:
+        """
+        Runs the compiled Logics expression with a given variable set.
+        """
         stack = _Stack()
-        self.__traverse(self.ast, stack, values)
+        self._run(self.ast, stack, values)
 
         try:
             return stack.pop()
         except IndexError:
-            pass
+            return None
 
-    def __traverse(self, node, stack, values):
-        # Flow operations
+    def _run(self, node: LogicsNode, stack: _Stack, values: dict):
+        """
+        Internal virtual machine working on the recursive
+        LogicsNodes, a stack and the values.
+        """
+        # Flow operations are being evaluated on demand
         match node.emit:
             case "and" | "or":
                 assert len(node.children) == 2
-                self.__traverse(node.children[0], stack, values)
+                self._run(node.children[0], stack, values)
 
                 check = stack.pop()
                 test = bool(check)
@@ -163,7 +144,7 @@ class Logics:
                     test = not test
 
                 if test:
-                    self.__traverse(node.children[1], stack, values)
+                    self._run(node.children[1], stack, values)
                 else:
                     stack.append(check)
 
@@ -171,10 +152,10 @@ class Logics:
 
             case "cmp":
                 assert len(node.children) > 1
-                self.__traverse(node.children[0], stack, values)
+                self._run(node.children[0], stack, values)
 
                 for node in node.children[1:]:
-                    self.__traverse(node.children[0], stack, values)
+                    self._run(node.children[0], stack, values)
 
                     b = stack.pop()
                     a = stack.pop()
@@ -207,7 +188,7 @@ class Logics:
 
             case "call":
                 if len(node.children) > 1:
-                    self.__traverse(node.children[1], stack, values)
+                    self._run(node.children[1], stack, values)
                     args = stack.pop().list()
                 else:
                     args = ()
@@ -225,7 +206,7 @@ class Logics:
                 assert len(node.children) in (3, 4)
 
                 # Obtain iterable
-                self.__traverse(node.children[2], stack, values)
+                self._run(node.children[2], stack, values)
                 items = stack.pop()
 
                 # Extract AST components for faster access
@@ -244,11 +225,11 @@ class Logics:
 
                     # optional if
                     if test:
-                        self.__traverse(test, stack, values)
+                        self._run(test, stack, values)
                         if not bool(stack.pop()):
                             continue
 
-                    self.__traverse(each, stack, values)
+                    self._run(each, stack, values)
                     ret.append(stack.pop())
 
                 stack.op0(ret)
@@ -257,17 +238,17 @@ class Logics:
             case "if":
                 assert len(node.children) == 3
                 # Evaluate condition
-                self.__traverse(node.children[1], stack, values)
+                self._run(node.children[1], stack, values)
                 # Evaluate specific branch
-                self.__traverse(node.children[0 if bool(stack.pop()) else 2], stack, values)
+                self._run(node.children[0 if bool(stack.pop()) else 2], stack, values)
                 return
 
-        # Traverse children first (default behavior, except state otherwise above)
+        # Otherwise, traverse any children first (default behavior, except state otherwise above)
         if node.children:
             for child in node.children:
-                self.__traverse(child, stack, values)
+                self._run(child, stack, values)
 
-        # Stack operations
+        # Stack operations (processed post-children)
         match node.emit:
             # Pushing values
             case "False":
@@ -295,7 +276,7 @@ class Logics:
             case "div":
                 stack.op2(lambda a, b: a / b)
             case "entity":
-                ...
+                ...  # nothing to do
             case "idiv":
                 stack.op2(lambda a, b: a // b)
             case "in":
