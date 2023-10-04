@@ -1,3 +1,5 @@
+<!-- README for PyPI -->
+
 <div align="center">
     <img src="https://github.com/viur-framework/viur-artwork/raw/main/icons/icon-logics.svg" height="196" alt="A hexagonal logo of Logics" title="Logics logo">
     <h1>Logics</h1>
@@ -47,24 +49,3 @@ Both packages are under recent development and not stable right now. They are ma
     - `dict` for structured objects
 - Provides a set of functions that can be used in expressions
 - Extendable to custom functions
-
-## `Logics` vs. `Python`
-
-Logics does look like Python, but it isn't Python!
-
-- Expressions can be used with arbitrary whitespace and line-breaks
-- There are no methods on objects, but functions that work on values
-  - e.g. `dict.keys()` becomes `keys(dict)`
-  - `";".join(["a", "b", "c"])` becomes `join(["a", "b", "c"], ";")`
-- No exceptions, access to e.g. invalid index or key just returns `None`
-- Dynamic and automatic value conversion
-  - e.g. the content of strings is automatically converted when used in calculations,
-    so `"42" ** 3` produces 74088, and not a TypeError.
-
-## License
-
-Copyright © 2023 by Mausbrand Informationssysteme GmbH.<br>
-Mausbrand and ViUR are registered trademarks of Mausbrand Informationssysteme GmbH.
-
-Logics is free software under the MIT license.<br>
-Please see the LICENSE file for details.
