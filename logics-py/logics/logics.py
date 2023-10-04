@@ -6,20 +6,6 @@ from .parser import LogicsParser
 from .value import Value, parse_float, parse_int, unescape
 
 '''
-# ----------------------------------------------------------------------------------------
-
-self.addFunction("upper", lambda x: str(x).upper())
-self.addFunction("lower", lambda x: str(x).lower())
-self.addFunction("bool", lambda x: bool(x))
-self.addFunction("str", lambda x: str(x))
-self.addFunction("int", lambda x: parseInt(parseFloat(x)))
-self.addFunction("float", parseFloat)
-self.addFunction("len", lambda x: len(x))
-self.addFunction("sum", lambda v: sum([optimizeValue(_, allow=[bool, int, float], default=0) for _ in v]))
-self.addFunction("max", lambda x: max(x))
-self.addFunction("min", lambda x: min(x))
-self.addFunction("round", lambda f, deci=0: optimizeValue(round(parseFloat(f), parseInt(deci))))
-
 # --- replace ----------------------------------------------------------------------------
 
 def _replace(s, f = " ", r=""):
@@ -136,8 +122,22 @@ class Logics:
     def __init__(self, src: str, debug: bool = False):
         super().__init__()
         self.ast = _parser.parse(src)
-        self.debug = debug
+        self.functions = {
+            "bool": bool,
+            "float": parse_float,
+            "len": len,
+            "int": parse_int,
+            "lower": lambda val: str(val).lower(),
+            "max": max,
+            "min": min,
+            "round": lambda f, deci=0: Value(round(parse_float(f), parse_int(deci))),
+            "str": str,
+            "sum": lambda val: sum([Value(i, allow=[bool, int, float], default=0) for i in val]),
+            "upper": lambda val: str(val).upper(),
+            # todo: Port missing functions from above
+        }
 
+        self.debug = debug
         if self.debug:
             self.ast.dump()
 
@@ -203,6 +203,22 @@ class Logics:
                     stack.op0(b)
 
                 stack.op0(True)
+                return
+
+            case "call":
+                if len(node.children) > 1:
+                    self.__traverse(node.children[1], stack, values)
+                    args = stack.pop().list()
+                else:
+                    args = ()
+
+                if fn := self.functions.get(node.children[0].match):
+                    # todo: Handle invalid parameters
+                    stack.op0(fn(*args))
+                else:
+                    # todo: should this return a string?
+                    raise NotImplementedError(f"Call to unknown function: {node.children[0].match!r}")
+
                 return
 
             case "comprehension":

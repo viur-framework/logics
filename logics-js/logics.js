@@ -200,9 +200,11 @@ export default class Logics {
                             args[i] = new Value(args[i]);
                         }
 
+                        // todo: Handle invalid parameters
                         stack.op0(fn(...args));
                     }
                     else {
+                        // todo: should this return a string?
                         throw new Error(`Call to unknown function: ${node.children[0].match}`);
                     }
                 },
