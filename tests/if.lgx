@@ -1,0 +1,4 @@
+"Ja" if 2 + 3 == 5 else "Nein"
+#EXPECT:"Ja"
+"Ja" if False else "Nein"
+#EXPECT:"Nein"

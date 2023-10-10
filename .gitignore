@@ -1,4 +1,6 @@
 *.pyc
 .idea
+.vscode
 logics-py/dist
 logics-py/.venv
+logics-js/node_modules

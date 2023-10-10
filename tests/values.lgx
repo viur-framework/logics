@@ -1,0 +1,8 @@
+123
+
+#EXPECT:123
+
+   # dies ist eine Berechnung
+1 + 2 * 3 + 4
+#EXPECT:11
+

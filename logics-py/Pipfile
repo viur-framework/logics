@@ -4,16 +4,18 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+pytest-cov = "*"
 
 [dev-packages]
 twine = "*"
 build = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.11"
 
 [scripts]
+test = "python -m pytest"
 clean = "rm -rf dist build logics_py.egg-info"
-test = "python -m unittest"
 pypi-build = "python -m build --wheel"  # PIPENV_VENV_IN_PROJECT=0 pipenv run pypi-build
 pypi-upload = "twine upload dist/*"     # PIPENV_VENV_IN_PROJECT=0 pipenv run pypi-upload

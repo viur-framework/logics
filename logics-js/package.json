@@ -3,9 +3,13 @@
   "version": "0.3.8",
   "description": "Logics is a user-friendly formula language with a subset of Python's expression syntax",
   "main": "logics.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "type": "module",
   "author": "Jan Max Meyer <jmm@phorward.de>",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "^10.2.0"
+  },
+  "scripts": {
+    "test": "mocha"
+  }
 }

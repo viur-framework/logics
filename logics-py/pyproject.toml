@@ -3,3 +3,6 @@ requires = [
     "setuptools>=68",
     "wheel"
 ]
+
+[tool.pytest.ini_options]
+pythonpath = "."
