@@ -26,5 +26,5 @@ jobs:
       - name: Install pipenv
         run: pip install pipenv
       - name: Run Testsuite
-        run: cd logics-py && pipenv install --dev && pipenv run pytest
+        run: cd logics-py && pipenv install --dev && pipenv run pytest -vvv
 

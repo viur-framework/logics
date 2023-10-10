@@ -10,6 +10,10 @@
     <a href="https://github.com/viur-framework/logics/LICENSE">
         <img src="https://img.shields.io/github/license/viur-framework/logics" alt="Badge displaying the license" title="License badge">
     </a>
+    <a href="https://github.com/LeopoldWichtel/logics/actions/workflows/test.yml">
+        <img src="https://github.com/LeopoldWichtel/logics/actions/workflows/test.yml/badge.svg" alt="Badge displaying the test status" title="Test badge">
+    </a>
+
     <br>
     A tiny, sandboxed, secure and extendable formula language with a flavor of Python.
 </div>
