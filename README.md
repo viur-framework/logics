@@ -1,6 +1,9 @@
 <div align="center">
     <img src="https://github.com/viur-framework/viur-artwork/raw/main/icons/icon-logics.svg" height="196" alt="A hexagonal logo of Logics" title="Logics logo">
     <h1>Logics</h1>
+    <a href="https://github.com/LeopoldWichtel/logics/actions/workflows/test.yml">
+        <img src="https://github.com/LeopoldWichtel/logics/actions/workflows/test.yml/badge.svg" alt="Badge displaying the test status" title="Test badge">
+    </a>
     <a href="https://pypi.org/project/logics-py">
         <img alt="Badge showing current PyPI version if logics-py" title="logics-py" src="https://img.shields.io/pypi/v/logics-py?label=logics-py">
     </a>
@@ -10,10 +13,6 @@
     <a href="https://github.com/viur-framework/logics/LICENSE">
         <img src="https://img.shields.io/github/license/viur-framework/logics" alt="Badge displaying the license" title="License badge">
     </a>
-    <a href="https://github.com/LeopoldWichtel/logics/actions/workflows/test.yml">
-        <img src="https://github.com/LeopoldWichtel/logics/actions/workflows/test.yml/badge.svg" alt="Badge displaying the test status" title="Test badge">
-    </a>
-
     <br>
     A tiny, sandboxed, secure and extendable formula language with a flavor of Python.
 </div>

@@ -1,5 +1,6 @@
 #set:i:10
 i + i
 #expect:20
-i * "Jan"
-#expect:"JanJanJanJanJanJanJanJanJanJan"
+
+i * "Logics"
+#expect:"LogicsLogicsLogicsLogicsLogicsLogicsLogicsLogicsLogicsLogics"

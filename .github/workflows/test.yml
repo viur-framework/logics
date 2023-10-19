@@ -2,7 +2,7 @@ name: Test
 
 on:
   push:
-    branches: [ testsuite ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -27,4 +27,3 @@ jobs:
         run: pip install pipenv
       - name: Run Testsuite
         run: cd logics-py && pipenv install --dev && pipenv run pytest -vvv
-
