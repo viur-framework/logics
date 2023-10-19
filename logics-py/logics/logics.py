@@ -62,11 +62,7 @@ class Logics:
             self.ast.dump()
 
     @staticmethod
-    def lgx_range(
-        start: int,
-        end: int | None = None,
-        step: int | None = None
-    ) -> range:
+    def lgx_range(start: int, end: int | None = None, step: int | None = None) -> range:
         if step is not None:
             return tuple(range(int(start), int(end), int(step)))
         if end is not None:
@@ -101,11 +97,7 @@ class Logics:
         return ret.strip()
 
     @staticmethod
-    def lgx_replace(
-        value: str,
-        find: str | list[str] = " ",
-        replace: str = ""
-    ) -> str:
+    def lgx_replace(value: str, find: str | list[str] = " ", replace: str = "") -> str:
         # handle a list when passed to replace multiple strings
         if isinstance(find, list):
             for item in find:
@@ -298,7 +290,7 @@ class Logics:
             case "pos":
                 stack.op1(lambda a: +a)
             case "pow":
-                stack.op2(lambda a, b: a ** b)
+                stack.op2(lambda a, b: a**b)
             case "index":
                 stack.op2(lambda value, idx: value[idx])
             case "load":

@@ -106,13 +106,7 @@ def unescape(s: str) -> str:
 
 
 class Value:
-    def __init__(
-        self,
-        value=None,
-        allow=(int, bool, float, list, tuple, dict, str),
-        default=None,
-        optimize=True
-    ):
+    def __init__(self, value=None, allow=(int, bool, float, list, tuple, dict, str), default=None, optimize=True):
         if value is None:
             self.value = None
         elif isinstance(value, Value):
@@ -124,12 +118,7 @@ class Value:
             self.value = _ERR_MAX_STRING_LENGTH
 
     @staticmethod
-    def align(
-        value,
-        allow=(int, bool, float, list, tuple, dict, str),
-        default=None,
-        optimize=True
-    ):
+    def align(value, allow=(int, bool, float, list, tuple, dict, str), default=None, optimize=True):
         assert allow  # allow must not be empty!
 
         if optimize:

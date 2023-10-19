@@ -34,5 +34,3 @@ def test_testcase(input):
             last_result = Logics(line).run(variables)
 
     assert last_result is None, f"{last_result=} unverified"
-
-    

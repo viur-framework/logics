@@ -2,8 +2,8 @@
 export default class Value {
     static maxStringLength = 32 * 1024;
 
-    #value;  // private property: The native value in JavaScript
-    #type;  // private property: Logics type name
+    #value; // private property: The native value in JavaScript
+    #type; // private property: Logics type name
 
     /** Constructs a Logics value from a native JS-value, or clones an existing Logics value.
     In case the native value is not JSON-serializable, an Exception is thrown. */
@@ -11,8 +11,7 @@ export default class Value {
         if (value instanceof Value) {
             this.#value = value.valueOf();
             this.#type = value.type();
-        }
-        else {
+        } else {
             this.#value = value;
             this.#type = this.constructor.type(value);
         }
@@ -25,7 +24,7 @@ export default class Value {
 
     /// Returns the Logics value type; The type is cached in this.#type, for further usage.
     type() {
-        return this.#type || (this.#type = this.constructor.type(this.#value))
+        return this.#type || (this.#type = this.constructor.type(this.#value));
     }
 
     /// Determine Logics value type from a JavaScript native value
@@ -57,8 +56,7 @@ export default class Value {
                     }
 
                     return "list";
-                }
-                else if (value === null) {
+                } else if (value === null) {
                     return "NoneType";
                 }
 
@@ -87,25 +85,29 @@ export default class Value {
                 return this.#value.toString();
 
             case "str":
-                return "\"" + this.#value.toString().replace(/([\\"])/, "\\$1") + "\"";
+                return '"' + this.#value.toString().replace(/([\\"])/, "\\$1") + '"';
 
             case "list":
-               return "[" +
-                    this.#value.map(
-                        item => {
-                            if (!( item instanceof Value )) {
+                return (
+                    "[" +
+                    this.#value
+                        .map((item) => {
+                            if (!(item instanceof Value)) {
                                 item = new Value(item);
                             }
 
-                            return item.repr()
-                        }
-                    ).join(", ") + "]";
+                            return item.repr();
+                        })
+                        .join(", ") +
+                    "]"
+                );
 
             case "dict":
-                return "{" +
-                    Object.keys(this.#value).map(
-                        key => {
-                            if (!( key instanceof Value)) {
+                return (
+                    "{" +
+                    Object.keys(this.#value)
+                        .map((key) => {
+                            if (!(key instanceof Value)) {
                                 key = new Value(key);
                             }
 
@@ -114,9 +116,11 @@ export default class Value {
                                 value = new Value(value);
                             }
 
-                            return key + ": " + value.repr()
-                        }
-                    ).join(", ") + "}";
+                            return key + ": " + value.repr();
+                        })
+                        .join(", ") +
+                    "}"
+                );
 
             default:
                 throw new Error("Unimplemented repr for " + this.type());
@@ -167,8 +171,7 @@ export default class Value {
 
         if (type === "list") {
             return this.#value;
-        }
-        else if (type) {
+        } else if (type) {
             return [this.#value];
         }
 
@@ -181,8 +184,7 @@ export default class Value {
 
         if (type === "dict") {
             return this.#value;
-        }
-        else if (type) {
+        } else if (type) {
             let dict = {};
             dict[this.#value] = this.#value;
             return dict;
@@ -206,13 +208,12 @@ export default class Value {
     // Checks if a given value is part of another value
     __contains__(value) {
         if (value.type() === "dict") {
-            return value.valueOf()[this.toString()] !== undefined;  // fixme: toString() conversion falsifies data
-        }
-        else if (value.type() === "list") {
+            return value.valueOf()[this.toString()] !== undefined; // fixme: toString() conversion falsifies data
+        } else if (value.type() === "list") {
             // We need to compare every item using __cmp__()
-            for(let item of value.valueOf()) {
+            for (let item of value.valueOf()) {
                 item = new Value(item);
-                if(item.__cmp__(this) === 0) {
+                if (item.__cmp__(this) === 0) {
                     return true;
                 }
             }
@@ -225,7 +226,8 @@ export default class Value {
     }
 
     // Index into value
-    __getitem__(key, until) {  // todo: provide and use a Slice() class similar to Python (not an until value)
+    __getitem__(key, until) {
+        // todo: provide and use a Slice() class similar to Python (not an until value)
         if (this.type() === "dict") {
             console.assert(until === undefined, "Cannot slice into a dict");
             return this.toDict()[key.toString()];
@@ -271,13 +273,12 @@ export default class Value {
 
             if (ak.length < bk.length) {
                 return -1;
-            }
-            else if (ak.length > bk.length) {
+            } else if (ak.length > bk.length) {
                 return 1;
             }
 
-            for( let k of ak ) {
-                if( typeof b[k] === "undefined" ) {
+            for (let k of ak) {
+                if (typeof b[k] === "undefined") {
                     return 1;
                 }
 
@@ -299,12 +300,11 @@ export default class Value {
 
             if (a.length < b.length) {
                 return -1;
-            }
-            else if (a.length > b.length) {
+            } else if (a.length > b.length) {
                 return 1;
             }
 
-            for(let i = 0; i < a.length; i++) {
+            for (let i = 0; i < a.length; i++) {
                 let av = new Value(a[i]);
                 let bv = new Value(b[i]);
 
@@ -320,12 +320,10 @@ export default class Value {
         else if (this.type() === "str" || other.type() === "str") {
             a = this.toString();
             b = other.toString();
-        }
-        else if (this.type() === "float" || other.type() === "float") {
+        } else if (this.type() === "float" || other.type() === "float") {
             a = this.toFloat();
             b = other.toFloat();
-        }
-        else {
+        } else {
             a = this.toInt();
             b = other.toInt();
         }
@@ -333,8 +331,7 @@ export default class Value {
         // Perform final comparison
         if (a < b) {
             return -1;
-        }
-        else if (a > b) {
+        } else if (a > b) {
             return 1;
         }
 
@@ -343,11 +340,11 @@ export default class Value {
 
     // Performs an add-operation with another Value object.
     __add__(op) {
-        if( this.type() === "str" || op.type() === "str" ) {
+        if (this.type() === "str" || op.type() === "str") {
             return new Value(this.toString() + op.toString());
         }
 
-        if( this.type() === "float" || op.type() === "float" ) {
+        if (this.type() === "float" || op.type() === "float") {
             return new Value(this.toFloat() + op.toFloat());
         }
 
@@ -356,7 +353,7 @@ export default class Value {
 
     // Performs a sub-operation with another Value object.
     __sub__(op) {
-        if( this.type() === "float" || op.type() === "float" ) {
+        if (this.type() === "float" || op.type() === "float") {
             return new Value(this.toFloat() - op.toFloat());
         }
 
@@ -372,8 +369,7 @@ export default class Value {
             if (this.type() === "str") {
                 repeat = this.toString();
                 count = op.toInt();
-            }
-            else {
+            } else {
                 repeat = op.toString();
                 count = this.toInt();
             }
@@ -386,7 +382,7 @@ export default class Value {
             return new Value(repeat.repeat(count));
         }
 
-        if( this.type() === "float" || op.type() === "float" ) {
+        if (this.type() === "float" || op.type() === "float") {
             return new Value(this.toFloat() * op.toFloat());
         }
 
@@ -395,10 +391,10 @@ export default class Value {
 
     // Performs a div-operation with another Value object.
     __truediv__(op) {
-        if( this.type() === "float" || op.type() === "float" ) {
+        if (this.type() === "float" || op.type() === "float") {
             let divisor = op.toFloat();
             if (divisor === 0.0) {
-                return new Value("#ERR:division by zero")
+                return new Value("#ERR:division by zero");
             }
 
             return new Value(this.toFloat() / divisor);
@@ -406,7 +402,7 @@ export default class Value {
 
         let divisor = op.toInt();
         if (divisor === 0) {
-            return new Value("#ERR:division by zero")
+            return new Value("#ERR:division by zero");
         }
 
         return new Value(this.toInt() / divisor);
@@ -415,7 +411,7 @@ export default class Value {
     __floordiv__(op) {
         let divisor = op.toInt();
         if (divisor === 0) {
-            return new Value("#ERR:division by zero")
+            return new Value("#ERR:division by zero");
         }
 
         return new Value(Math.floor(this.toInt() / divisor));
@@ -423,17 +419,17 @@ export default class Value {
 
     // Performs a mod-operation with another Value object.
     __mod__(op) {
-        if( this.type() === "float" || op.type() === "float" ) {
+        if (this.type() === "float" || op.type() === "float") {
             let divisor = op.toFloat();
             if (divisor === 0.0) {
-                return new Value("#ERR:modulo by zero")
+                return new Value("#ERR:modulo by zero");
             }
             return new Value(this.toFloat() % divisor);
         }
 
         let divisor = op.toInt();
         if (divisor === 0) {
-            return new Value("#ERR:modulo by zero")
+            return new Value("#ERR:modulo by zero");
         }
 
         return new Value(this.toInt() % divisor);
@@ -441,7 +437,7 @@ export default class Value {
 
     // Performs a mod-operation with another Value object.
     __pow__(op) {
-        if( this.type() === "float" || op.type() === "float" ) {
+        if (this.type() === "float" || op.type() === "float") {
             return new Value(this.toFloat() ** op.toFloat());
         }
 
@@ -450,24 +446,24 @@ export default class Value {
 
     // Performs unary plus
     __pos__() {
-       if (this.type() === "float") {
-           return new Value(+this.toFloat());
-       }
+        if (this.type() === "float") {
+            return new Value(+this.toFloat());
+        }
 
-       return new Value(+this.toInt());
+        return new Value(+this.toInt());
     }
 
     // Performs unary minus
     __neg__() {
-       if (this.type() === "float") {
-           return new Value(-this.toFloat());
-       }
+        if (this.type() === "float") {
+            return new Value(-this.toFloat());
+        }
 
-       return new Value(-this.toInt());
+        return new Value(-this.toInt());
     }
 
     // Performs unary complement
     __invert__() {
-       return new Value(~this.toInt());
+        return new Value(~this.toInt());
     }
 }

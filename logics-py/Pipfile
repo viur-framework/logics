@@ -9,11 +9,13 @@ name = "pypi"
 twine = "*"
 build = "*"
 pytest = "*"
+black = "*"
 
 [requires]
 python_version = "3.11"
 
 [scripts]
+fmt = "bash -c 'python -m black **/*.py'"
 test = "python -m pytest -vvv"
 clean = "rm -rf dist build logics_py.egg-info"
 build = "bash -c 'cp ../README.md README.md; python -m build --wheel; rm README.md'"

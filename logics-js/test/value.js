@@ -2,8 +2,6 @@ import assert from "assert";
 import Value from "../value.js";
 
 describe("Value", () => {
-    
-    
     it("None", () => {
         let none = new Value(null);
 
@@ -19,7 +17,7 @@ describe("Value", () => {
     it("bool", () => {
         let value_true = new Value(true);
         let value_false = new Value(false);
-        
+
         assert.ok(value_true.__cmp__(value_true) == 0);
         assert.ok(value_false.__cmp__(value_false) == 0);
         assert.ok(value_true.__cmp__(new Value(1)) == 0);
@@ -30,9 +28,8 @@ describe("Value", () => {
         assert.strictEqual(value_false.repr(), "False");
     });
 
-    it("conversion", () => {       
-        
-        assert.ok(new Value({"a": 1}).__cmp__(new Value({"a": 1})) == 0);
+    it("conversion", () => {
+        assert.ok(new Value({ a: 1 }).__cmp__(new Value({ a: 1 })) == 0);
         assert.ok(new Value(4).__cmp__(new Value(4)) == 0);
         assert.ok(new Value(4).__neg__(2));
         // assert.ok(new Value(4).__add__(4).__cmp__(8));
@@ -48,31 +45,27 @@ describe("Value", () => {
         // assert.strictEqual(new Value(4).__add__(4), 8);
         // assert.strictEqual(new Value('4112', { optimize: true }).repr(), '4112');
     });
-    
-    it("int", () => {       
+
+    it("int", () => {
         const _123 = new Value(123);
-        
+
         assert.strictEqual(_123.toInt(), 123);
         assert.strictEqual(_123.__neg__().toInt(), -123);
-        assert.strictEqual(new Value(' 123 xix').toInt(), 123);
-        assert.strictEqual(new Value(' -123 xix').toInt(), -123);
-        assert.strictEqual(_123.repr(), '123');
-        assert.strictEqual(_123.__neg__().repr(), '-123');       
+        assert.strictEqual(new Value(" 123 xix").toInt(), 123);
+        assert.strictEqual(new Value(" -123 xix").toInt(), -123);
+        assert.strictEqual(_123.repr(), "123");
+        assert.strictEqual(_123.__neg__().repr(), "-123");
     });
-    
+
     it("float", () => {
         const _1234 = new Value(123.4);
-    
+
         assert.strictEqual(_1234.toFloat(), 123.4);
         assert.strictEqual(_1234.__neg__().toFloat(), -123.4);
-        assert.strictEqual(new Value(' 123.4 xfx').toFloat(), 123.4);
-        assert.strictEqual(new Value(' 123.4 xfx').toFloat(), 123.4);
-        assert.strictEqual(new Value(' -123.4 xfx').toFloat(), -123.4);
-        assert.strictEqual(_1234.repr(), '123.4');
-        assert.strictEqual(_1234.__neg__().repr(), '-123.4');        
+        assert.strictEqual(new Value(" 123.4 xfx").toFloat(), 123.4);
+        assert.strictEqual(new Value(" 123.4 xfx").toFloat(), 123.4);
+        assert.strictEqual(new Value(" -123.4 xfx").toFloat(), -123.4);
+        assert.strictEqual(_1234.repr(), "123.4");
+        assert.strictEqual(_1234.__neg__().repr(), "-123.4");
     });
-    
 });
-
-
-

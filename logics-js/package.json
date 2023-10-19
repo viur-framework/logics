@@ -7,10 +7,12 @@
   "author": "Jan Max Meyer <jmm@phorward.de>",
   "license": "MIT",
   "devDependencies": {
-    "mocha": "^10.2.0"
+    "mocha": "^10.2.0",
+    "prettier": "^3.0.3"
   },
   "scripts": {
     "test": "mocha",
+    "fmt": "prettier -w *.js **/*.js",
     "prepack": "cp ../README.md README.md",
     "postpack": "rm README.md"
   }

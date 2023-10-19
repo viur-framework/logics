@@ -40,7 +40,7 @@ Previous uses of Logics included
 Since Logics is used on both the client and server side, the language has been implemented in two separate implementations:
 
 - [logics-js](https://www.npmjs.com/package/logics-js) is a pure (vanilla) JavaScript implementation of Logics provided as npm-package.
-- [logics-py](https://pypi.org/project/logics-py/) is a pure Python 3.10 implementation of Logics provided as PyPI-package, with no other dependencies.
+- [logics-py](https://pypi.org/project/logics-py/) is a pure Python 3.11 implementation of Logics provided as PyPI-package, with no other dependencies.
 
 Both packages are under recent development and not stable right now. They are maintained in separate version numbers, which is planned to be changed soon, when they become almost feature-complete.
 
@@ -131,6 +131,15 @@ x * x
 
 ### logics-js
 
+#### Formatting
+
+To format the source code, use [prettier](https://www.npmjs.com/package/prettier) as follows:
+
+```bash
+cd logics-js
+npm run fmt
+```
+
 #### Tests
 
 Tests are implemented using [Mocha](https://mochajs.org/):
@@ -150,6 +159,15 @@ npm publish
 ```
 
 ### logics-py
+
+#### Formatting
+
+To format the source code, use [Black](https://github.com/psf/black) as follows:
+
+```
+cd logics-py
+pipenv run fmt
+```
 
 #### Tests
 
