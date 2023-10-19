@@ -343,6 +343,10 @@ export default class Logics {
 }
 
 // Register Logics in the browser
-if (window !== undefined) {
-    window.Logics = Logics;
+if (typeof window !== "undefined") {
+    window.logics = {
+        "Logics": Logics,
+        "Value": Value 
+    };
 }
+

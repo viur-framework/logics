@@ -8,12 +8,13 @@ name = "pypi"
 [dev-packages]
 twine = "*"
 build = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.11"
 
 [scripts]
+test = "python -m pytest"
 clean = "rm -rf dist build logics_py.egg-info"
-test = "python -m unittest"
 build = "bash -c 'cp ../README.md README.md; python -m build --wheel; rm README.md'"
 publish = "twine upload dist/*"

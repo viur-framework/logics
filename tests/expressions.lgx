@@ -1,0 +1,6 @@
+1 + 2 * 3 + 4
+#EXPECT:11
+(1 + 2) * (3 + 4)
+#EXPECT:21
+3 * "HelloWorld"
+#EXPECT:"HelloWorldHelloWorldHelloWorld"
