@@ -15,5 +15,5 @@ python_version = "3.11"
 [scripts]
 clean = "rm -rf dist build logics_py.egg-info"
 test = "python -m unittest"
-pypi-build = "python -m build --wheel"  # PIPENV_VENV_IN_PROJECT=0 pipenv run pypi-build
-pypi-upload = "twine upload dist/*"     # PIPENV_VENV_IN_PROJECT=0 pipenv run pypi-upload
+build = "bash -c 'cp ../README.md README.md; python -m build --wheel; rm README.md'"
+publish = "twine upload dist/*"

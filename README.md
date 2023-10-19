@@ -100,10 +100,30 @@ Logics does look like Python, but it isn't Python!
   - e.g. the content of strings is automatically converted when used in calculations,
     so `"42" ** 3` produces 74088, and not a TypeError.
 
-## Building
+## Building & Packaging
 
 Logics is built using the [UniCC LALR(1) Parser Generator](https://github.com/phorward/unicc), which supports generating parsers in multiple target languages.<br>
 UniCC should be compiled from source, as the latest version 1.8 is required.
+
+Whenever something is changed on the syntax, ensure `unicc` is installed properly and run `make`, which regenerates the parser modules.
+
+### Packaging logics-js
+
+```bash
+cd logics-js
+npm publish
+```
+
+### Packaging logics-py
+
+```bash
+cd logics-py
+pipenv install --dev
+pipenv run build
+pipenv run publish
+pipenv run clean
+pipenv --rm
+```
 
 ## License
 

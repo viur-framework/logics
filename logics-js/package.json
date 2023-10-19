@@ -1,10 +1,12 @@
 {
   "name": "logics-js",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "Logics is a user-friendly formula language with a subset of Python's expression syntax",
   "main": "logics.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepack": "cp ../README.md README.md",
+    "postpack": "rm README.md"
   },
   "author": "Jan Max Meyer <jmm@phorward.de>",
   "license": "MIT"
