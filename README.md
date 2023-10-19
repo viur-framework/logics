@@ -60,7 +60,7 @@ Using Logics in Python:
 from logics import Logics
 
 logics = Logics("a + 2 * 3 + b")
-print(logics.run({"a": 1, b: "-Logics"}))  # "7-Logics"
+print(logics.run({"a": 1, "b": "-Logics"}))  # "7-Logics"
 ```
 
 ## Features
