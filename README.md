@@ -37,7 +37,7 @@ Previous uses of Logics included
 Since Logics is used on both the client and server side, the language has been implemented in two separate implementations:
 
 - [logics-js](https://www.npmjs.com/package/logics-js) is a pure (vanilla) JavaScript implementation of Logics provided as npm-package.
-- [logics-py](https://pypi.org/project/logics-py/) is a pure Python 3.10 implementation of Logics provided as PyPI-package, with no other
+- [logics-py](https://pypi.org/project/logics-py/) is a pure Python 3.10 implementation of Logics provided as PyPI-package, with no other dependencies.
 
 Both packages are under recent development and not stable right now. They are maintained in separate version numbers, which is planned to be changed soon, when they become almost feature-complete.
 
