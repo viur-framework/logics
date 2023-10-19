@@ -38,22 +38,22 @@ class Logics:
             "currency": Logics.lgx_currency,
             "float": parse_float,
             "int": parse_int,
-            "join": lambda value, delimiter=", ": str(delimiter).join(str(item) for item in value.list()),  # todo: MAX_STRING_LENGTH
+            "join": lambda value, delimiter=", ": str(delimiter).join(str(item) for item in value.list()),
             "len": len,
-            "lfill": lambda value, length, fill=" ": str(value).rjust(int(length), str(fill)),  # todo: MAX_STRING_LENGTH
+            "lfill": lambda value, length, fill=" ": str(value).rjust(int(length), str(fill)),
             "lower": lambda value: str(value).lower(),
             "lstrip": lambda value, chars=" \t\r\n": str(value).lstrip(str(chars)),
             "max": max,
             "min": min,
             "range": Logics.lgx_range,
             "replace": Logics.lgx_replace,
-            "rfill": lambda value, length, fill=" ": str(value).ljust(int(length), str(fill)),  # todo: MAX_STRING_LENGTH
+            "rfill": lambda value, length, fill=" ": str(value).ljust(int(length), str(fill)),
             "round": lambda value, digits=0: round(float(value), int(digits)),
             "rstrip": lambda value, chars=" \t\r\n": str(value).rstrip(str(chars)),
             "split": lambda value, delimiter=" ": str(value).split(str(delimiter)),
             "str": str,
             "strip": lambda s, c=" \t\r\n": str(s).strip(str(c)),
-            "sum": lambda value: sum([Value.read(item, allow=(bool, int, float), default=0) for item in value]),
+            "sum": lambda value: sum([Value.align(item, allow=(bool, int, float), default=0) for item in value]),
             "upper": lambda value: str(value).upper(),
         }
 
