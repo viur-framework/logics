@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pytest-cov = "*"
 
 [dev-packages]
 twine = "*"
@@ -17,6 +16,5 @@ python_version = "3.11"
 [scripts]
 test = "python -m pytest"
 clean = "rm -rf dist build logics_py.egg-info"
-test = "python -m unittest"
 build = "bash -c 'cp ../README.md README.md; python -m build --wheel; rm README.md'"
 publish = "twine upload dist/*"

@@ -2,7 +2,7 @@
 
 #EXPECT:123
 
-   # dies ist eine Berechnung
+   # test
 1 + 2 * 3 + 4
 #EXPECT:11
 
