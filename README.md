@@ -16,12 +16,49 @@
 
 ## About
 
-Logics is a simple expression language with the goal to provide equal syntax and semantics for different runtime contexts and host languages.
+Logics is a formula language with the aim of flexibly implementing programmable logics such as conditions, calculations or validations, so that developers as well as administrators and experienced users can use such expressions within a framework specified by the system to influence, calculate or otherwise dynamically adapt certain processes of a system.
 
-- [logics-js](https://www.npmjs.com/package/logics-js) is a pure JavaScript implementation of Logics provided as npm-package.
-- [logics-py](https://pypi.org/project/logics-py/) is a pure Python implementation of Logics provided as PyPI-package.
+The language can be compared to [Excel's formula language](https://github.com/microsoft/power-fx), where expressions can be defined based on variables and calculated dynamically. But Logics has a Python-like syntax at this point, but provides its own semantics, so that numbers and strings, for example, can be directly linked, None-values are assumed as 0, and Exceptions are generally not raised.
 
-Both packages are under recent development and not stable right now. They are maintained in separate version numbers.
+In addition, Logics provides a sandbox environment, which does not allow potential attackers to break out of the provided environment or slow down the system. There are appropriate security mechanisms integrated into the language for this purpose.
+
+Logics has been developed at [Mausbrand Informationssysteme GmbH](https://www.mausbrand.de/en) as part of the [ViUR ecosystem](https://www.viur.dev/), but it is a standalone project that can also be used outside the ViUR context.
+
+Previous uses of Logics included
+
+- event-based state evaluation
+- dynamic rule systems
+- programmable conditions for filters
+- template engine generating text modules
+- questionnaires with queries that depend on previous answers
+
+## Usage
+
+Since Logics is used on both the client and server side, the language has been implemented in two separate implementations:
+
+- [logics-js](https://www.npmjs.com/package/logics-js) is a pure (vanilla) JavaScript implementation of Logics provided as npm-package.
+- [logics-py](https://pypi.org/project/logics-py/) is a pure Python 3.10 implementation of Logics provided as PyPI-package, with no other
+
+Both packages are under recent development and not stable right now. They are maintained in separate version numbers, which is planned to be changed soon, when they become almost feature-complete.
+
+Using Logics in JavaScript:
+
+```javascript
+// npm install logics-js
+import Logics from "logics-js";
+
+let logics = new Logics("a + 2 * 3 + b");
+console.log(logics.run({a: 1, b: "-Logics"}).toString()); // "7-Logics"
+```
+
+Using Logics in Python:
+```python
+# pip install logics-py
+from logics import Logics
+
+logics = Logics("a + 2 * 3 + b")
+print(logics.run({"a": 1, b: "-Logics"}))  # "7-Logics"
+```
 
 ## Features
 
@@ -41,12 +78,14 @@ Both packages are under recent development and not stable right now. They are ma
   - Attribute access `x[y]`
   - `# comments` in separate lines
   - Dedicated Value object abstraction of native types for
-    - `True`, `False`, `None`
+    - `None`
+    - `True`, `False`
     - `int`, `float`, `str`
-    - `list` for arrays
-    - `dict` for structured objects
+    - `list` for lists (similar to arrays)
+    - `dict` for dicts (similar to structured objects)
 - Provides a set of functions that can be used in expressions
 - Extendable to custom functions
+- Embeddable into other languages
 
 ## `Logics` vs. `Python`
 
@@ -60,6 +99,11 @@ Logics does look like Python, but it isn't Python!
 - Dynamic and automatic value conversion
   - e.g. the content of strings is automatically converted when used in calculations,
     so `"42" ** 3` produces 74088, and not a TypeError.
+
+## Building
+
+Logics is built using the [UniCC LALR(1) Parser Generator](https://github.com/phorward/unicc), which supports generating parsers in multiple target languages.<br>
+UniCC should be compiled from source, as the latest version 1.8 is required.
 
 ## License
 
