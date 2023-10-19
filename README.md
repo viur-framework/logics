@@ -105,19 +105,64 @@ Logics does look like Python, but it isn't Python!
 
 ## Building & Packaging
 
-Logics is built using the [UniCC LALR(1) Parser Generator](https://github.com/phorward/unicc), which supports generating parsers in multiple target languages.<br>
-UniCC should be compiled from source, as the latest version 1.8 is required.
+Logics is built using the [UniCC LALR(1) Parser Generator](https://github.com/phorward/unicc), which supports generating parsers in multiple target languages. UniCC should be compiled from source, as the latest version 1.8 is required.
 
 Whenever something is changed on the syntax, ensure `unicc` is installed properly and run `make`, which regenerates the parser modules.
 
-### Packaging logics-js
+### Shared test cases
+
+Logics-related test cases are placed as `*.lgx`-files into the `tests/` folder. They are shared by both implementations.
+
+```logics
+# In lgx-files, variables can be set using `#set:` as shown below.
+# The part behind the second colon may contain any logics expression, including variables.
+#set:x:6 * 7
+
+#
+# To verify if an expression produces an expected result, provide the expression followed by an `#expect:`.
+#
+
+x
+#expect:42
+
+x * x
+#expect:1764
+```
+
+### logics-js
+
+#### Tests
+
+Tests are implemented using [Mocha](https://mochajs.org/):
+
+```bash
+cd logics-js
+npm test
+```
+
+#### Packaging
+
+Publish on [npmjs.com](https://www.npmjs.com/):
 
 ```bash
 cd logics-js
 npm publish
 ```
 
-### Packaging logics-py
+### logics-py
+
+#### Tests
+
+Tests are implemented using [pytest](https://pytest.org):
+
+```bash
+cd logics-py
+pipenv run test
+```
+
+#### Packaging
+
+Publish on [PyPI](https://pypi.org/):
 
 ```bash
 cd logics-py
