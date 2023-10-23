@@ -23,7 +23,7 @@ function testcase(code) {
             switch (cmd[0].toLowerCase()) {
                 case "expect":
                     // Verify the expected result.
-                    let expect = cmd[1];
+                    let expect = cmd.slice(1).join(":");
 
                     // Ensure that the previous result is not undefined.
                     assert.notStrictEqual(lastResult, undefined);

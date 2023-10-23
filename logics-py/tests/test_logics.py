@@ -19,7 +19,7 @@ def test_testcase(input):
 
             action = cmd[0].lower()
             if action == "expect":
-                expect = cmd[1]
+                expect = ":".join(cmd[1:])
 
                 assert last_result is not None, "#EXPECT used before evaluation"
 

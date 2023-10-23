@@ -198,6 +198,7 @@ export default class Logics {
                     }
                 },
                 call: () => {
+                    let fname = node.children[0].match;
                     let args = [];
 
                     if (node.children.length === 2) {
@@ -205,7 +206,7 @@ export default class Logics {
                         args = stack.pop().toList();
                     }
 
-                    let fn = this.functions[node.children[0].match];
+                    let fn = this.functions[fname];
 
                     if (fn !== undefined) {
                         // Convert all args to Logics values
@@ -213,11 +214,15 @@ export default class Logics {
                             args[i] = new Value(args[i]);
                         }
 
-                        // todo: Handle invalid parameters
-                        stack.op0(fn(...args));
+                        try {
+                            stack.op0(fn(...args));
+                        }
+                        catch (e) {
+                            stack.op0(`#ERR:Invalid call to ${fname}()`)
+                        }
+
                     } else {
-                        // todo: should this return a string?
-                        throw new Error(`Call to unknown function: ${node.children[0].match}`);
+                        stack.op0(`#ERR:Call to unknown function ${fname}()`)
                     }
                 },
                 comprehension: () => {

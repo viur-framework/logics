@@ -1,0 +1,5 @@
+foo()
+#EXPECT:"#ERR:Call to unknown function foo()"
+
+upper()
+#EXPECT:"#ERR:Invalid call to upper()"

@@ -181,18 +181,22 @@ class Logics:
                 return
 
             case "call":
+                fname = node.children[0].match
+
                 if len(node.children) > 1:
                     self._run(node.children[1], stack, values)
                     args = stack.pop().list()
                 else:
                     args = ()
 
-                if fn := self.functions.get(node.children[0].match):
-                    # todo: Handle invalid parameters
-                    stack.op0(fn(*args))
+                if fn := self.functions.get(fname):
+                    try:
+                        stack.op0(fn(*args))
+                    except TypeError:
+                        # TODO: Improve parameter validation
+                        stack.op0(f"#ERR:Invalid call to {fname}()")
                 else:
-                    # todo: should this return a string?
-                    raise NotImplementedError(f"Call to unknown function: {node.children[0].match!r}")
+                    stack.op0(f"#ERR:Call to unknown function {fname}()")
 
                 return
 
