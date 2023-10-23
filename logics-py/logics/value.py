@@ -157,6 +157,9 @@ class Value:
 
         return name
 
+    def __hash__(self):
+        return hash(self.value)
+
     def __repr__(self):
         if self.type() == "str":
             return '"' + re.sub(r"([\"\\])", r"\\\1", self.value) + '"'
@@ -195,7 +198,7 @@ class Value:
         if self.type() == "dict":
             return self.value
 
-        return {self.value: self.value}
+        return {i: i for i in self.list()}
 
     def __len__(self):
         if self.type() in ("dict", "list", "str"):

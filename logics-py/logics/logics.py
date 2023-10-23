@@ -39,6 +39,7 @@ class Logics:
             "float": parse_float,
             "int": parse_int,
             "join": lambda value, delimiter=", ": str(delimiter).join(str(item) for item in value.list()),
+            "keys": lambda obj: list(obj.dict().keys()),
             "len": len,
             "lfill": lambda value, length, fill=" ": str(value).rjust(int(length), str(fill)),
             "lower": lambda value: str(value).lower(),
@@ -55,6 +56,7 @@ class Logics:
             "strip": lambda s, c=" \t\r\n": str(s).strip(str(c)),
             "sum": lambda value: sum([Value.align(item, allow=(bool, int, float), default=0) for item in value]),
             "upper": lambda value: str(value).upper(),
+            "values": lambda obj: list(obj.dict().values()),
         }
 
         self.debug = debug
