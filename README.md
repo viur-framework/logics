@@ -21,7 +21,7 @@
 
 Logics is a formula language with the aim of flexibly implementing programmable logics such as conditions, calculations or validations, so that developers as well as administrators and experienced users can use such expressions within a framework specified by the system to influence, calculate or otherwise dynamically adapt certain processes of a system.
 
-The language can be compared to [Excel's formula language](https://github.com/microsoft/power-fx), where expressions can be defined based on variables and calculated dynamically. But Logics has a Python-like syntax at this point, but provides its own semantics, so that numbers and strings, for example, can be directly linked, None-values are assumed as 0, and Exceptions are generally not raised.
+The language can be compared to [Excel's formula language](https://github.com/microsoft/power-fx), where expressions can be defined based on variables and calculated dynamically. But Logics has a Python-like syntax at this point, but provides its own semantics, so that numbers and strings, for example, can be directly linked, None-values are assumed as 0, and Exceptions are generally not raised during execution.
 
 In addition, Logics provides a sandbox environment, which does not allow potential attackers to break out of the provided environment or slow down the system. There are appropriate security mechanisms integrated into the language for this purpose.
 
@@ -40,7 +40,7 @@ Previous uses of Logics included
 Since Logics is used on both the client and server side, the language has been implemented in two separate implementations:
 
 - [logics-js](https://www.npmjs.com/package/logics-js) is a pure (vanilla) JavaScript implementation of Logics provided as npm-package.
-- [logics-py](https://pypi.org/project/logics-py/) is a pure Python 3.11 implementation of Logics provided as PyPI-package, with no other dependencies.
+- [logics-py](https://pypi.org/project/logics-py/) is a pure Python 3.10 implementation of Logics provided as PyPI-package, with no other dependencies.
 
 Both packages are under recent development and not stable right now. They are maintained in separate version numbers, which is planned to be changed soon, when they become almost feature-complete.
 
@@ -94,11 +94,16 @@ print(logics.run({"a": 1, "b": "-Logics"}))  # "7-Logics"
 
 Logics does look like Python, but it isn't Python!
 
+It differs both in syntax and semantics:
+
 - Expressions can be used with arbitrary whitespace and line-breaks
-- There are no methods on objects, but functions that work on values
-  - e.g. `dict.keys()` becomes `keys(dict)`
-  - `";".join(["a", "b", "c"])` becomes `join(["a", "b", "c"], ";")`
-- No exceptions, access to e.g. invalid index or key just returns `None`
+- There are no methods on objects, but functions that work on values, e.g.
+  - Python's `dict.keys()` is `keys(dict)` in Logics
+  - Python's `";".join(["a", "b", "c"])` is `join(["a", "b", "c"], ";")` in Logics
+- No exceptions during runtime, but a defined behavior
+  - Access to e.g. invalid index or key just returns `None`
+  - Access of undefined variables returns `None`
+  - Division by zero returns string `"#ERR: Division by zero"`
 - Dynamic and automatic value conversion
   - e.g. the content of strings is automatically converted when used in calculations,
     so `"42" ** 3` produces 74088, and not a TypeError.
@@ -164,7 +169,7 @@ npm publish
 
 To format the source code, use [Black](https://github.com/psf/black) as follows:
 
-```
+```bash
 cd logics-py
 pipenv run fmt
 ```
