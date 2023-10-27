@@ -14,5 +14,9 @@ $(LOGICS_JS): logics.par
 	unicc -swo $(patsubst %.js,%,$@) -l javascript $?
 	cd logics-js; npm i; npm run fmt
 
+test:
+	cd logics-py; pipenv install --dev; pipenv run test
+	cd logics-js; npm i; npm run test
+
 clean:
 	rm $(LOGICS_JS) $(LOGICS_PY)

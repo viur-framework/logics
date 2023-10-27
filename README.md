@@ -8,13 +8,13 @@
         <img src="https://img.shields.io/github/license/viur-framework/logics" alt="Badge displaying the license" title="License badge">
     </a>
     <a href="https://pypi.org/project/logics-py">
-        <img alt="Badge showing current PyPI version if logics-py" title="logics-py" src="https://img.shields.io/pypi/v/logics-py?label=logics-py">
+        <img alt="Badge showing current PyPI version of logics-py" title="logics-py" src="https://img.shields.io/pypi/v/logics-py?label=logics-py">
     </a>
     <a href="https://www.npmjs.com/package/logics-js">
-        <img alt="Badge showing current npm version if logics-js" title="logics-js" src="https://img.shields.io/npm/v/logics-js?label=logics-js">
+        <img alt="Badge showing current npm version of logics-js" title="logics-js" src="https://img.shields.io/npm/v/logics-js?label=logics-js">
     </a>
     <br>
-    A tiny, sandboxed, secure and extendable formula language with a flavor of Python.
+    A multi-platform, sandboxed and extendable expression language with a Python-like syntax.
 </div>
 
 ## About

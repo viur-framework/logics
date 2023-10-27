@@ -216,13 +216,11 @@ export default class Logics {
 
                         try {
                             stack.op0(fn(...args));
+                        } catch (e) {
+                            stack.op0(`#ERR:Invalid call to ${fname}()`);
                         }
-                        catch (e) {
-                            stack.op0(`#ERR:Invalid call to ${fname}()`)
-                        }
-
                     } else {
-                        stack.op0(`#ERR:Call to unknown function ${fname}()`)
+                        stack.op0(`#ERR:Call to unknown function ${fname}()`);
                     }
                 },
                 comprehension: () => {
