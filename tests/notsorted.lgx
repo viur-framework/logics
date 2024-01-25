@@ -1,0 +1,127 @@
+"Hund" + "Leine" == "Katze" + "Fisch"
+#EXPECT:False
+
+20 * "Äpfel" == 20 * "Bananen"
+#EXPECT:False
+
+2 ** 8 == 256
+#EXPECT:True
+
+1.1 + 2.2 == 3.3
+#EXPECT:False
+
+10 == "10"
+#EXPECT:True
+
+(True and False) or (False or True)
+#EXPECT:True
+
+(x > 5 or x < 2) and (y == 10 or y > 20)
+#EXPECT:False
+
+True and False == False
+#EXPECT:True
+
+x % 2 == 0 or x % 3 == 0 or x % 5 == 0
+#EXPECT:True
+
+(x > 5 and y < 10) or (x > 20 and y < 30)
+#EXPECT:False
+
+(x > 5 and "hello" or y < 10) and (x > 20 and y < 30)
+#EXPECT:False
+
+10 < x <= 20
+#EXPECT:False
+
+("apple" + "orange" != "banana") or (len("coding") == 6)
+#EXPECT:True
+
+(20 - 10 == 5 + 5) and (2 ** 3 == 8)
+#EXPECT:True
+
+(27 / 3 == 9) and (17 == 17)
+#EXPECT:True
+
+(36 / 6 == 6) and (7 * 5 == 35) or ("chat" in "chatbot")
+#EXPECT:True
+
+(2 ** 10 == 1024) and (85 - 13 > 42 + 17)
+#EXPECT:True
+
+(len("hello") == 5) and (3 * 7 == 20 + 10) or (100 / 5 == 20)
+#EXPECT:True
+
+(10 + 13 == 23) and (92 / 4 == 23) or (len("apple") == 5)
+#EXPECT:True
+
+(len("world") == 5) and (4 * 6 == 24 + 12) or (81 / 3 == 27)
+#EXPECT:True
+
+(len("python") == 6) and (5 * 8 == 40 + 20) or (125 / 5 == 25)
+#EXPECT:True
+
+(len("testing") == 7) and (2 * 9 == 18 + 9) or (64 / 4 == 16)
+#EXPECT:True
+
+(len("kakapups") == 7) and (3 * 5 == 15 + 10) or (144 / 6 == 24)
+#EXPECT:True
+
+int("7") == 7
+#EXPECT:True
+
+float("3.14") == 3.14
+#EXPECT:True
+
+round(3.7) == 4
+#EXPECT:True
+
+str(42) == "42"
+#EXPECT:True
+
+str(int("42")) == "42"
+#EXPECT:True
+
+"code" + str(42) == "code42"
+#EXPECT:True
+
+round(float("5.67")) == 6
+#EXPECT:True
+
+max(int("10"), round(8.5), float("7.3")) == 10
+#EXPECT:True
+
+int(float("9.8")) == 9
+#EXPECT:True
+
+str(round(float("7.89"))) == "8"
+#EXPECT:True
+
+float(str(round(6.789))) == 7.0
+#EXPECT:True
+
+not ((x > 10 and y < 20) or (x > 30 and y < 40) or (x == 15))
+#EXPECT:True
+
+(x * 3 + y / 2) > 20 and (x % 5 == 0 or y % 3 == 0) or ("test" + "case" == "testcase")
+#EXPECT:True
+
+len("Short") >= 5 and len("Short") < 15 or (3.0 / 2 == 1.5)
+#EXPECT:True
+
+len("Medium Length") >= 15 and len("Medium Length") < 25 or (7.5 / 2 == 3.75)
+#EXPECT:True
+
+len("A Really Long Text with Many Words") >= 30 and len("A Really Long Text with Many Words") < 40 or (12.0 / 2 == 6.0)
+#EXPECT:True
+
+len("1234567890") >= 10 and len("1234567890") < 20 or (5.0 / 2 == 2.5)
+#EXPECT:True
+
+len("!@#$%^&*") >= 7 and len("!@#$%^&*") < 17 or (8.5 / 2 == 4.25)
+#EXPECT:True
+
+len("Spaces   Between") >= 10 and len("Spaces   Between") < 20 or (11.5 / 2 == 5.75)
+#EXPECT:True
+
+

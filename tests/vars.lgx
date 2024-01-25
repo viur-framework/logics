@@ -1,6 +1,24 @@
 #set:i:10
+
 i + i
 #expect:20
 
 i * "Logics"
 #expect:"LogicsLogicsLogicsLogicsLogicsLogicsLogicsLogicsLogicsLogics"
+
+#set:y:25
+#set:x:8
+(x > 10 and y < 30) or (x < 5 or y == 25) and (x != 7) or not (x == 10)
+#EXPECT:True
+
+#set:x:25
+(x % 3 == 0 and x % 5 == 0) or (x % 2 == 0) and ("foo" + "bar" == "foobar") or (100 / 5 == 20)
+#EXPECT:True
+
+#set:value:15
+"even" if value % 2 == 0 else ("positive" if value > 0 else "negative")
+#EXPECT:"positive"
+
+#set:text_length:len("This is a long text")
+text_length >= 10 and text_length < 20 or (5.5 /2 ==2.75)
+#EXPECT:True
