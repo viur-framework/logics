@@ -1,0 +1,22 @@
+"hello" and "world" + 4
+#EXPECT:"world4"
+
+"hello" or "world" and "kaputt" + 4
+#EXPECT:"hello"
+
+"hello" and "world" or "kaputt" and + 4
+#EXPECT:"world"
+
+x >= 10 and x < 20
+#EXPECT:False
+
+a and not b
+#EXPECT:None
+
+#SET:year:2000
+(year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+#EXPECT:True
+
+#SET:year:2023
+(year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+#EXPECT:False
