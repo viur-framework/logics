@@ -1,7 +1,7 @@
 // Grammar for ViUR logics
 // Compile with UniCC (https://github.com/phorward/unicc) using `unicc -swo parser -l python logics.par`
 
-#!mode          insensitive;
+#!mode          scanner;
 #whitespaces    @whitespace ;
 
 @whitespace     ' \r\n\t'+
@@ -13,16 +13,6 @@
                 | '\'' ( '\\' . | !'\'' )* '\''                     = STRING;
 @NUMBER         '0-9'+ '.' '0-9'* | '0-9'* '.' '0-9'+ | '0-9'+      = NUMBER;
 
-// This ugly terminal mapping below is only done because there's no
-// "don't recognize this string as AST-node"-option in UniCC v1.x
-@FOR            "for";
-@IF             "if";
-@ELSE           "else";
-@OR             "or";
-@AND            "and";
-@NOT            "not";
-@IN             "in";
-
 logic$          : expression ;
 
 expression      : test ;
@@ -31,23 +21,23 @@ test            : if_else
                 | or_test
                 ;
 
-if_else         := or_test @IF or_test @ELSE test
+if_else         := or_test ""if"" or_test ""else"" test
                 ;
 
-or_test         : and_test ( @OR and_test )+                       = or_test
+or_test         : and_test ( ""or"" and_test )+                     = or_test
                 | and_test
                 ;
 
-and_test        : not_test ( @AND not_test )+                      = and_test
+and_test        : not_test ( ""and"" not_test )+                    = and_test
                 | not_test
                 ;
 
-not_test        : @NOT not_test                                     = not_test
+not_test        : ""not"" not_test                                  = not_test
                 | comparison
                 ;
 
-in              := @IN ;
-not_in          := @NOT @IN ;
+in              := ""in"" ;
+not_in          := ""not"" ""in"" ;
 
 comparison_op   : "=="
                 | ">="
@@ -98,7 +88,7 @@ trailer         : '(' list ')'
                 | '.' @IDENT
                 ;
 
-atom            : ( "True" | "False" )
+atom            : ( ""True"" | ""False"" )
                 | @NUMBER
                 | @IDENT
                 | @STRING
@@ -108,7 +98,7 @@ atom            : ( "True" | "False" )
                 | '(' expression ')'                                = atom
                 ;
 
-comprehension   := '[' expression @FOR @IDENT @IN or_test ( @IF expression )? ']'
+comprehension   := '[' expression ""for"" @IDENT ""in"" or_test ( ""if"" expression )? ']'
                 ;
 
 list            := expression (',' expression )*
