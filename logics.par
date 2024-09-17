@@ -21,31 +21,31 @@ test            : if_else
                 | or_test
                 ;
 
-if_else         := or_test ""if"" or_test ""else"" test
+if_else         := or_test "if" or_test "else" test
                 ;
 
-or_test         : and_test ( ""or"" and_test )+                     = or_test
+or_test         : and_test ( "or" and_test )+                     = or_test
                 | and_test
                 ;
 
-and_test        : not_test ( ""and"" not_test )+                    = and_test
+and_test        : not_test ( "and" not_test )+                    = and_test
                 | not_test
                 ;
 
-not_test        : ""not"" not_test                                  = not_test
+not_test        : "not" not_test                                  = not_test
                 | comparison
                 ;
 
-in              := ""in"" ;
-not_in          := ""not"" ""in"" ;
+in              := "in" ;
+not_in          := "not" "in" ;
 
-comparison_op   : "=="
-                | ">="
-                | "<="
-                | "<"
-                | ">"
-                | "<>"
-                | "!="
+comparison_op   : ""==""
+                | "">=""
+                | ""<=""
+                | ""<""
+                | "">""
+                | ""<>""
+                | ""!=""
                 | in
                 | not_in
                 ;
@@ -98,7 +98,7 @@ atom            : ( ""True"" | ""False"" )
                 | '(' expression ')'                                = atom
                 ;
 
-comprehension   := '[' expression ""for"" @IDENT ""in"" or_test ( ""if"" expression )? ']'
+comprehension   := '[' expression "for" @IDENT "in" or_test ( "if" expression )? ']'
                 ;
 
 list            := expression (',' expression )*
