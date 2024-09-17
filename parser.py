@@ -251,7 +251,7 @@ class Parser(object):
         ("opt_expression : expression", "", 1, 44),
         ("opt_expression : ", "null", 0, 44),
         ("trailer : '(' list ')'", "", 3, 46),
-        ("trailer : '[' expression ']'", "", 3, 46),
+        ("trailer : '[' expression ']'", "subscript", 3, 46),
         ("trailer : '[' opt_expression ':' opt_expression ']'", "slice", 5, 46),
         ("trailer : '.' @IDENT", "", 2, 46),
         ("&embedded_3 : \"True\"", "", 1, 42),

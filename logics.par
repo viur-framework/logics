@@ -83,7 +83,7 @@ opt_expression  : expression
                 ;
 
 trailer         : '(' list ')'
-                | '[' expression ']'
+                | '[' expression ']'                                = subscript
                 | '[' opt_expression ':' opt_expression ']'         = slice
                 | '.' @IDENT
                 ;
