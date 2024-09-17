@@ -1,9 +1,9 @@
 // Logics: A Python-like evaluation language
-// Grammar requires unicc >= 1.8, use Makefile for building.
+// This grammar requires unicc >= 1.9 to compile, use the Makefile for building.
 
-#!mode          scanner;
-#prefix         "Logics";
-#whitespaces    @whitespace ;
+%!mode          scanner;
+%prefix         "Logics";
+%whitespaces    @whitespace;
 
 @whitespace     ' \r\n\t'+
                 | "#" !'\n'* '\n'

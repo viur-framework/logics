@@ -198,7 +198,7 @@ pipenv --rm
 
 ## License
 
-Copyright © 2023 by Mausbrand Informationssysteme GmbH.<br>
+Copyright © 2024 by Mausbrand Informationssysteme GmbH.<br>
 Mausbrand and ViUR are registered trademarks of Mausbrand Informationssysteme GmbH.
 
 Logics is free software under the MIT license.<br>
