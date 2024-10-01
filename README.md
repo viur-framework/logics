@@ -37,12 +37,12 @@ Previous uses of Logics included
 
 ## Usage
 
-Since Logics is used on both the client and server side, the language has been implemented in two separate implementations:
+Since Logics is used on both the client and server side, the language was made available in two separate implementations.
 
 - [logics-js](https://www.npmjs.com/package/logics-js) is a pure (vanilla) JavaScript implementation of Logics provided as npm-package.
-- [logics-py](https://pypi.org/project/logics-py/) is a pure Python 3.10 implementation of Logics provided as PyPI-package, with no other dependencies.
+- [logics-py](https://pypi.org/project/logics-py/) is a pure Python >= 3.10 implementation of Logics provided as PyPI-package.
 
-Both packages are under recent development and not stable right now. They are maintained in separate version numbers, which is planned to be changed soon, when they become almost feature-complete.
+Both packages are stand-alone without any further dependencies. They are both under recent development and stable until a specific degree right now. They are maintained in separate version numbers, which is planned to be changed soon, when they become almost feature-complete.
 
 Using Logics in JavaScript:
 
@@ -110,7 +110,7 @@ It differs both in syntax and semantics:
 
 ## Building & Packaging
 
-Logics is built using the [UniCC LALR(1) Parser Generator](https://github.com/phorward/unicc), which supports generating parsers in multiple target languages. UniCC should be compiled from source, as the latest version 1.8 is required.
+Logics is built using the [UniCC LALR(1) Parser Generator](https://github.com/phorward/unicc), which supports generating parsers in multiple target languages. UniCC should be compiled from source, as the latest version 1.9+ is required.
 
 Whenever something is changed on the syntax, ensure `unicc` is installed properly and run `make`, which regenerates the parser modules.
 
