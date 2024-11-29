@@ -1,0 +1,9 @@
+ 
+bool(700/4)
+#EXPECT:True
+
+"string" / 1
+#EXPECT:0
+
+6000/49
+#EXPECT:122.44897959183673

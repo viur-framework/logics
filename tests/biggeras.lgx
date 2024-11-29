@@ -1,0 +1,5 @@
+ 2 == 2 > 1 == 2
+#EXPECT:False
+
+x >= 10 and x < 20
+#EXPECT:False

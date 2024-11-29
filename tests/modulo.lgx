@@ -1,0 +1,27 @@
+n % 5 == 0 or n % 7 == 0
+#EXPECT:True
+
+x % 2 == 0
+#EXPECT:True
+
+x % 2 != 0
+#EXPECT:False
+
+x % 4 == 0
+#EXPECT:True
+
+x % 3 == 0 and x % 5 == 0
+#EXPECT:True
+
+#calculate the switching year
+#SET:year:2020
+(year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+#EXPECT:True
+
+#SET:year:2000
+(year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+#EXPECT:True
+
+#SET:year:2023
+(year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+#EXPECT:False
