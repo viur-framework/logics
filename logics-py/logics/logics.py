@@ -167,6 +167,10 @@ class Logics:
                             res = a > b
                         case "gteq":
                             res = a >= b
+                        case "in":
+                            res = a in b
+                        case "outer":
+                            res = a not in b
 
                         case node:
                             raise NotImplementedError(f"Logics VM: cmp {node=} is not implemented")
