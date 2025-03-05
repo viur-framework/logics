@@ -1,0 +1,29 @@
+
+
+1 + 1
+#expect:2
+
+
+
+
+# Unary `+`, `-`, `~`, `not`
+
+# Binary `+`, `*`, `-`, `/`, `//`, `**`
+
+# Comparison `==`, `!=`, `<>`, `<`, `<=`, `>`, `>=`, `in`, `not in`
+
+# Logical `and`, `or`
+
+# Conditions `y if x else z`
+
+# Comprehensions `[x for x in y if z]`
+
+# Slices `x[:]`
+
+# Attribute access `x[y]`
+
+# `None`
+
+# `True`, `False`
+
+# `int`, `float`, `str`
