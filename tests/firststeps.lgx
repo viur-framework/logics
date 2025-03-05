@@ -1,29 +1,65 @@
+# Vergleichsoperatoren
 
+# == (gleich)
+# > (größer)
+# >= (größer oder gleich)
+# < (kleiner)
+# <= (kleiner oder gleich)
+# != (ungleich)
+# <> (ungleich, alternative Schreibweise)
+# in (in)
+# not in (nicht in)
 
-1 + 1
-#expect:2
+# Logische Operatoren
 
+# or (logisches Oder)
+# and (logisches Und)
+# not (logisches Nicht)
 
+# Arithmetische Operatoren
 
+# + (Addition)
+# - (Subtraktion)
+# * (Multiplikation)
+# / (Division)
+# // (Ganzzahldivision)
+# % (Modulo)
+# ** (Potenzierung)
 
-# Unary `+`, `-`, `~`, `not`
+# Unäre Operatoren
 
-# Binary `+`, `*`, `-`, `/`, `//`, `**`
+# + (positiv)
+# - (negativ)
+# ~ (Bitweise Negation)
 
-# Comparison `==`, `!=`, `<>`, `<`, `<=`, `>`, `>=`, `in`, `not in`
+# Weitere Operatoren
 
-# Logical `and`, `or`
+# = (Zuweisung)
+# : (Slice-Operator in Listen)
+# . (Attributzugriff)
 
-# Conditions `y if x else z`
+# Schlüsselwörter
 
-# Comprehensions `[x for x in y if z]`
+# True (boolescher Wert wahr)
+# False (boolescher Wert falsch)
+# None (repräsentiert das Fehlen eines Wertes)
+# $ (Variablen)
+# if (Bedingung)
+# else (Alternative Bedingung)
+# for (Schleife)
 
-# Slices `x[:]`
+# Weitere Elemente
 
-# Attribute access `x[y]`
+# y if x else z (Bedingte Ausdrücke)
+# [x for x in y if z] (List Comprehensions)
+# x[:] (Slices)
+# x[y] (Attributzugriff)
+# int (Ganzzahlen)
+# float (Gleitkommazahlen)
+# str (Zeichenketten)
 
-# `None`
+# Token-Typen
 
-# `True`, `False`
-
-# `int`, `float`, `str`
+# @Identifier (Bezeichner)
+# @Number (Zahlen)
+# @String (Zeichenketten)
