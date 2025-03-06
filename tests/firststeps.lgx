@@ -1,65 +1,215 @@
-# Vergleichsoperatoren
+########## Vergleichsoperatoren ##########
 
-# == (gleich)
-# > (größer)
-# >= (größer oder gleich)
-# < (kleiner)
-# <= (kleiner oder gleich)
-# != (ungleich)
-# <> (ungleich, alternative Schreibweise)
-# in (in)
-# not in (nicht in)
+##################################
+#==(gleich)
+##################################
 
-# Logische Operatoren
+5 == 5
+#expect:True
 
-# or (logisches Oder)
-# and (logisches Und)
-# not (logisches Nicht)
+5 == 1
+#expect:False
 
-# Arithmetische Operatoren
+a == a
+#expect:True
 
-# + (Addition)
-# - (Subtraktion)
-# * (Multiplikation)
-# / (Division)
-# // (Ganzzahldivision)
-# % (Modulo)
-# ** (Potenzierung)
+a == "a"
+#expect:False
 
-# Unäre Operatoren
+float == float
+#expect:True
 
-# + (positiv)
-# - (negativ)
-# ~ (Bitweise Negation)
+"float" == float
+#expect:False
 
-# Weitere Operatoren
+#bugbugbug!?
+#"6" == 6
+##expect:False
 
-# = (Zuweisung)
-# : (Slice-Operator in Listen)
-# . (Attributzugriff)
+#bugbugbug!?
+#6 == "6"
+##expect:False
 
-# Schlüsselwörter
+##################################
+#>(größer)
+##################################
 
-# True (boolescher Wert wahr)
-# False (boolescher Wert falsch)
-# None (repräsentiert das Fehlen eines Wertes)
-# $ (Variablen)
-# if (Bedingung)
-# else (Alternative Bedingung)
-# for (Schleife)
+5 > 3
+#expect:True
 
-# Weitere Elemente
+#bugbugbug!?
+#'5' > 3
+##expect:False
 
-# y if x else z (Bedingte Ausdrücke)
-# [x for x in y if z] (List Comprehensions)
-# x[:] (Slices)
-# x[y] (Attributzugriff)
-# int (Ganzzahlen)
-# float (Gleitkommazahlen)
-# str (Zeichenketten)
+#bugbugbug!?
+#"5" > 3
+##expect:False
 
-# Token-Typen
+0 > a
+#expect:False
 
-# @Identifier (Bezeichner)
-# @Number (Zahlen)
-# @String (Zeichenketten)
+#set:x:0 > 1
+x
+#expect:False
+
+##################################
+#>= (größer oder gleich)
+##################################
+
+5 >= 5
+#expect:True
+
+5 >= 3
+#expect:True
+
+3 >= 5
+#expect:False
+
+0 >= "False"
+#expect:False
+
+#bugbugbug!?
+#None >= None
+##expect:False
+
+#failed in js?!
+#False >= "False"
+##expect:False
+
+##################################
+#< (kleiner)
+##################################
+
+3 < 5
+#expect:True
+
+#bugbugbug!?
+#'3' < 5
+##expect:False
+
+0 < a
+#expect:False
+
+#set:x:0 < 1
+x
+#expect:True
+
+##################################
+#<= (kleiner oder gleich)
+##################################
+
+5 <= 5
+#expect:True
+
+4 <= 5
+#expect:True
+
+5 <= 4
+#expect:False
+
+#failed in js?!
+#0 <= a
+##expect:False
+
+##################################
+#!= (ungleich)
+##################################
+
+5 != 3
+#expect:True
+
+"a" != "b"
+#expect:True
+
+None != None
+#expect:False
+
+##################################
+#in (in)
+##################################
+
+3 in [1, 2, 3]
+#expect:True
+
+"a" in "abc"
+#expect:True
+
+#failed?!
+#'key' in {'key': 'value'}
+##expect:True
+
+4 in [1, 2, 3]
+#expect:False
+
+"d" in "abc"
+#expect:False
+
+##################################
+#not in (not in)
+##################################
+
+3 not in [1, 2, 3]
+#expect:False
+
+"a" not in "abc"
+#expect:False
+
+#failed?!
+#'key' not in {'key': 'value'}
+##expect:False
+
+4 not in [1, 2, 3]
+#expect:True
+
+"d" not in "abc"
+#expect:True
+
+########## Logische Operatoren ##########
+
+##################################
+#or (oder)
+##################################
+
+True or False
+#expect:True
+
+False or False
+#expect:False
+
+True or True
+#expect:True
+
+False or True
+#expect:True
+
+##################################
+#and (und)
+##################################
+
+True and False
+#expect:False
+
+False and False
+#expect:False
+
+True and True
+#expect:True
+
+False and True
+#expect:False
+
+##################################
+#not (nicht)
+##################################
+
+not True
+#expect:False
+
+not False
+#expect:True
+
+not (True and False)
+#expect:True
+
+not (False or True)
+#expect:False
