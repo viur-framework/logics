@@ -10,10 +10,52 @@ int("0")
 int(False)
 #expect:0
 
+#bug: AssertionError
+#int("10", 2)
+##expect:2
+
+#bug: AssertionError
+#int(True)
+##expect:1
+
+#set:numbers:(1,2,3, 53.2)
+
+3 in numbers
+#expect:True
+
+4 in numbers
+#expect:False
+
+4 not in numbers
+#expect:True
+
+"a" in numbers
+#expect:False
+
 ##################################
 
 float("5.5")
 #expect:5.5
+
+#bug: AssertionError
+#float(5)
+##expect:5.0
+
+#bug: AssertionError
+#float("0")
+##expect:0.0
+
+#bug: AssertionError
+#float(True)
+##expect:1.0
+
+#bug: AssertionError
+#float(False)
+##expect:0.0
+
+#bug: AssertionError
+#float("nan")
+##expect:float("nan")
 
 ##################################
 
@@ -29,3 +71,34 @@ str(None)
 str([1, 2, 3])
 #expect:"[1, 2, 3]"
 
+#bug: AssertionError
+#str(5)
+##expect:5
+
+str(5)
+#expect:"5"
+
+str(5.5)
+#expect:"5.5"
+
+#set:strings:("a","b","c")
+
+"a" in strings
+#expect:True
+
+"aa" in strings
+#expect:False
+
+"x" not in strings
+#expect:True
+
+#set:string:"Hello World"
+
+"World" in string
+#expect:True
+
+"Earth" in string
+#expect:False
+
+"Earth" not in string
+#expect:True

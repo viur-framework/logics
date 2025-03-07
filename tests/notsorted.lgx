@@ -15,6 +15,16 @@ z
 b
 #expect:5.5
 
+#bug: logics.parser.LogicsParseException: Line 1, column 1: Parse error
+##set:a:{'key': 'value'}
+#a
+##expect:{'key': 'value'}
+
+#bug: logics.parser.LogicsParseException: Line 1, column 1: Parse error
+##set:c:True
+#c
+##expect:True
+
 ##################################
 
 [1, 2, 3][1]
@@ -74,5 +84,203 @@ None == None
 None
 #expect:None
 
+#bug: logics.parser.LogicsParseException: Line 1, column 1: Parse error
+#None == False
+##expect:False
+
+#bug: logics.parser.LogicsParseException: Line 1, column 1: Parse error
+#None != None
+##expect:False
+
+#bug: logics.parser.LogicsParseException: Line 1, column 6: Parse error, expecting '&eof
+#None is not None
+##expect:False
+
+#bug: logics.parser.LogicsParseException: Line 1, column 6: Parse error, expecting '&eof'
+#None is None
+##expect:True
+
 ##################################
 
+#set:i:10
+i + i
+#expect:20
+
+i * "Logics"
+#expect:"LogicsLogicsLogicsLogicsLogicsLogicsLogicsLogicsLogicsLogics"
+
+1 + 2 * 3 + 4
+#EXPECT:11
+
+(1 + 2) * (3 + 4)
+#EXPECT:21
+
+3 * "HelloWorld"
+#EXPECT:"HelloWorldHelloWorldHelloWorld"
+
+##################################
+
+(3 * "Cat" + "Dog") == "CatCatCatDog"
+#expect:True
+
+(5 + 3 * 2) == 11
+#expect:True
+
+(10 / 2) == 5 and (2 * 3) == 6
+#expect:True
+
+(7 - 3) * 2 == 8
+#expect:True
+
+(2 ** 3) == 8 and (4 ** 2) == 16
+#expect:True
+
+(15 % 4) == 3 and (9 % 2) == 1
+#expect:True
+
+(100 / 5) == 20 and (50 / 2) == 25
+#expect:True
+
+(3 + 5) * (2 + 2) == 32
+#expect:True
+
+(10 - 3) * (2 + 1) == 21
+#expect:True
+
+(2 ** 4) == 16 and (3 ** 3) == 27
+#expect:True
+
+(True and False) or (False or True)
+#expect:True
+
+not (True and False) and (True or False)
+#expect:True
+
+(True or False) and not (False and True)
+#expect:True
+
+(True and not False) or (False and not True)
+#expect:True
+
+not (False or False) and (True or True)
+#expect:True
+
+(True and True) or (False and False)
+#expect:True
+
+not (True and False) or (True and not False)
+#expect:True
+
+#bug: AssertionError: assert 'False' == 'True'
+#(True or not False) and (False or not True)
+##expect:True
+
+not (False and True) or (True and not False)
+#expect:True
+
+(True and not False) and (False or True)
+#expect:True
+
+"Cat" + "Dog" == "CatDog"
+#expect:True
+
+"Fish" * 3 == "FishFishFish"
+#expect:True
+
+len("Elephant") == 8
+#expect:True
+
+"Monkey"[1] == "o"
+#expect:True
+
+"Zebra"[-1] == "a"
+#expect:True
+
+#bug: logics.parser.LogicsParseException: Line 1, column 16: Parse error, expecting '&eof'
+#"Penguin".upper() == "PENGUIN"
+##expect:True
+
+#bug: logics.parser.LogicsParseException: Line 1, column 21: Parse error, expecting '&eof'
+#"giraffe".capitalize() == "Giraffe"
+##expect:True
+
+#bug: logics.parser.LogicsParseException: Line 1, column 21: Parse error, expecting '&eof'
+#"hippopotamus".count("p") == 3
+##expect:True
+
+#bug: logics.parser.LogicsParseException: Line 1, column 17: Parse error, expecting '&eof'
+#"alligator".find("gator") == 3
+##expect:True
+
+#bug: logics.parser.LogicsParseException: Line 1, column 21: Parse error, expecting '&eof'
+#"rhinoceros".replace("rhino", "hippo") == "hippoceros"
+##expect:True
+
+#bug: logics.parser.LogicsParseException: Line 1, column 26: Parse error, expecting '&eof'
+#(3 * "Cat" + "Dog").upper() == "CATCATCATDOG"
+##expect:True
+
+len("Fish" * 3) == 12
+#expect:True
+
+#bug: logics.parser.LogicsParseException: Line 1, column 30: Parse error, expecting '&eof'
+#("Elephant" + "Giraffe").find("Giraffe") == 8
+##expect:True
+
+("Monkey"[1] + "Zebra"[-1]) == "oa"
+#expect:True
+
+#bug: logics.parser.LogicsParseException: Line 1, column 17: Parse error, expecting ')', ','
+#("Penguin".upper() + "giraffe".capitalize()) == "PENGUINGiraffe"
+##expect:True
+
+#bug: logics.parser.LogicsParseException: Line 1, column 22: Parse error, expecting ')', ','
+#("hippopotamus".count("p") + len("alligator")) == 12
+##expect:True
+
+#bug: logics.parser.LogicsParseException: Line 1, column 22: Parse error, expecting ')', ','
+#("rhinoceros".replace("rhino", "hippo") + " is big").find("hippo") == 0
+##expect:True
+
+#bug: logics.parser.LogicsParseException: Line 1, column 25: Parse error, expecting '&eof'
+#("Cat" + "Dog" * 2).find("Dog") == 3
+##expect:True
+
+#bug: logics.parser.LogicsParseException: Line 1, column 32: Parse error, expecting '&eof'
+#("Fish" * 2 + "Elephant").count("Fish") == 2
+##expect:True
+
+#bug: logics.parser.LogicsParseException: Line 1, column 45: Parse error, expecting ')', ','
+#("Monkey"[1] + "Zebra"[-1] + "Penguin".upper()) == "oapenguin"
+##expect:True
+
+int("7") == 7
+#expect:True
+
+float("3.14") == 3.14
+#expect:True
+
+round(float("5.67")) == 6
+#expect:True
+
+max(int("10"), round(8.5), float("7.3")) == 10
+#expect:True
+
+int(float("9.8")) == 9
+#expect:True
+
+#bug: AssertionError: assert 'False' == 'True'
+#str(round(float("7.89"))) == "8"
+##expect:True
+
+float(str(round(6.789))) == 7.0
+#expect:True
+
+len("Short") >= 5 and len("Short") < 15 or (3.0 / 2 == 1.5)
+#expect:True
+
+len("Medium Length") >= 15 and len("Medium Length") < 25 or (7.5 / 2 == 3.75)
+#expect:True
+
+len("A Really Long Text with Many Words") >= 30 and len("A Really Long Text with Many Words") < 40 or (12.0 / 2 == 6.0)
+#expect:True

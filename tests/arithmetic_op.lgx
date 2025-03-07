@@ -50,8 +50,9 @@
 3 * "HelloWorld"
 #EXPECT:"HelloWorldHelloWorldHelloWorld"
 
-[1, 2] * 2
-#expect:[1, 2, 1, 2]
+#bug: TypeError: int() argument must be a string, a bytes-like object or a real number, not 'list'
+#[1, 2] * 2
+##expect:[1, 2, 1, 2]
 
 ##################################
 

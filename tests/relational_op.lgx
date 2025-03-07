@@ -24,6 +24,9 @@ float == float
 5 > 3
 #expect:True
 
+"5" > 3
+#expect:True
+
 0 > a
 #expect:False
 
@@ -44,6 +47,10 @@ x
 
 0 >= "False"
 #expect:False
+
+#bug: works in python but not in javascript
+#None >= None
+##expect:False
 
 #bug: works in python but not in javascript
 #False >= "False"
@@ -75,6 +82,10 @@ x
 5 <= 4
 #expect:False
 
+#bug: works in python but not in javascript
+#0 <= a
+##expect:False
+
 ##################################
 
 5 != 3
@@ -100,6 +111,10 @@ None != None
 "d" in "abc"
 #expect:False
 
+#bug: logics.parser.LogicsParseException: Line 1, column 10: Parse error, expecting 'Identifier', 'Number', 'String', '+', '-', '~', '(', '[', 'True', 'False', 'None', '$'
+#'key' in {'key': 'value'}
+##expect:True
+
 ##################################
 
 3 not in [1, 2, 3]
@@ -113,3 +128,7 @@ None != None
 
 "d" not in "abc"
 #expect:True
+
+#bug: logics.parser.LogicsParseException: Line 1, column 14: Parse error, expecting 'Identifier', 'Number', 'String', '+', '-', '~', '(', '[', 'True', 'False', 'None', '$'
+#'key' not in {'key': 'value'}
+##expect:False
