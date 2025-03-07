@@ -1,0 +1,134 @@
+5 == 5
+#expect:True
+
+5 == 1
+#expect:False
+
+a == a
+#expect:True
+
+a == "a"
+#expect:False
+
+float == float
+#expect:True
+
+"float" == float
+#expect:False
+
+6 == "6"
+#expect:True
+
+##################################
+
+5 > 3
+#expect:True
+
+"5" > 3
+#expect:True
+
+0 > a
+#expect:False
+
+#set:x:0 > 1
+x
+#expect:False
+
+##################################
+
+5 >= 5
+#expect:True
+
+5 >= 3
+#expect:True
+
+3 >= 5
+#expect:False
+
+0 >= "False"
+#expect:False
+
+#bug: works in python but not in javascript
+#None >= None
+##expect:False
+
+#bug: works in python but not in javascript
+#False >= "False"
+##expect:False
+
+##################################
+
+3 < 5
+#expect:True
+
+0 < a
+#expect:False
+
+#set:x:0 < 1
+x
+#expect:True
+
+'3' < 5
+#expect:True
+
+##################################
+
+5 <= 5
+#expect:True
+
+4 <= 5
+#expect:True
+
+5 <= 4
+#expect:False
+
+#bug: works in python but not in javascript
+#0 <= a
+##expect:False
+
+##################################
+
+5 != 3
+#expect:True
+
+"a" != "b"
+#expect:True
+
+None != None
+#expect:False
+
+##################################
+
+3 in [1, 2, 3]
+#expect:True
+
+"a" in "abc"
+#expect:True
+
+4 in [1, 2, 3]
+#expect:False
+
+"d" in "abc"
+#expect:False
+
+#bug: logics.parser.LogicsParseException: Line 1, column 10: Parse error, expecting 'Identifier', 'Number', 'String', '+', '-', '~', '(', '[', 'True', 'False', 'None', '$'
+#'key' in {'key': 'value'}
+##expect:True
+
+##################################
+
+3 not in [1, 2, 3]
+#expect:False
+
+"a" not in "abc"
+#expect:False
+
+4 not in [1, 2, 3]
+#expect:True
+
+"d" not in "abc"
+#expect:True
+
+#bug: logics.parser.LogicsParseException: Line 1, column 14: Parse error, expecting 'Identifier', 'Number', 'String', '+', '-', '~', '(', '[', 'True', 'False', 'None', '$'
+#'key' not in {'key': 'value'}
+##expect:False

@@ -1,0 +1,42 @@
+True or False
+#expect:True
+
+False or False
+#expect:False
+
+True or True
+#expect:True
+
+False or True
+#expect:True
+
+##################################
+
+True and False
+#expect:False
+
+False and False
+#expect:False
+
+True and True
+#expect:True
+
+False and True
+#expect:False
+
+"hello" or "world" and "jupiter" + 6
+#EXPECT:"hello"
+
+##################################
+
+not True
+#expect:False
+
+not False
+#expect:True
+
+not (True and False)
+#expect:True
+
+not (False or True)
+#expect:False

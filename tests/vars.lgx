@@ -1,6 +1,0 @@
-#set:i:10
-i + i
-#expect:20
-
-i * "Logics"
-#expect:"LogicsLogicsLogicsLogicsLogicsLogicsLogicsLogicsLogicsLogics"
