@@ -1,0 +1,36 @@
+1 if True else 0
+#expect:1
+
+1 if False else 0
+#expect:0
+
+"a" if True else "b"
+#expect:"a"
+
+"a" if False else "b"
+#expect:"b"
+
+##################################
+
+[x for x in range(5)]
+#expect:[0, 1, 2, 3, 4]
+
+[x for x in range(5) if x % 2 == 0]
+#expect:[0, 2, 4]
+
+[x*2 for x in range(3)]
+#expect:[0, 2, 4]
+
+[x for x in [1, 2, 3] if x > 1]
+#expect:[2, 3]
+
+##################################
+
+[1, 2, 3][1]
+#expect:2
+
+"abc"[1]
+#expect:"b"
+
+(1, 2, 3)[2]
+#expect:3

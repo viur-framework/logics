@@ -1,0 +1,31 @@
+int("5")
+#expect:5
+
+int(5.5)
+#expect:5
+
+int("0")
+#expect:0
+
+int(False)
+#expect:0
+
+##################################
+
+float("5.5")
+#expect:5.5
+
+##################################
+
+str(True)
+#expect:"True"
+
+str(False)
+#expect:"False"
+
+str(None)
+#expect:"None"
+
+str([1, 2, 3])
+#expect:"[1, 2, 3]"
+

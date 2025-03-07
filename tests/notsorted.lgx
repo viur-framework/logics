@@ -1,0 +1,78 @@
+
+#set:x:5
+x
+#expect:5
+
+#set:y:"hello"
+y
+#expect:"hello"
+
+#set:z:[1, 2, 3]
+z
+#expect:[1, 2, 3]
+
+#set:b:5.5
+b
+#expect:5.5
+
+##################################
+
+[1, 2, 3][1]
+#expect:2
+
+"abc"[1]
+#expect:"b"
+
+(1, 2, 3)[2]
+#expect:3
+
+##################################
+
+True
+#expect:True
+
+not True
+#expect:False
+
+True and True
+#expect:True
+
+True or False
+#expect:True
+
+True == 1
+#expect:True
+
+True != 0
+#expect:True
+
+##################################
+
+False
+#expect:False
+
+not False
+#expect:True
+
+False and True
+#expect:False
+
+False or True
+#expect:True
+
+False == 0
+#expect:True
+
+False != 1
+#expect:True
+
+##################################
+
+None == None
+#expect:True
+
+None
+#expect:None
+
+##################################
+
