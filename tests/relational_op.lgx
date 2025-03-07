@@ -16,6 +16,9 @@ float == float
 "float" == float
 #expect:False
 
+6 == "6"
+#expect:True
+
 ##################################
 
 5 > 3
@@ -42,6 +45,10 @@ x
 0 >= "False"
 #expect:False
 
+#bug: works in python but not in javascript
+#False >= "False"
+##expect:False
+
 ##################################
 
 3 < 5
@@ -52,6 +59,9 @@ x
 
 #set:x:0 < 1
 x
+#expect:True
+
+'3' < 5
 #expect:True
 
 ##################################

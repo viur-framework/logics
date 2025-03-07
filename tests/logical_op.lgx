@@ -24,6 +24,9 @@ True and True
 False and True
 #expect:False
 
+"hello" or "world" and "jupiter" + 6
+#EXPECT:"hello"
+
 ##################################
 
 not True
