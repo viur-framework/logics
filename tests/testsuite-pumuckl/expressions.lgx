@@ -1,0 +1,15 @@
+1 + 2 * 3 + 4
+#EXPECT:11
+
+(1 + 2) * (3 + 4)
+#EXPECT:21
+
+3 * "HelloWorld"
+#EXPECT:"HelloWorldHelloWorldHelloWorld"
+
+6000/49
+#EXPECT:122.44897959183673
+
+(3*"arbeit")+7*90
+#EXPECT:"arbeitarbeitarbeit630"
+

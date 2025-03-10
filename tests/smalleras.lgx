@@ -1,0 +1,20 @@
+ "Maus" + "Brand" < "Nager" + "Clown"
+#EXPECT:True
+
+700 * "Mäuse" + "Fallen" < 700 * "Katzen"
+#EXPECT:False
+
+700 < (200  + 499)
+#EXPECT:False
+
+700 < 1 if True else "b"
+#EXPECT:False
+
+x >= 10 and x < 20
+#EXPECT:False
+
+not (30 <= y <= 40)
+#EXPECT:True
+
+not (100 <= z <= 200)
+#EXPECT:True

@@ -1,0 +1,2 @@
+bool(700/4)
+#EXPECT:True
