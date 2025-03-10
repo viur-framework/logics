@@ -1,0 +1,25 @@
+"yes" if 2 + 3 == 5 else "no"
+#expect:"yes"
+
+"yes" if False else "no"
+#expect:"no"
+
+1 if True else 0
+#expect:1
+
+1 if False else 0
+#expect:0
+
+1 if 1 else 0
+#expect:1
+
+1 if 0 else 0
+#expect:0
+
+1 if None else 0
+#expect:0
+
+1 if not None else 0
+#expect:1
+
+##################################

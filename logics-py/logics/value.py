@@ -209,7 +209,7 @@ class Value:
     def __contains__(self, item):
         if self.type() in ("dict", "list"):
             value = Value(item)
-            return value.value in self
+            return value.value in self.value
 
         return str(item) in str(self)
 
