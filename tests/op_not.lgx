@@ -1,2 +1,12 @@
+
+not True
+#expect:False
+
+not False
+#expect:True
+
+not (True and False)
+#expect:True
+
 not (False or True)
 #expect:False

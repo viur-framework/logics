@@ -33,3 +33,6 @@
 
 "a" if False else "b"
 #expect:"b"
+
+700 + 1 if True else "b"
+#EXPECT:701
