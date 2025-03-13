@@ -1,0 +1,13 @@
+#set:numbers:(1,2,3, 53.2)
+
+3 in numbers
+#expect:True
+
+4 in numbers
+#expect:False
+
+4 not in numbers
+#expect:True
+
+"a" in numbers
+#expect:False

@@ -1,0 +1,22 @@
+int("5")
+#expect:5
+
+int(5.5)
+#expect:5
+
+int("0")
+#expect:0
+
+int(False)
+#expect:0
+
+#bug: AssertionError
+#int("10", 2)
+##expect:2
+
+#bug: AssertionError
+#int(True)
+##expect:1
+
+int(False)
+#expect:0

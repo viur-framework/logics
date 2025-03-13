@@ -1,0 +1,19 @@
+[x for x in range(5)]
+#expect:[0, 1, 2, 3, 4]
+
+[x for x in range(5) if x % 2 == 0]
+#expect:[0, 2, 4]
+
+[x*2 for x in range(3)]
+#expect:[0, 2, 4]
+
+[x for x in [1, 2, 3] if x > 1]
+#expect:[2, 3]
+
+#bug: AssertionError
+#[x for x in "abc"]
+##expect:["a", "b", "c"]
+
+#bug: LogicsParseException
+#[x.upper() for x in "abc"]
+##expect:["A", "B", "C"]

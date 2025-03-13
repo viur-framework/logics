@@ -1,0 +1,49 @@
+# Slices
+
+#bug: AssertionError: assert '2' == '[1, 2]'
+#[1, 2, 3, 4][:2]
+##expect:[1, 2]
+
+#bug: AssertionError: assert '3' == '[2, 3]'
+#[1, 2, 3, 4][1:3]
+##expect:[2, 3]
+
+#bug: AssertionError
+#"abcdef"[:3]
+##expect:"abc"
+
+#bug: AssertionError
+#'abcdef'[2:]
+##expect:'cdef'
+
+#bug: AssertionError
+#'abcdef'[::2]
+##expect:'ace'
+
+#bug: AssertionError
+#[1, 2, 3, 4][::-1]
+##expect:[4, 3, 2, 1]
+
+#bug:  AssertionError: assert '2' == '[1, 2]'
+#[1, 2, 3, 4][:2]
+##expect:[1, 2]
+
+#bug: AssertionError...
+#[1, 2, 3, 4][1:3]
+##expect:[2, 3]
+
+#bug: AssertionError...
+#'abcdef'[:3]
+##expect:'abc'
+
+#bug: AssertionError...
+#'abcdef'[2:]
+##expect:'cdef'
+
+#bug: AssertionError...
+#'abcdef'[::2]
+##expect:'ace'
+
+#bug: AssertionError...
+#[1, 2, 3, 4][::-1]
+##expect:[4, 3, 2, 1]

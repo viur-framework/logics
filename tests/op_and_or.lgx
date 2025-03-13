@@ -38,5 +38,14 @@ not False
 not (True and False)
 #expect:True
 
-not (False or True)
-#expect:False
+"hello" and "world" + 4
+#EXPECT:"world4"
+
+"hello" or "world" and "kaputt" + 4
+#EXPECT:"hello"
+
+"hello" and "world" or "kaputt" and + 4
+#EXPECT:"world"
+
+700 + 1 if True else "b"
+#EXPECT:701

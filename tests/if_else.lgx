@@ -22,4 +22,14 @@
 1 if not None else 0
 #expect:1
 
-##################################
+1 if True else 0
+#expect:1
+
+1 if False else 0
+#expect:0
+
+"a" if True else "b"
+#expect:"a"
+
+"a" if False else "b"
+#expect:"b"

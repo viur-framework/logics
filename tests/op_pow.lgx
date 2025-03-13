@@ -1,0 +1,16 @@
+# Power
+
+2 ** 3
+#expect:8
+
+5 ** 2
+#expect:25
+
+5 ** 1
+#expect:5
+
+5 ** 0
+#expect:1
+
+0 ** 5
+#expect:0

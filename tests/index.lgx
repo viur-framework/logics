@@ -1,0 +1,22 @@
+# Indexing
+
+[1, 2, 3][1]
+#expect:2
+
+"abc"[1]
+#expect:"b"
+
+(1, 2, 3)[2]
+#expect:3
+
+#bug: logics.parser.LogicsParseException: Line 1, column 1: Parse error, expecting 'Identifier', 'Number', 'String', 'not', '+', '-', '~', '(', '[', 'True', 'False', 'None', '$'
+#{"a": 1, "b": 2}["b"]
+##expect:2
+
+#bug: logics.parser.LogicsParseException: Line 1, column 2: Parse error, expecting 'Identifier', 'Number', 'String', 'not', '+', '-', '~', '(', '[', 'True', 'False', 'None', '$'
+#[{"a": 1}, {"b": 2}][1]["b"]
+##expect:2
+
+#bug: logics.parser.LogicsParseException
+#{'key': 'value'}['key']
+##expect:'value'

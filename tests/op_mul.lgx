@@ -1,0 +1,29 @@
+# Multipication
+
+5 * 3
+#expect:15
+
+5 * 0
+#expect:0
+
+0 * 0
+#expect:0
+
+3 * "HelloWorld"
+#EXPECT:"HelloWorldHelloWorldHelloWorld"
+
+#bug: TypeError: int() argument must be a string, a bytes-like object or a real number, not 'list'
+#[1, 2] * 2
+##expect:[1, 2, 1, 2]
+
+"arbeit" + "tag" + 300 ** 4
+#EXPECT:"arbeittag8100000000"
+
+700 * "Mäuse" + "Fallen" < 700 * "Katzen"
+#EXPECT:False
+
+32769 * "a"
+#EXPECT:"#ERR limit of 32768 reached"
+
+(3*"arbeit")+7*90
+#EXPECT:"arbeitarbeitarbeit630"

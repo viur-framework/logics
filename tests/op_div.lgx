@@ -1,0 +1,24 @@
+# Divison
+
+6 / 3
+#expect:2
+
+5 / 2
+#expect:2.5
+
+5 / 1
+#expect:5
+
+0 / 5
+#expect:0
+
+5 / 0
+#expect:"#ERR:division by zero"
+
+6000/49
+#EXPECT:122.44897959183673
+
+"string" / 1
+#EXPECT:0
+
+# TODO: Divison with periods, very small floats, rounding issues

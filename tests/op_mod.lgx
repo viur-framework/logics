@@ -1,3 +1,20 @@
+# Modulus
+
+5 % 3
+#expect:2
+
+5 % 2
+#expect:1
+
+5 % 1
+#expect:0
+
+0 % 5
+#expect:0
+
+5 % 0
+#expect:"#ERR:modulo by zero"
+
 n % 5 == 0 or n % 7 == 0
 #EXPECT:True
 
