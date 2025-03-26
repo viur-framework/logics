@@ -1,0 +1,17 @@
+[package]
+name = "logics-rs"
+version = "0.1.0"
+edition = "2024"
+description = "Logics is a user-friendly formula language with a subset of Python's expression syntax"
+authors = [
+    "Jan Max Meyer <jmm@phorward.de>"
+]
+license = "MIT"
+repository = "https://github.com/viur-framework/logics"
+categories = [
+    "compilers",
+    "command-line-utilities",
+    "development-tools"
+]
+
+[dependencies]
