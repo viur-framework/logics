@@ -1,6 +1,6 @@
 [package]
 name = "logics-rs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Logics is a user-friendly formula language with a subset of Python's expression syntax"
 authors = [
@@ -13,5 +13,6 @@ categories = [
     "command-line-utilities",
     "development-tools"
 ]
+readme = "../README.md"
 
 [dependencies]

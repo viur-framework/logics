@@ -41,6 +41,7 @@ Since Logics is used on both the client and server side, the language was made a
 
 - [logics-js](https://www.npmjs.com/package/logics-js) is a pure (vanilla) JavaScript implementation of Logics provided as npm-package.
 - [logics-py](https://pypi.org/project/logics-py/) is a pure Python >= 3.10 implementation of Logics provided as PyPI-package.
+- [logics-rs](https://crates.io/crates/logics-rs) is a new Rust implementation of Logics provided via crates.io, under development.
 
 Both packages are stand-alone without any further dependencies. They are both under recent development and stable until a specific degree right now. They are maintained in separate version numbers, which is planned to be changed soon, when they become almost feature-complete.
 
