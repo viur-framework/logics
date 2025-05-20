@@ -1,7 +1,8 @@
 use std::collections::HashMap;
+use num_parse::parse_int;
 
 #[derive(Debug)]
-enum Value {
+pub enum Value {
     None,
     Bool(bool),
     Int(i64),
@@ -37,7 +38,7 @@ impl Value {
             Self::Int(i) => *i,
             Self::Float(f) => *f as i64,
             Self::String(s) => {
-                if let Ok(i) = s.parse::<i64>() {
+                if let Some(i) = parse_int::<i64>(s) {
                     i
                 } else {
                     0
@@ -224,5 +225,5 @@ fn test_string() {
     assert_eq!(s.to_i64(), 3i64);
     assert_eq!(s.to_f64(), 3.1415f64);
     assert_eq!(s.to_string(), "3.1415");
-    assert_eq!(s.repr(), "3.1415");
+    assert_eq!(s.repr(), "\"3.1415\"");
 }
