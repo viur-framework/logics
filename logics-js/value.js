@@ -116,7 +116,7 @@ export default class Value {
                                 value = new Value(value);
                             }
 
-                            return key + ": " + value.repr();
+                            return key.repr() + ": " + value.repr();
                         })
                         .join(", ") +
                     "}"
