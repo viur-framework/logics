@@ -7,9 +7,9 @@ from logics import Logics
 def test_testcase(input):
     input = open(input, "r").read()
     variables = {}
-    last_result = None
+    last_line = last_result = None
 
-    for line in input.splitlines():
+    for row, line in enumerate(input.splitlines()):
         line = line.strip()
 
         if not line:
@@ -23,7 +23,9 @@ def test_testcase(input):
 
                 assert last_result is not None, "#EXPECT used before evaluation"
 
-                assert repr(last_result) == expect
+                if repr(last_result) != expect:
+                    raise AssertionError(f"{row=}: {last_line!r}: {last_result!r} != {expect!r}")
+
                 last_result = None
 
             elif action == "set":
@@ -32,5 +34,6 @@ def test_testcase(input):
                 variables[var] = Logics(value).run(variables)
         else:
             last_result = Logics(line).run(variables)
+            last_line = line
 
     assert last_result is None, f"{last_result=} unverified"

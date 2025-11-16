@@ -263,7 +263,7 @@ float("3.14") == 3.14
 round(float("5.67")) == 6
 #expect:True
 
-max(int("10"), round(8.5), float("7.3")) == 10
+max((int("10"), round(8.5), float("7.3"))) == 10
 #expect:True
 
 int(float("9.8")) == 9
