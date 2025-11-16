@@ -19,7 +19,7 @@ function testcase(code) {
 
         if (line[0] === "#") {
             // Process lines starting with "#" (comments and instructions).
-            let cmd = line.substr(1).split(":", 3);
+            let cmd = line.substr(1).split(":");
             switch (cmd[0].toLowerCase()) {
                 case "expect":
                     // Verify the expected result.
