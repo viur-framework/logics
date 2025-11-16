@@ -36,7 +36,7 @@ class Logics:
 
         self.functions = {
             "bool": bool,
-            "currency": Logics.lgx_currency,
+            # "currency": Logics.lgx_currency,
             "endswith": lambda value, suffix: str(value).endswith(str(suffix)),
             "float": parse_float,
             "int": parse_int,

@@ -46,7 +46,7 @@ export default class Logics {
 
         this.functions = {
             bool: (val) => val.toBool(),
-            currency: (value, decimalDelimiter, thousandsDelimiter, currencySign) => "#todo", // todo
+            // currency: (value, decimalDelimiter, thousandsDelimiter, currencySign) => "#todo", // todo
             endswith: (value, suffix) => value.toString().endsWith(suffix.toString()),
             float: (val) => val.toFloat(),
             int: (val) => val.toInt(),
