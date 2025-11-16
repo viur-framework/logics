@@ -114,6 +114,12 @@ class Value:
         else:
             self.value = Value.align(value, allow, default, optimize)
 
+            # Ensure that container values are wrapped by Value objects as well
+            if isinstance(self.value, list):
+                self.value = [Value(item) for item in self.value]
+            elif isinstance(self.value, dict):
+                self.value = {Value(k): Value(v) for k, v in self.value.items()}
+
         if isinstance(self.value, str) and len(self.value) > MAX_STRING_LENGTH:
             self.value = _ERR_MAX_STRING_LENGTH
 
