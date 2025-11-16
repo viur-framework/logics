@@ -107,7 +107,7 @@ export default class Logics {
                 return parseFloat(float.toFloat().toFixed((precision && precision.toInt()) || 0));
             },
             rstrip: (str) => str.toString().trimEnd(),
-            split: (str, delimiter) => str.toString().split((delimiter && delimiter.toString()) || " "),
+            split: (str, delimiter) => str.toString().split((delimiter && delimiter.toString()) || ","),
             str: (val) => val.toString(),
             strip: (str) => str.toString().trim(),
             sum: (array) => {

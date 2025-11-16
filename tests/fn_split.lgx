@@ -1,0 +1,5 @@
+split("hello,world,test")
+#expect:["hello", "world", "test"]
+
+split("hello world test", " ")
+#expect:["hello", "world", "test"]

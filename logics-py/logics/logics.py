@@ -51,7 +51,7 @@ class Logics:
             "rfill": lambda value, length, fill=" ": str(value).ljust(int(length), str(fill)),
             "round": lambda value, digits=0: round(float(value), int(digits)),
             "rstrip": lambda value, chars=" \t\r\n": str(value).rstrip(str(chars)),
-            "split": lambda value, delimiter=" ": str(value).split(str(delimiter)),
+            "split": lambda value, delimiter=",": str(value).split(str(delimiter)),
             "str": lambda val: Value(str(val), optimize=False),
             "strip": lambda s, c=" \t\r\n": str(s).strip(str(c)),
             "sum": lambda value: sum([Value.align(item, allow=(bool, int, float), default=parse_int) for item in value]),
