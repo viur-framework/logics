@@ -1,0 +1,36 @@
+#set:s:"Hello World"
+#set:n:1337
+
+# --- endswith ---
+
+endswith(s, "World")
+#expect:True
+
+endswith(s, "Eazy")
+#expect:False
+
+endswith(s, 37)
+#expect:False
+
+endswith(n, 13)
+#expect:False
+
+endswith(n, 37)
+#expect:True
+
+# --- startswith ---
+
+startswith(s, "Hello")
+#expect:True
+
+startswith(s, "Ello")
+#expect:False
+
+startswith(s, 13)
+#expect:False
+
+startswith(n, 13)
+#expect:True
+
+startswith(n, 37)
+#expect:False

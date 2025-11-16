@@ -47,6 +47,7 @@ export default class Logics {
         this.functions = {
             bool: (val) => val.toBool(),
             currency: (value, decimalDelimiter, thousandsDelimiter, currencySign) => "#todo", // todo
+            endswith: (value, suffix) => value.toString().endsWith(suffix.toString()),
             float: (val) => val.toFloat(),
             int: (val) => val.toInt(),
             join: (array, delimiter, lastDelimiter) => {
@@ -108,6 +109,7 @@ export default class Logics {
             },
             rstrip: (str) => str.toString().trimEnd(),
             split: (str, delimiter) => str.toString().split((delimiter && delimiter.toString()) || ","),
+            startswith: (value, prefix) => value.toString().startsWith(prefix.toString()),
             str: (val) => val.toString(),
             strip: (str) => str.toString().trim(),
             sum: (array) => {

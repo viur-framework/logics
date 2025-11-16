@@ -37,6 +37,7 @@ class Logics:
         self.functions = {
             "bool": bool,
             "currency": Logics.lgx_currency,
+            "endswith": lambda value, suffix: str(value).endswith(str(suffix)),
             "float": parse_float,
             "int": parse_int,
             "join": lambda value, delimiter=", ": str(delimiter).join(str(item) for item in value.list()),
@@ -53,6 +54,7 @@ class Logics:
             "round": lambda value, digits=0: round(float(value), int(digits)),
             "rstrip": lambda value, chars=" \t\r\n": str(value).rstrip(str(chars)),
             "split": lambda value, delimiter=",": str(value).split(str(delimiter)),
+            "startswith": lambda value, prefix: str(value).startswith(str(prefix)),
             "str": lambda val: Value(str(val), optimize=False),
             "strip": lambda s, c=" \t\r\n": str(s).strip(str(c)),
             "sum": lambda value: sum(
