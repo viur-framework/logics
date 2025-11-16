@@ -1,0 +1,12 @@
+#set:x:23.5
+#set:y:42
+#set:z:"Hello World"
+
+vars
+#expect:{"x": 23.5, "y": 42, "z": "Hello World"}
+
+vars()
+#expect:{"x": 23.5, "y": 42, "z": "Hello World"}
+
+vars("z")
+#expect:"Hello World"

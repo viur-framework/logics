@@ -119,6 +119,7 @@ export default class Logics {
             },
             upper: (str) => str.toString().toUpperCase(),
             values: (val) => Object.values(val.toDict().valueOf()),
+            // vars: (name) => ... is a special case handled inline!
         };
     }
 
@@ -183,6 +184,11 @@ export default class Logics {
             return false;
         }
 
+        // Use this function to access values
+        function _values(name) {
+            return name === undefined ? values : values[name.toString()]
+        }
+
         // Flow operations
         if (
             !action(node.emit, {
@@ -207,6 +213,9 @@ export default class Logics {
                     }
 
                     let fn = this.functions[fname];
+                    if (fn === undefined && fname == "vars") {
+                        fn = _values;
+                    }
 
                     if (fn !== undefined) {
                         // Convert all args to Logics values
@@ -347,11 +356,10 @@ export default class Logics {
             pos: () => stack.op1((a) => a.__pos__()),
             pow: () => stack.op2((a, b) => a.__pow__(b)),
             index: () => stack.op2((value, idx) => value.__getitem__(idx)),
-            load: () => stack.op1((name) => values[name.toString()]),
+            load: () => stack.op1((name) => name == "vars" ? _values() : _values(name)),
             slice: () => stack.op3((value, from, to) => value.__getitem__(from, to)),
             strings: () => stack.op0(stack.splice(-node.children.length).join("")),
             sub: () => stack.op2((a, b) => a.__sub__(b)),
-            vars: () => stack.op0(values),
         });
     }
 }

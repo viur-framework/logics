@@ -2,6 +2,7 @@
 logics is a domain-specific expression language with a Python-style syntax,
 that can be compiled and executed in any of ViUR's runtime contexts.
 """
+import typing as t
 from .parser import LogicsParser, LogicsNode
 from .value import Value, parse_float, parse_int, unescape
 
@@ -54,9 +55,12 @@ class Logics:
             "split": lambda value, delimiter=",": str(value).split(str(delimiter)),
             "str": lambda val: Value(str(val), optimize=False),
             "strip": lambda s, c=" \t\r\n": str(s).strip(str(c)),
-            "sum": lambda value: sum([Value.align(item, allow=(bool, int, float), default=parse_int) for item in value]),
+            "sum": lambda value: sum(
+                [Value.align(item, allow=(bool, int, float), default=parse_int) for item in value]
+            ),
             "upper": lambda value: str(value).upper(),
             "values": lambda obj: list(obj.dict().values()),
+            # "vars": ... is a special case handled inline!
         }
 
         self.debug = debug
@@ -126,6 +130,11 @@ class Logics:
         Internal virtual machine working on the recursive
         LogicsNodes, a stack and the values.
         """
+
+        # Use this function to access values
+        def _vars(name: t.Optional[str] = None):
+            return values.get(str(name)) if name is not None else values
+
         # Flow operations are being evaluated on demand
         match node.emit:
             case "and" | "or":
@@ -193,7 +202,11 @@ class Logics:
                 else:
                     args = ()
 
-                if fn := self.functions.get(fname):
+                fn = self.functions.get(fname)
+                if not fn and fname == "vars":
+                    fn = _vars
+
+                if fn:
                     try:
                         stack.op0(fn(*args))
                     except TypeError:
@@ -304,7 +317,7 @@ class Logics:
             case "index":
                 stack.op2(lambda value, idx: value[idx])
             case "load":
-                stack.op1(lambda name: values.get(str(name)))
+                stack.op1(lambda name: _vars() if name == "vars" else _vars(name))
             case "slice":
                 # TODO
                 # stack.op3(lambda value, from, to: value.__getitem__(from, to))
@@ -314,8 +327,6 @@ class Logics:
 
             case "sub":
                 stack.op2(lambda a, b: a - b)
-            case "vars":
-                stack.op0(values)
 
             case node:
                 raise NotImplementedError(f"Logics VM: {node=} is not implemented")
