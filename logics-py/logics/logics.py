@@ -261,9 +261,9 @@ class Logics:
                 stack.op0(None)
             case "Number":
                 if "." in node.match:
-                    stack.op0(Value(parse_float(node.match)))
+                    stack.op0(parse_float(node.match))
                 else:
-                    stack.op0(Value(parse_int(node.match)))
+                    stack.op0(parse_int(node.match))
 
             case "String":
                 stack.op0(unescape(node.match[1:-1]))  # cut "..." from string.
