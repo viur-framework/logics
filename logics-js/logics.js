@@ -188,7 +188,7 @@ export default class Logics {
 
         // Use this function to access values
         function _values(name) {
-            return name === undefined ? values : values[name.toString()]
+            return name === undefined ? values : values[name.toString()];
         }
 
         // Flow operations
@@ -358,7 +358,7 @@ export default class Logics {
             pos: () => stack.op1((a) => a.__pos__()),
             pow: () => stack.op2((a, b) => a.__pow__(b)),
             index: () => stack.op2((value, idx) => value.__getitem__(idx)),
-            load: () => stack.op1((name) => name == "vars" ? _values() : _values(name)),
+            load: () => stack.op1((name) => (name == "vars" ? _values() : _values(name))),
             slice: () => stack.op3((value, from, to) => value.__getitem__(from, to)),
             strings: () => stack.op0(stack.splice(-node.children.length).join("")),
             sub: () => stack.op2((a, b) => a.__sub__(b)),
