@@ -12,6 +12,7 @@
         let values = {
             "name": "Doe",
             "firstname": "John",
+            "demo_alter": 12,
             "person": {
                 "firstname": "Bernd",
                 "name": "Bommelunder"
@@ -31,7 +32,9 @@
             "roles": ["custom"],
         };
 
-        document.querySelector("#prompt").addEventListener(
+        let prompt = document.querySelector("#prompt");
+
+        prompt.addEventListener(
             "change",
             (e) => {
                 let calc;
@@ -55,9 +58,13 @@
                     li.style.color = "red";
                     li.appendChild(document.createTextNode(exception.toString()));
                 }
-
             }
-        )
+        );
+
+        // When prompt is already filled, execute imediatelly
+        if (prompt.value) {
+            window.setTimeout(() => prompt.dispatchEvent(new Event("change")), 125);
+        }
     </script>
 </body>
 </html>

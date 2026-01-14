@@ -8,6 +8,8 @@ describe("Value", () => {
         // assert.strictEqual(none, null);
         // assert.isNull(none.toNullable());
         // assert.isFalse(none.toBoolean());
+        assert.ok(none.__cmp__(new Value(null)) == 0);
+        assert.ok(none.__cmp__(new Value(0)) < 0);
         assert.strictEqual(none.toBool(), false);
         assert.strictEqual(none.toInt(), 0);
         assert.strictEqual(none.toFloat(), 0.0);

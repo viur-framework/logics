@@ -262,6 +262,8 @@ export default class Value {
     __cmp__(other) {
         let a, b;
 
+        // console.log(this.type(), other.type());
+
         // Dict types
         if (this.type() === "dict" || other.type() === "dict") {
             // fixme: Python cannot compare < and > on dict, only ==. Change this here, too?
@@ -323,6 +325,9 @@ export default class Value {
         } else if (this.type() === "float" || other.type() === "float") {
             a = this.toFloat();
             b = other.toFloat();
+        } else if (this.type() === "NoneType" || other.type() === "NoneType") {
+            a = this.type() === "NoneType" ? -1 : 0;
+            b = other.type() === "NoneType" ? -1 : 0;
         } else {
             a = this.toInt();
             b = other.toInt();

@@ -1,0 +1,7 @@
+#SET:none:None
+none == None
+#EXPECT:True
+none == 0
+#EXPECT:False
+none < 0
+#EXPECT:True

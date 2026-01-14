@@ -250,6 +250,11 @@ class Value:
         value = self.value
         other = Value(other).value
 
+        if value is None:
+            value = -1
+        if other is None:
+            other = -1
+
         try:
             match op:
                 case "lt":

@@ -12,6 +12,7 @@ def test_conversion():
 def test_none():
     none = Value(None)
     assert none == None
+    assert none != 0
     assert bool(none) == False
     assert int(none) == 0
     assert float(none) == 0.0
